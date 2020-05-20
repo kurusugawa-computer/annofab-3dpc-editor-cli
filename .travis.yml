@@ -1,0 +1,15 @@
+language: python
+
+python: "3.8"
+dist: bionic
+
+install:
+  - python3 -m pip install poetry
+  - poetry install
+
+script:
+    make lint && make test
+
+branches:
+  - master
+  - develop
