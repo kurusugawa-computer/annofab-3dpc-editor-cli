@@ -1,0 +1,20 @@
+from dataclasses import dataclass
+from typing import Type, TypeVar
+
+from dataclasses_json import DataClassJsonMixin, LetterCase, config
+
+A = TypeVar("A", bound=DataClassJsonMixin)
+
+
+def pascalcase(cls: Type[A]) -> Type[A]:
+    cls.dataclass_json_config = config(letter_case=LetterCase.CAMEL)  # type: ignore
+    # 受け取ったクラスはそのまま返す
+    return cls
+
+
+@pascalcase
+@dataclass(frozen=True)
+class Vector3(DataClassJsonMixin):
+    x: float
+    y: float
+    z: float
