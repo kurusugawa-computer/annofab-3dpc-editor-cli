@@ -36,15 +36,17 @@ class Uploader:
 
         return data_path.path
 
-    def upload_input_data(self, file: Path) -> None:
+    def upload_input_data(self, file: Path) -> str:
         path = self._upload_tempdata(file)
 
+        data_id = str(uuid4())
         body = {"input_data_name": file.name, "input_data_path": path}
-        input_data, _ = self._client.put_input_data(self._project, str(uuid4()), query_params=None, request_body=body)
+        input_data, _ = self._client.put_input_data(self._project, data_id, query_params=None, request_body=body)
 
         logger.info("uploaded input data: %s", input_data)
+        return data_id
 
-    def upload_supplementary(self, input_data_id: str, supplementary_id, file: Path) -> None:
+    def upload_supplementary(self, input_data_id: str, supplementary_id: str, file: Path) -> str:
         path = self._upload_tempdata(file)
 
         body = {
@@ -55,3 +57,4 @@ class Uploader:
         }
         supplementary, _ = self._client.put_supplementary_data(self._project, input_data_id, supplementary_id, body)
         logger.info("uploaded supplementary data: %s", supplementary)
+        return supplementary_id

@@ -18,6 +18,7 @@ class ImageCameraFov(DataClassJsonMixin):
 class ImageCamera(DataClassJsonMixin):
     direction: Vector3
     fov: ImageCameraFov
+    camera_height: float
 
 
 @pascalcase

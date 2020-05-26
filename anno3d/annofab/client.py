@@ -14,7 +14,7 @@ class ClientLoader:
         self._annofab_pass = annofab_pass
 
     @contextmanager
-    def open_resource(self) -> Generator[Resource]:
+    def open_resource(self) -> Generator[Resource, None, None]:
         resource = annofabapi.build(self._annofab_id, self._annofab_pass)
         try:
             yield resource
@@ -22,6 +22,6 @@ class ClientLoader:
             resource.api.session.close()
 
     @contextmanager
-    def open_api(self) -> Generator[AnnofabApi]:
+    def open_api(self) -> Generator[AnnofabApi, None, None]:
         with self.open_resource() as r:
             yield r.api
