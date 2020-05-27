@@ -9,11 +9,11 @@ from anno3d.model.file_paths import FrameKind
 from anno3d.simple_data_uploader import upload
 
 
-def add_stdout_handler(logger: logging.Logger, level: int = logging.INFO):
+def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
     handler = logging.StreamHandler()
     handler.setLevel(level)
     handler.setFormatter(logging.Formatter("[%(asctime)s] [%(process)d] [%(name)s] [%(levelname)s] %(message)s"))
-    logger.addHandler(handler)
+    target.addHandler(handler)
 
 
 root_logger = logging.getLogger()
