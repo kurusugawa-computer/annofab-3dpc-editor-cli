@@ -71,3 +71,8 @@ def upload(uploader: Uploader, paths: FilePaths) -> None:
         image = SupplementaryData(camera_image_id(input_data_id, 0), paths.image)
         image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0)
         _upload_supplementaries(uploader, input_data_id, [frame_meta, image, image_meta])
+
+
+def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
+    _create_frame_meta(parent_dir, "sample_input_id")
+    _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0)
