@@ -7,7 +7,8 @@ A = TypeVar("A", bound=DataClassJsonMixin)
 
 
 def pascalcase(cls: Type[A]) -> Type[A]:
-    cls.dataclass_json_config = config(letter_case=LetterCase.CAMEL)  # type: ignore
+    cls.dataclass_json_config = config(letter_case=LetterCase.CAMEL)["dataclasses_json"]  # type: ignore
+
     # 受け取ったクラスはそのまま返す
     return cls
 
