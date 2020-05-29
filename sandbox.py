@@ -56,7 +56,8 @@ def create_meta():
 
 
 def main() -> None:
-    create_meta()
+    # create_meta()
+    upload_files()
 
 
 if __name__ == "__main__":
