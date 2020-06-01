@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from anno3d.calib_loader import read_kitty_calib
+from anno3d.calib_loader import read_kitti_calib
 
-test_ressources_path = Path(__file__).parent / "resources" / "kitty_calib.txt"
+test_ressources_path = Path(__file__).parent / "resources" / "kitti_calib.txt"
 
 
-def test_read_kitty_calib():
-    calib = read_kitty_calib(test_ressources_path)
+def test_read_kitti_calib():
+    calib = read_kitti_calib(test_ressources_path)
 
     assert len(calib.camera_matrix) == 4 * 3
     assert calib.camera_matrix[0] == 721.5377

@@ -3,7 +3,7 @@ from pathlib import Path
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
 
-test_ressources_path = Path(__file__).parent / "resources" / "kitty3dobj"
+test_ressources_path = Path(__file__).parent / "resources" / "kitti3dobj"
 
 
 def test_load_training():

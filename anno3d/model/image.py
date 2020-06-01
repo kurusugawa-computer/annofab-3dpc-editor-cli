@@ -23,7 +23,7 @@ class ImageCamera(DataClassJsonMixin):
 
 @pascalcase
 @dataclass(frozen=True)
-class Kitty3DCalib(DataClassJsonMixin):
+class kitti3DCalib(DataClassJsonMixin):
     # 4x3行列 (P2)
     camera_matrix: List[float]
 
@@ -33,7 +33,7 @@ class Kitty3DCalib(DataClassJsonMixin):
     # 3x4行列 Tr_velo_to_cam
     velo_cam_matrix: List[float]
 
-    kind: str = "kitty3dDetection"
+    kind: str = "kitti3dDetection"
 
 
 @pascalcase
@@ -41,5 +41,5 @@ class Kitty3DCalib(DataClassJsonMixin):
 class ImageMeta(DataClassJsonMixin):
     """ 画像ごとに存在するメタデータ """
 
-    calib: Kitty3DCalib
+    calib: kitti3DCalib
     camera: ImageCamera

@@ -29,11 +29,11 @@ def upload_files():
 
     annofab_id = args[0]
     password = args[1]
-    kitty_dir = Path(args[2])
+    kitti_dir = Path(args[2])
 
     project = "66241367-9175-40e3-8f2f-391d6891590b"
 
-    loader = FilePathsLoader(kitty_dir, kitty_dir, kitty_dir)
+    loader = FilePathsLoader(kitti_dir, kitti_dir, kitti_dir)
     pathss = loader.load(FrameKind.testing)[0:10]
     client_loader = ClientLoader(annofab_id, password)
     with client_loader.open_api() as api:
@@ -48,16 +48,16 @@ def create_meta():
         shutil.rmtree(parent)
 
     args = sys.argv[1:]
-    kitty_dir = Path(args[0])
-    loader = FilePathsLoader(kitty_dir, kitty_dir, kitty_dir)
+    kitti_dir = Path(args[0])
+    loader = FilePathsLoader(kitti_dir, kitti_dir, kitti_dir)
     pathss = loader.load(FrameKind.testing)[0:10]
     parent.mkdir(parents=True)
     create_meta_file(parent, pathss[0])
 
 
 def main() -> None:
-    # create_meta()
-    upload_files()
+    create_meta()
+    # upload_files()
 
 
 if __name__ == "__main__":

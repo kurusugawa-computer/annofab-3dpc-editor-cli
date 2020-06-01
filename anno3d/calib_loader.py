@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Callable, Iterable, List, Optional, TypeVar, cast
 
-from anno3d.model.image import Kitty3DCalib
+from anno3d.model.image import kitti3DCalib
 
 T = TypeVar("T")
 
@@ -15,7 +15,7 @@ def _find(iterable: Iterable[T], pred: Callable[[T], bool]) -> Optional[T]:
     return next(filter(cast(Callable[[Optional[T]], Any], pred), iterable), None)
 
 
-def _read_str(lines: List[str]) -> Kitty3DCalib:
+def _read_str(lines: List[str]) -> kitti3DCalib:
     p2prefix = "P2: "
     r0prefix = "R0_rect: "
     velo_cam_prefix = "Tr_velo_to_cam: "
@@ -35,9 +35,9 @@ def _read_str(lines: List[str]) -> Kitty3DCalib:
     values_p2 = to_values(p2line, p2prefix)
     values_r0 = to_values(r0line, r0prefix)
     values_velo_cam = to_values(velo_cam_line, velo_cam_prefix)
-    return Kitty3DCalib(camera_matrix=values_p2, r0_matrix=values_r0, velo_cam_matrix=values_velo_cam)
+    return kitti3DCalib(camera_matrix=values_p2, r0_matrix=values_r0, velo_cam_matrix=values_velo_cam)
 
 
-def read_kitty_calib(path: Path) -> Kitty3DCalib:
+def read_kitti_calib(path: Path) -> kitti3DCalib:
     with path.open(mode="r", encoding="utf-8") as file:
         return _read_str(file.readlines())

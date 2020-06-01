@@ -17,7 +17,7 @@ class PointCloudMetaData(DataClassJsonMixin):
 @dataclass(frozen=True)
 class ImagesMetaData(DataClassJsonMixin):
     image_count: int
-    calib_kind: str = "kitty3dDetection"
+    calib_kind: str = "kitti3dDetection"
 
 
 @pascalcase

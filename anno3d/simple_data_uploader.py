@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 from anno3d.annofab.uploader import Uploader
-from anno3d.calib_loader import read_kitty_calib
+from anno3d.calib_loader import read_kitti_calib
 from anno3d.model.common import Vector3
 from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
@@ -40,7 +40,7 @@ def _create_image_meta(parent_dir: Path, calib_path: Path, input_data_id: str, n
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
     meta = ImageMeta(
-        read_kitty_calib(calib_path),
+        read_kitti_calib(calib_path),
         ImageCamera(
             direction=Vector3(1, 0, 0),
             fov=ImageCameraFov(90.0 / 180.0 * math.pi, 35.0 / 180.0 * math.pi),
