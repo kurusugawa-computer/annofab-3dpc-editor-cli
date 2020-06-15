@@ -23,6 +23,10 @@ add_stdout_handler(root_logger, logging.INFO)
 
 logger = logging.getLogger(__name__)
 
+resources = Path(__file__).parent / "resources"
+hidari = resources / "hidari.png"
+migi = resources / "migi.png"
+
 
 def upload_files():
     args = sys.argv[1:]
@@ -34,12 +38,12 @@ def upload_files():
     project = "66241367-9175-40e3-8f2f-391d6891590b"
 
     loader = FilePathsLoader(kitti_dir, kitti_dir, kitti_dir)
-    pathss = loader.load(FrameKind.testing)[0:10]
+    pathss = loader.load(FrameKind.testing)[10:20]
     client_loader = ClientLoader(annofab_id, password)
     with client_loader.open_api() as api:
         uploader = Uploader(api, project)
         for paths in pathss:
-            upload(uploader, paths)
+            upload(uploader, paths, [hidari, migi])
 
 
 def create_meta():
@@ -50,14 +54,14 @@ def create_meta():
     args = sys.argv[1:]
     kitti_dir = Path(args[0])
     loader = FilePathsLoader(kitti_dir, kitti_dir, kitti_dir)
-    pathss = loader.load(FrameKind.testing)[0:10]
+    pathss = loader.load(FrameKind.testing)[10:20]
     parent.mkdir(parents=True)
     create_meta_file(parent, pathss[0])
 
 
 def main() -> None:
-    create_meta()
-    # upload_files()
+    # create_meta()
+    upload_files()
 
 
 if __name__ == "__main__":

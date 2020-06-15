@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -41,5 +41,5 @@ class kitti3DCalib(DataClassJsonMixin):
 class ImageMeta(DataClassJsonMixin):
     """ 画像ごとに存在するメタデータ """
 
-    calib: kitti3DCalib
+    calib: Optional[kitti3DCalib]
     camera: ImageCamera
