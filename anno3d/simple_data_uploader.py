@@ -93,7 +93,7 @@ def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> No
         frame_meta = _create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1)
         image = SupplementaryData(camera_image_id(input_data_id, 0), paths.image)
         image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0)
-        dummy_images = [
+        dummy_image_supps = [
             meta
             for i in range(1, len(dummy_images) + 1)
             for meta in [
@@ -102,10 +102,10 @@ def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> No
             ]
         ]
 
-        _upload_supplementaries(uploader, input_data_id, dummy_images + [frame_meta, image, image_meta])
+        _upload_supplementaries(uploader, input_data_id, dummy_image_supps + [frame_meta, image, image_meta])
 
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
-    _create_frame_meta(parent_dir, "sample_input_id")
+    _create_frame_meta(parent_dir, "sample_input_id", 2)
     _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
