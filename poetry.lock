@@ -135,6 +135,18 @@ typing-inspect = ">=0.4.0"
 dev = ["pytest", "ipython", "mypy (>=0.710)", "hypothesis", "portray", "flake8", "simplejson"]
 
 [[package]]
+category = "main"
+description = "A library for automatically generating command line interfaces."
+name = "fire"
+optional = false
+python-versions = "*"
+version = "0.3.1"
+
+[package.dependencies]
+six = "*"
+termcolor = "*"
+
+[[package]]
 category = "dev"
 description = "the modular source code checker: pep8 pyflakes and co"
 name = "flake8"
@@ -401,6 +413,14 @@ python-versions = "*"
 version = "1.2.0"
 
 [[package]]
+category = "main"
+description = "ANSII Color formatting for output in terminal."
+name = "termcolor"
+optional = false
+python-versions = "*"
+version = "1.1.0"
+
+[[package]]
 category = "dev"
 description = "Python Library for Tom's Obvious, Minimal Language"
 name = "toml"
@@ -466,7 +486,7 @@ python-versions = "*"
 version = "1.12.1"
 
 [metadata]
-content-hash = "af3bee647f9954b215c1db62e441ad6e35d6fdb5bfc993a6037f95a495966af7"
+content-hash = "3cdb35588b0c9bb162cc0f2839103597249da1504fd0c473f68500da37dc32ca"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -517,6 +537,9 @@ colorama = [
 dataclasses-json = [
     {file = "dataclasses-json-0.4.2.tar.gz", hash = "sha256:65ac9ae2f7ec152ee01bf42c8c024736d4cd6f6fb761502dec92bd553931e3d9"},
     {file = "dataclasses_json-0.4.2-py3-none-any.whl", hash = "sha256:dbb53ebbac30ef45f44f5f436b21bd5726a80a14e1a193958864229100271372"},
+]
+fire = [
+    {file = "fire-0.3.1.tar.gz", hash = "sha256:9736a16227c3d469e5d2d296bce5b4d8fa8d7851e953bda327a455fc2994307f"},
 ]
 flake8 = [
     {file = "flake8-3.8.1-py2.py3-none-any.whl", hash = "sha256:6c1193b0c3f853ef763969238f6c81e9e63ace9d024518edc020d5f1d6d93195"},
@@ -662,6 +685,9 @@ six = [
 ]
 stringcase = [
     {file = "stringcase-1.2.0.tar.gz", hash = "sha256:48a06980661908efe8d9d34eab2b6c13aefa2163b3ced26972902e3bdfd87008"},
+]
+termcolor = [
+    {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
 ]
 toml = [
     {file = "toml-0.10.1-py2.py3-none-any.whl", hash = "sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88"},
