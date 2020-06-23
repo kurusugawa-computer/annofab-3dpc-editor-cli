@@ -5,6 +5,7 @@ from pathlib import Path
 import fire
 
 from anno3d.annofab.client import ClientLoader
+from anno3d.annofab.project import Project
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
@@ -58,11 +59,47 @@ class Sandbox:
         create_meta_file(parent, pathss[0])
 
 
+class ProjectCommand:
+    """ プロジェクトの操作を行うためのサブコマンドです """
+
+    @staticmethod
+    def create(
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        organization_name: str,
+        plugin_id: str,
+        title: str = "",
+        overview: str = "",
+    ) -> None:
+        """
+        新しいカスタムプロジェクトを生成します。
+
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 作成するprojectのid
+            organization_name: projectを所属させる組織の名前
+            title: projectのタイトル。　省略した場合 project_id と同様
+            overview:  projectの概要。 省略した場合 project_id と同様
+
+        Returns:
+
+        """
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            created_project_id = Project(api).create_custom_project(
+                project_id, organization_name, plugin_id, title, overview
+            )
+            logger.info("プロジェクト(=%s)を作成しました。", created_project_id)
+
+
 class Command:
     """ root command """
 
     def __init__(self):
         self.sandbox = Sandbox()
+        self.project = ProjectCommand()
 
 
 if __name__ == "__main__":
