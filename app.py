@@ -126,6 +126,43 @@ class ProjectCommand:
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
 
+    @staticmethod
+    def upload_kitti_data(
+        annofab_id: str, annofab_pass: str, project_id: str, kitti_dir: str, skip: int = 0, size: int = 10
+    ):
+        """
+        kitti 3d detection形式のファイル群を3dpc-editorに登録します。
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 登録先のプロジェクトid
+            kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
+            skip: 見つけたデータの先頭何件をスキップするか
+            size: 最大何件のinput_dataを登録するか
+
+        Returns:
+
+        """
+        project = project_id
+
+        kitti_dir_path = Path(kitti_dir)
+        loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
+        pathss = loader.load(None)[skip : (skip + size)]
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            uploader = Uploader(api, project)
+            # fmt: off
+            uploaded = [
+                (input_id, len(supps))
+                for paths in pathss
+                for input_id, supps in [upload(uploader, paths, [])]
+            ]
+            # fmt: on
+
+            logger.info("%d 件のinput dataをuploadしました", len(uploaded))
+            for input_id, supp_count in uploaded:
+                logger.info("id: %s, 補助データ件数: %d", input_id, supp_count)
+
 
 class Command:
     """ root command """

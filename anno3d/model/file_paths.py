@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 
 class FrameKind(Enum):
@@ -10,7 +11,7 @@ class FrameKind(Enum):
 
 @dataclass(frozen=True)
 class FrameKey:
-    kind: FrameKind
+    kind: Optional[FrameKind]
     id: str
 
 

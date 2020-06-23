@@ -1,8 +1,9 @@
+import logging
 import math
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from anno3d.annofab.uploader import Uploader
 from anno3d.calib_loader import read_kitti_calib
@@ -11,6 +12,8 @@ from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
 from anno3d.model.image import ImageCamera, ImageCameraFov, ImageMeta
 from anno3d.supplementary_id import camera_image_calib_id, camera_image_id, frame_meta_id
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -85,7 +88,7 @@ def _upload_supplementaries(
         uploader.upload_supplementary(input_data_id, supp.data_id, supp.path)
 
 
-def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> None:
+def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> Tuple[str, List[SupplementaryData]]:
     input_data_id = uploader.upload_input_data(paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
@@ -102,7 +105,11 @@ def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> No
             ]
         ]
 
-        _upload_supplementaries(uploader, input_data_id, dummy_image_supps + [frame_meta, image, image_meta])
+        all_supps = dummy_image_supps + [frame_meta, image, image_meta]
+        _upload_supplementaries(uploader, input_data_id, all_supps)
+
+        logger.info("uploaded: %s", paths.pcd)
+        return input_data_id, all_supps
 
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
