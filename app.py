@@ -1,11 +1,12 @@
 import logging
 import shutil
 from pathlib import Path
+from typing import Tuple
 
 import fire
 
 from anno3d.annofab.client import ClientLoader
-from anno3d.annofab.project import Project
+from anno3d.annofab.project import Label, Project
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
@@ -80,6 +81,7 @@ class ProjectCommand:
             annofab_pass:
             project_id: 作成するprojectのid
             organization_name: projectを所属させる組織の名前
+            plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
             title: projectのタイトル。　省略した場合 project_id と同様
             overview:  projectの概要。 省略した場合 project_id と同様
 
@@ -92,6 +94,37 @@ class ProjectCommand:
                 project_id, organization_name, plugin_id, title, overview
             )
             logger.info("プロジェクト(=%s)を作成しました。", created_project_id)
+
+    @staticmethod
+    def put_label(
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+    ) -> None:
+        """
+        対象のプロジェクトのlabelを追加・更新します。
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 対象プロジェクト
+            label_id: 追加・更新するラベルのid
+            ja_name: 日本語名称
+            en_name: 　英語名称
+            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
+
+        Returns:
+
+        """
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            labels = Project(api).put_label(project_id, label_id, ja_name, en_name, color)
+            labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
+            logger.info("Label(=%s) を作成・更新しました", label_id)
+            logger.info(labels_json)
 
 
 class Command:
