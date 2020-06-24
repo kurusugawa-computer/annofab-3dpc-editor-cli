@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from uuid import uuid4
 
 import requests
 from annofabapi import AnnofabApi
@@ -36,10 +35,10 @@ class Uploader:
 
         return data_path.path
 
-    def upload_input_data(self, file: Path) -> str:
+    def upload_input_data(self, input_data_id: str, file: Path) -> str:
         path = self._upload_tempdata(file)
 
-        data_id = str(uuid4())
+        data_id = input_data_id
         body = {"input_data_name": file.name, "input_data_path": path}
         input_data, _ = self._client.put_input_data(self._project, data_id, query_params=None, request_body=body)
 

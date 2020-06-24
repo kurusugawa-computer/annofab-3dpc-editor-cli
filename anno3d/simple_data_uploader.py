@@ -88,8 +88,10 @@ def _upload_supplementaries(
         uploader.upload_supplementary(input_data_id, supp.data_id, supp.path)
 
 
-def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> Tuple[str, List[SupplementaryData]]:
-    input_data_id = uploader.upload_input_data(paths.pcd)
+def upload(
+    input_data_id_prefix: str, uploader: Uploader, paths: FilePaths, dummy_images: List[Path]
+) -> Tuple[str, List[SupplementaryData]]:
+    input_data_id = uploader.upload_input_data("{}_{}".format(input_data_id_prefix, paths.key.id), paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)

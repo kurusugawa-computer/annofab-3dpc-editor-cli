@@ -45,7 +45,7 @@ class Sandbox:
         with client_loader.open_api() as api:
             uploader = Uploader(api, project)
             for paths in pathss:
-                upload(uploader, paths, [hidari, migi])
+                upload("", uploader, paths, [hidari, migi])
 
     @staticmethod
     def create_meta(kitti_dir: str, output: str = "/tmp/meta"):
@@ -155,7 +155,7 @@ class ProjectCommand:
             uploaded = [
                 (input_id, len(supps))
                 for paths in pathss
-                for input_id, supps in [upload(uploader, paths, [])]
+                for input_id, supps in [upload(input_id_prefix, uploader, paths, [])]
             ]
             # fmt: on
 
