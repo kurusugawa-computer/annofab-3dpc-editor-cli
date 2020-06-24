@@ -10,7 +10,7 @@ from anno3d.annofab.project import Label, Project
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
-from anno3d.simple_data_uploader import create_meta_file, upload
+from anno3d.simple_data_uploader import create_kitti_files, create_meta_file, upload
 
 
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
@@ -61,7 +61,7 @@ class Sandbox:
 
 
 class ProjectCommand:
-    """ プロジェクトの操作を行うためのサブコマンドです """
+    """ AnnoFabプロジェクトの操作を行うためのサブコマンドです """
 
     @staticmethod
     def create(
@@ -128,7 +128,13 @@ class ProjectCommand:
 
     @staticmethod
     def upload_kitti_data(
-        annofab_id: str, annofab_pass: str, project_id: str, kitti_dir: str, skip: int = 0, size: int = 10
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        kitti_dir: str,
+        skip: int = 0,
+        size: int = 10,
+        input_id_prefix: str = "",
     ):
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
@@ -139,6 +145,7 @@ class ProjectCommand:
             kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
+            input_id_prefix: input_data_idの先頭に付与する文字列
 
         Returns:
 
@@ -164,12 +171,51 @@ class ProjectCommand:
                 logger.info("id: %s, 補助データ件数: %d", input_id, supp_count)
 
 
+class LocalCommand:
+    """ ローカルファイルシステムに対する処理を行います """
+
+    @staticmethod
+    def make_kitti_data(
+        kitti_dir: str, output_dir: str, skip: int = 0, size: int = 10, input_id_prefix: str = ""
+    ) -> None:
+        """
+        kitti 3d detection形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
+        annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+
+        Args:
+            kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
+            output_dir: 出力先ディレクトリ。
+            skip: 見つけたデータの先頭何件をスキップするか
+            size: 最大何件のinput_dataを登録するか
+            input_id_prefix: input_data_idの先頭に付与する文字列
+
+        Returns:
+
+        """
+        kitti_dir_path = Path(kitti_dir)
+        output_dir_path = Path(output_dir)
+        loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
+        pathss = loader.load(None)[skip : (skip + size)]
+
+        inputs = [create_kitti_files(input_id_prefix, output_dir_path, paths) for paths in pathss]
+
+        all_files_json = output_dir_path / "_all_data.jsonl"
+        with all_files_json.open(mode="w", encoding="UTF-8") as writer:
+            for input_data in inputs:
+                writer.write(input_data.to_json(ensure_ascii=False, sort_keys=True))
+                writer.write("\n")
+
+        logger.info("%d 件のinput dataを、%sに出力しました", len(inputs), output_dir_path)
+        logger.info("メタデータ: %s", all_files_json.absolute())
+
+
 class Command:
     """ root command """
 
     def __init__(self):
         self.sandbox = Sandbox()
         self.project = ProjectCommand()
+        self.local = LocalCommand()
 
 
 if __name__ == "__main__":
