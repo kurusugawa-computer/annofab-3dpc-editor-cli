@@ -115,7 +115,5 @@ class Project:
             "auto_marking": False,
         }
 
-        print("last updated = {}".format(specs["updated_datetime"]))
-
         created_specs, _ = client.put_annotation_specs(project_id, new_specs)
         return [self._from_annofab_label(label) for label in created_specs["labels"]]
