@@ -95,3 +95,39 @@ fish:
 pipx install poetry
 poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
 ```
+
+
+## コマンドサンプル
+
+`alias popy='poetry run python'`が設定されているものとします。
+環境変数`ANNO_ID`にAnnoFabのIdが設定されているものとします。
+環境変数`ANNO_PASS`にAnnoFabのパスワードが設定されているものとします。
+
+### プラグインプロジェクトの生成
+
+```
+popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
+```
+
+### ラベルの設定 
+
+```
+popy app.py project put_label --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --label_id "car" --ja_name "車" --en_name "car" --color "(255, 0, 0)"
+popy app.py project put_label --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --label_id "human" --ja_name "人" --en_name "human" --color "(0, 255, 0)"
+```
+
+### データの投入
+
+kitti 3d detectionのデータのAnnoFabへの登録
+
+```
+popy app.py project upload_kitti_data --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --kitti_dir "path/to/kitti3d/dir" --skip 0 --size 30
+```
+
+### 投入データのローカルファイルシステムへの生成
+
+プライベートストレージなどを使用する場合に、kitti 3d detectionのデータを元に、AnnoFabに投入可能なデータ群を作る
+
+```
+popy app.py local make_kitti_data --kitti_dir "path/to/kitti3d/dir" --output_dir "./output" --size 30 --input_id_prefix "prefix"
+```
