@@ -99,9 +99,9 @@ poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
 
 ## コマンドサンプル
 
-`alias popy='poetry run python'`が設定されているものとします。
-環境変数`ANNO_ID`にAnnoFabのIdが設定されているものとします。
-環境変数`ANNO_PASS`にAnnoFabのパスワードが設定されているものとします。
+* `alias popy='poetry run python'`が設定されているものとします。
+* 環境変数`ANNO_ID`にAnnoFabのIdが設定されているものとします。
+* 環境変数`ANNO_PASS`にAnnoFabのパスワードが設定されているものとします。
 
 ### プラグインプロジェクトの生成
 
