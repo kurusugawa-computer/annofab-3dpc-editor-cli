@@ -1,8 +1,10 @@
+import logging
 import math
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from anno3d.annofab.uploader import Uploader
 from anno3d.calib_loader import read_kitti_calib
@@ -10,7 +12,10 @@ from anno3d.model.common import Vector3
 from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
 from anno3d.model.image import ImageCamera, ImageCameraFov, ImageMeta
+from anno3d.model.input_files import InputData, InputDataBody, Supplementary, SupplementaryBody
 from anno3d.supplementary_id import camera_image_calib_id, camera_image_id, frame_meta_id
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -85,8 +90,11 @@ def _upload_supplementaries(
         uploader.upload_supplementary(input_data_id, supp.data_id, supp.path)
 
 
-def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> None:
-    input_data_id = uploader.upload_input_data(paths.pcd)
+def upload(
+    input_data_id_prefix: str, uploader: Uploader, paths: FilePaths, dummy_images: List[Path]
+) -> Tuple[str, List[SupplementaryData]]:
+    input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
+    input_data_id = uploader.upload_input_data("{}{}".format(input_data_id_prefix, paths.key.id), paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
@@ -102,10 +110,45 @@ def upload(uploader: Uploader, paths: FilePaths, dummy_images: List[Path]) -> No
             ]
         ]
 
-        _upload_supplementaries(uploader, input_data_id, dummy_image_supps + [frame_meta, image, image_meta])
+        all_supps = dummy_image_supps + [frame_meta, image, image_meta]
+        _upload_supplementaries(uploader, input_data_id, all_supps)
+
+        logger.info("uploaded: %s", paths.pcd)
+        return input_data_id, all_supps
 
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
     _create_frame_meta(parent_dir, "sample_input_id", 2)
     _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
+
+
+def create_supplementary(data: SupplementaryData) -> Supplementary:
+    return Supplementary(data.data_id, SupplementaryBody(data.data_id, data.path.absolute().as_posix()))
+
+
+def create_kitti_files(input_data_id_prefix: str, parent_dir: Path, paths: FilePaths) -> InputData:
+    input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
+    input_data_id = "{}{}".format(input_data_id_prefix, paths.key.id)
+    input_data_dir = parent_dir / paths.key.id
+    if input_data_dir.exists():
+        raise RuntimeError("データ生成先ディレクトリがすでに存在します: {}".format(input_data_dir.absolute()))
+
+    input_data_dir.mkdir(parents=True)
+    input_data_path = input_data_dir / paths.pcd.name
+    shutil.copyfile(paths.pcd, input_data_path)
+
+    frame_meta = _create_frame_meta(input_data_dir, input_data_id, image_count=1)
+
+    image_id = camera_image_id(input_data_id, 0)
+    image_path = input_data_dir / paths.image.name
+    shutil.copyfile(paths.image, image_path)
+    image = SupplementaryData(image_id, paths.image)
+
+    image_meta = _create_image_meta(input_data_dir, paths.calib, input_data_id, 0)
+
+    return InputData(
+        input_data_id,
+        InputDataBody(paths.pcd.name, input_data_path.absolute().as_posix()),
+        [create_supplementary(frame_meta), create_supplementary(image), create_supplementary(image_meta)],
+    )

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from anno3d.model.file_paths import FilePaths, FrameKey, FrameKind
 
@@ -15,10 +15,15 @@ class FilePathsLoader:
         self.image_root = image_root
         self.calib_root = calib_root
 
-    def load(self, kind: FrameKind) -> List[FilePaths]:
-        pcd_dir = self.pcd_root / kind.value / "velodyne"
-        image_dir = self.image_root / kind.value / "image_2"
-        calib_dir = self.calib_root / kind.value / "calib"
+    def load(self, kind: Optional[FrameKind]) -> List[FilePaths]:
+        if kind is not None:
+            pcd_dir = self.pcd_root / kind.value / "velodyne"
+            image_dir = self.image_root / kind.value / "image_2"
+            calib_dir = self.calib_root / kind.value / "calib"
+        else:
+            pcd_dir = self.pcd_root / "velodyne"
+            image_dir = self.image_root / "image_2"
+            calib_dir = self.calib_root / "calib"
 
         def id_to_paths(pcd_file: str) -> FilePaths:
             frame_id = pcd_file[0:-4]
