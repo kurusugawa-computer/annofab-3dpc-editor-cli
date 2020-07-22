@@ -59,6 +59,10 @@ class Sandbox:
         parent.mkdir(parents=True)
         create_meta_file(parent, pathss[0])
 
+    @staticmethod
+    def upload_velodyne(annofab_id: str, annofab_pass: str, project_id: str, velo_dir: str) -> None:
+        pass
+
 
 class ProjectCommand:
     """ AnnoFabプロジェクトの操作を行うためのサブコマンドです """
