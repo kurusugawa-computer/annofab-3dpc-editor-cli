@@ -1,5 +1,7 @@
 import logging
+import os
 import shutil
+import tempfile
 from pathlib import Path
 from typing import Tuple
 
@@ -10,7 +12,7 @@ from anno3d.annofab.project import Label, Project
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
-from anno3d.simple_data_uploader import create_kitti_files, create_meta_file, upload
+from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload
 
 
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
@@ -60,8 +62,22 @@ class Sandbox:
         create_meta_file(parent, pathss[0])
 
     @staticmethod
-    def upload_velodyne(annofab_id: str, annofab_pass: str, project_id: str, velo_dir: str) -> None:
-        pass
+    def upload_velodyne(
+        annofab_id: str, annofab_pass: str, project_id: str, velo_dir: str, data_id_prefix: str = ""
+    ) -> None:
+        velo_files = [Path(velo_dir) / path for path in os.listdir(velo_dir)]
+
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            with tempfile.TemporaryDirectory() as tempdir_str:
+                tempdir = Path(tempdir_str)
+                uploader = Uploader(api, project_id)
+                for velo_file in velo_files:
+                    data_id = data_id_prefix + velo_file.name
+                    uploader.upload_input_data(data_id, velo_file)
+                    supp_data = create_frame_meta(tempdir, data_id, 0)
+                    uploader.upload_supplementary(data_id, supp_data.data_id, supp_data.path)
+                    logger.info("uploaded: %s", velo_file)
 
 
 class ProjectCommand:
