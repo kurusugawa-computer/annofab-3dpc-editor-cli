@@ -167,7 +167,7 @@ class ProjectCommand:
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
-            camera_horizontal_fov: カメラのhorizontal FOV 指定が無い場合kittiのカメラ仕様を採用する
+            camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
 
         Returns:
 
@@ -215,7 +215,7 @@ class LocalCommand:
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
-            camera_horizontal_fov: カメラのhorizontal FOV 指定が無い場合kittiのカメラ仕様を採用する
+            camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
 
         Returns:
 
