@@ -146,7 +146,9 @@ def create_supplementary(data: SupplementaryData) -> Supplementary:
     return Supplementary(data.data_id, SupplementaryBody(data.data_id, data.path.absolute().as_posix()))
 
 
-def create_kitti_files(input_data_id_prefix: str, parent_dir: Path, paths: FilePaths) -> InputData:
+def create_kitti_files(
+    input_data_id_prefix: str, parent_dir: Path, paths: FilePaths, camera_horizontal_fov: Optional[int],
+) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = "{}{}".format(input_data_id_prefix, paths.key.id)
     input_data_dir = parent_dir / paths.key.id
@@ -164,7 +166,7 @@ def create_kitti_files(input_data_id_prefix: str, parent_dir: Path, paths: FileP
     shutil.copyfile(paths.image, image_path)
     image = SupplementaryData(image_id, paths.image)
 
-    image_meta = _create_image_meta(input_data_dir, paths.calib, input_data_id, 0, None)
+    image_meta = _create_image_meta(input_data_dir, paths.calib, input_data_id, 0, camera_horizontal_fov)
 
     return InputData(
         input_data_id,

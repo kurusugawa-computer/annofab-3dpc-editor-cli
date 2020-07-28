@@ -198,7 +198,12 @@ class LocalCommand:
 
     @staticmethod
     def make_kitti_data(
-        kitti_dir: str, output_dir: str, skip: int = 0, size: int = 10, input_id_prefix: str = ""
+        kitti_dir: str,
+        output_dir: str,
+        skip: int = 0,
+        size: int = 10,
+        input_id_prefix: str = "",
+        camera_horizontal_fov: Optional[int] = None,
     ) -> None:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
@@ -210,6 +215,7 @@ class LocalCommand:
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
+            camera_horizontal_fov: カメラのhorizontal FOV 指定が無い場合kittiのカメラ仕様を採用する
 
         Returns:
 
@@ -219,7 +225,9 @@ class LocalCommand:
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
 
-        inputs = [create_kitti_files(input_id_prefix, output_dir_path, paths) for paths in pathss]
+        inputs = [
+            create_kitti_files(input_id_prefix, output_dir_path, paths, camera_horizontal_fov) for paths in pathss
+        ]
 
         all_files_json = output_dir_path / "_all_data.jsonl"
         with all_files_json.open(mode="w", encoding="UTF-8") as writer:
