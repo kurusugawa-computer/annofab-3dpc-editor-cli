@@ -24,7 +24,7 @@ class SupplementaryData:
     path: Path
 
 
-def _create_frame_meta(parent_dir: Path, input_data_id: str, image_count: int) -> SupplementaryData:
+def create_frame_meta(parent_dir: Path, input_data_id: str, image_count: int) -> SupplementaryData:
     data_id = frame_meta_id(input_data_id)
 
     meta = FrameMetaData(
@@ -98,7 +98,7 @@ def upload(
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
-        frame_meta = _create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1)
+        frame_meta = create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1)
         image = SupplementaryData(camera_image_id(input_data_id, 0), paths.image)
         image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0)
         dummy_image_supps = [
@@ -118,7 +118,7 @@ def upload(
 
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
-    _create_frame_meta(parent_dir, "sample_input_id", 2)
+    create_frame_meta(parent_dir, "sample_input_id", 2)
     _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
@@ -138,7 +138,7 @@ def create_kitti_files(input_data_id_prefix: str, parent_dir: Path, paths: FileP
     input_data_path = input_data_dir / paths.pcd.name
     shutil.copyfile(paths.pcd, input_data_path)
 
-    frame_meta = _create_frame_meta(input_data_dir, input_data_id, image_count=1)
+    frame_meta = create_frame_meta(input_data_dir, input_data_id, image_count=1)
 
     image_id = camera_image_id(input_data_id, 0)
     image_path = input_data_dir / paths.image.name
