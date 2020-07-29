@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from anno3d.annofab.uploader import Uploader
 from anno3d.calib_loader import read_kitti_calib
@@ -39,16 +39,31 @@ def create_frame_meta(parent_dir: Path, input_data_id: str, image_count: int) ->
     return SupplementaryData(data_id, file)
 
 
-def _create_image_meta(parent_dir: Path, calib_path: Path, input_data_id: str, number: int) -> SupplementaryData:
+def _create_image_meta(
+    parent_dir: Path, calib_path: Path, input_data_id: str, number: int, camera_horizontal_fov: Optional[int]
+) -> SupplementaryData:
+    """
+
+    Args:
+        parent_dir:
+        calib_path:
+        input_data_id:
+        number:
+        camera_horizontal_fov: カメラの水平方向視野角 [degree]。
+
+    Returns:
+
+    """
     data_id = camera_image_calib_id(input_data_id, number)
 
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
+    horizontal_fov = camera_horizontal_fov if camera_horizontal_fov else 90
     meta = ImageMeta(
         read_kitti_calib(calib_path),
         ImageCamera(
             direction=Vector3(1, 0, 0),
-            fov=ImageCameraFov(90.0 / 180.0 * math.pi, 35.0 / 180.0 * math.pi),
+            fov=ImageCameraFov(horizontal_fov / 180.0 * math.pi, 35.0 / 180.0 * math.pi),
             camera_height=1.65,
         ),
     )
@@ -91,7 +106,11 @@ def _upload_supplementaries(
 
 
 def upload(
-    input_data_id_prefix: str, uploader: Uploader, paths: FilePaths, dummy_images: List[Path]
+    input_data_id_prefix: str,
+    uploader: Uploader,
+    paths: FilePaths,
+    dummy_images: List[Path],
+    camera_horizontal_fov: Optional[int],
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = uploader.upload_input_data("{}{}".format(input_data_id_prefix, paths.key.id), paths.pcd)
@@ -100,7 +119,7 @@ def upload(
         tempdir = Path(tempdir_str)
         frame_meta = create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1)
         image = SupplementaryData(camera_image_id(input_data_id, 0), paths.image)
-        image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0)
+        image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0, camera_horizontal_fov)
         dummy_image_supps = [
             meta
             for i in range(1, len(dummy_images) + 1)
@@ -119,7 +138,7 @@ def upload(
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
     create_frame_meta(parent_dir, "sample_input_id", 2)
-    _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0)
+    _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0, None)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
 
@@ -127,7 +146,9 @@ def create_supplementary(data: SupplementaryData) -> Supplementary:
     return Supplementary(data.data_id, SupplementaryBody(data.data_id, data.path.absolute().as_posix()))
 
 
-def create_kitti_files(input_data_id_prefix: str, parent_dir: Path, paths: FilePaths) -> InputData:
+def create_kitti_files(
+    input_data_id_prefix: str, parent_dir: Path, paths: FilePaths, camera_horizontal_fov: Optional[int],
+) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = "{}{}".format(input_data_id_prefix, paths.key.id)
     input_data_dir = parent_dir / paths.key.id
@@ -145,7 +166,7 @@ def create_kitti_files(input_data_id_prefix: str, parent_dir: Path, paths: FileP
     shutil.copyfile(paths.image, image_path)
     image = SupplementaryData(image_id, paths.image)
 
-    image_meta = _create_image_meta(input_data_dir, paths.calib, input_data_id, 0)
+    image_meta = _create_image_meta(input_data_dir, paths.calib, input_data_id, 0, camera_horizontal_fov)
 
     return InputData(
         input_data_id,
