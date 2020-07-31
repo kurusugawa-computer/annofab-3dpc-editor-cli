@@ -24,11 +24,15 @@ class SupplementaryData:
     path: Path
 
 
-def create_frame_meta(parent_dir: Path, input_data_id: str, image_count: int) -> SupplementaryData:
+def create_frame_meta(
+    parent_dir: Path, input_data_id: str, image_count: int, sensor_height: Optional[float]
+) -> SupplementaryData:
     data_id = frame_meta_id(input_data_id)
+    # http://www.cvlibs.net/datasets/kitti/setup.php によると、kittiのvelodyneの設置高は1.73m
+    height = sensor_height if sensor_height is not None else 1.73
 
     meta = FrameMetaData(
-        PointCloudMetaData(is_rightHand_system=True, up_vector=Vector3(0, 0, 1), sensor_height=1.73),
+        PointCloudMetaData(is_rightHand_system=True, up_vector=Vector3(0, 0, 1), sensor_height=height),
         ImagesMetaData(image_count=image_count),
     )
 
@@ -58,7 +62,7 @@ def _create_image_meta(
 
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
-    horizontal_fov = camera_horizontal_fov if camera_horizontal_fov else 90
+    horizontal_fov = camera_horizontal_fov if camera_horizontal_fov is not None else 90
     meta = ImageMeta(
         read_kitti_calib(calib_path),
         ImageCamera(
@@ -111,13 +115,14 @@ def upload(
     paths: FilePaths,
     dummy_images: List[Path],
     camera_horizontal_fov: Optional[int],
+    sensor_height: Optional[float],
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = uploader.upload_input_data("{}{}".format(input_data_id_prefix, paths.key.id), paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
-        frame_meta = create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1)
+        frame_meta = create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1, sensor_height)
         image = SupplementaryData(camera_image_id(input_data_id, 0), paths.image)
         image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0, camera_horizontal_fov)
         dummy_image_supps = [
@@ -137,7 +142,7 @@ def upload(
 
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
-    create_frame_meta(parent_dir, "sample_input_id", 2)
+    create_frame_meta(parent_dir, "sample_input_id", 2, None)
     _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0, None)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
@@ -147,7 +152,11 @@ def create_supplementary(data: SupplementaryData) -> Supplementary:
 
 
 def create_kitti_files(
-    input_data_id_prefix: str, parent_dir: Path, paths: FilePaths, camera_horizontal_fov: Optional[int],
+    input_data_id_prefix: str,
+    parent_dir: Path,
+    paths: FilePaths,
+    camera_horizontal_fov: Optional[int],
+    sensor_height: Optional[float],
 ) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = "{}{}".format(input_data_id_prefix, paths.key.id)
@@ -159,7 +168,7 @@ def create_kitti_files(
     input_data_path = input_data_dir / paths.pcd.name
     shutil.copyfile(paths.pcd, input_data_path)
 
-    frame_meta = create_frame_meta(input_data_dir, input_data_id, image_count=1)
+    frame_meta = create_frame_meta(input_data_dir, input_data_id, image_count=1, sensor_height=sensor_height)
 
     image_id = camera_image_id(input_data_id, 0)
     image_path = input_data_dir / paths.image.name

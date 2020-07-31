@@ -121,7 +121,15 @@ popy app.py project put_label --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS
 kitti 3d detectionのデータのAnnoFabへの登録
 
 ```
-popy app.py project upload_kitti_data --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --kitti_dir "path/to/kitti3d/dir" --skip 0 --size 30 --camera_horizontal_fov 56
+popy app.py project upload_kitti_data \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id "3dpc-editor-trial" \
+  --kitti_dir "path/to/kitti3d/dir" \
+  --skip 0 \
+  --size 30 \
+  --camera_horizontal_fov 56  \
+  --sensor_height 0
 ```
 
 ### 投入データのローカルファイルシステムへの生成
