@@ -29,7 +29,7 @@ def create_frame_meta(
 ) -> SupplementaryData:
     data_id = frame_meta_id(input_data_id)
     # http://www.cvlibs.net/datasets/kitti/setup.php によると、kittiのvelodyneの設置高は1.73m
-    height = sensor_height if sensor_height else 1.73
+    height = sensor_height if sensor_height is not None else 1.73
 
     meta = FrameMetaData(
         PointCloudMetaData(is_rightHand_system=True, up_vector=Vector3(0, 0, 1), sensor_height=height),
@@ -62,7 +62,7 @@ def _create_image_meta(
 
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
-    horizontal_fov = camera_horizontal_fov if camera_horizontal_fov else 90
+    horizontal_fov = camera_horizontal_fov if camera_horizontal_fov is not None else 90
     meta = ImageMeta(
         read_kitti_calib(calib_path),
         ImageCamera(
