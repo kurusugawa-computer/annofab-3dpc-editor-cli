@@ -43,7 +43,7 @@ def upload_files():
     with client_loader.open_api() as api:
         uploader = Uploader(api, project)
         for paths in pathss:
-            upload("", uploader, paths, [hidari, migi], None)
+            upload("", uploader, paths, [hidari, migi], None, None)
 
 
 def create_meta():

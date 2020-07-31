@@ -47,7 +47,7 @@ class Sandbox:
         with client_loader.open_api() as api:
             uploader = Uploader(api, project)
             for paths in pathss:
-                upload("", uploader, paths, [hidari, migi], None)
+                upload("", uploader, paths, [hidari, migi], None, None)
 
     @staticmethod
     def create_meta(kitti_dir: str, output: str = "/tmp/meta"):
@@ -63,7 +63,12 @@ class Sandbox:
 
     @staticmethod
     def upload_velodyne(
-        annofab_id: str, annofab_pass: str, project_id: str, velo_dir: str, data_id_prefix: str = ""
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        velo_dir: str,
+        data_id_prefix: str = "",
+        sensor_height: Optional[float] = None,
     ) -> None:
         velo_files = [Path(velo_dir) / path for path in os.listdir(velo_dir)]
 
@@ -75,7 +80,7 @@ class Sandbox:
                 for velo_file in velo_files:
                     data_id = data_id_prefix + velo_file.name
                     uploader.upload_input_data(data_id, velo_file)
-                    supp_data = create_frame_meta(tempdir, data_id, 0)
+                    supp_data = create_frame_meta(tempdir, data_id, 0, sensor_height)
                     uploader.upload_supplementary(data_id, supp_data.data_id, supp_data.path)
                     logger.info("uploaded: %s", velo_file)
 
@@ -156,6 +161,7 @@ class ProjectCommand:
         size: int = 10,
         input_id_prefix: str = "",
         camera_horizontal_fov: Optional[int] = None,
+        sensor_height: Optional[float] = None,
     ):
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
@@ -168,7 +174,7 @@ class ProjectCommand:
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
             camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
-
+            sensor_height: 点群のセンサ(velodyne)の設置高。 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
 
         """
@@ -184,7 +190,9 @@ class ProjectCommand:
             uploaded = [
                 (input_id, len(supps))
                 for paths in pathss
-                for input_id, supps in [upload(input_id_prefix, uploader, paths, [], camera_horizontal_fov)]
+                for input_id, supps in [
+                    upload(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+                ]
             ]
             # fmt: on
 
@@ -204,6 +212,7 @@ class LocalCommand:
         size: int = 10,
         input_id_prefix: str = "",
         camera_horizontal_fov: Optional[int] = None,
+        sensor_height: Optional[float] = None,
     ) -> None:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
@@ -216,6 +225,7 @@ class LocalCommand:
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
             camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
+            sensor_height: 点群のセンサ(velodyne)の設置高。 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
 
         Returns:
 
@@ -226,7 +236,8 @@ class LocalCommand:
         pathss = loader.load(None)[skip : (skip + size)]
 
         inputs = [
-            create_kitti_files(input_id_prefix, output_dir_path, paths, camera_horizontal_fov) for paths in pathss
+            create_kitti_files(input_id_prefix, output_dir_path, paths, camera_horizontal_fov, sensor_height)
+            for paths in pathss
         ]
 
         all_files_json = output_dir_path / "_all_data.jsonl"
