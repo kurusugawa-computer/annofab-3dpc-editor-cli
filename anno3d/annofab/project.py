@@ -5,6 +5,8 @@ from annofabapi import AnnofabApi
 from annofabapi.models import AnnotationSpecsV2, LabelV2
 from dataclasses_json import DataClassJsonMixin
 
+from anno3d.annofab.constant import lang_en, lang_ja
+
 
 @dataclass
 class Label(DataClassJsonMixin):
@@ -62,8 +64,8 @@ class Project:
     def _from_annofab_label(annofab_label: LabelV2) -> Label:
         messages = annofab_label["label_name"]["messages"]
         color = annofab_label["color"]
-        ja_name = next(filter(lambda e: e["lang"] == "ja", messages), "")
-        en_name = next(filter(lambda e: e["lang"] == "en", messages), "")
+        ja_name = next(filter(lambda e: e["lang"] == lang_ja, messages), "")
+        en_name = next(filter(lambda e: e["lang"] == lang_en, messages), "")
 
         return Label(annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]))
 
@@ -81,8 +83,8 @@ class Project:
         new_label: LabelV2 = {
             "label_id": label_id,
             "label_name": {
-                "messages": [{"lang": "ja", "message": ja_name}, {"lang": "en", "message": en_name}],
-                "default_lang": "ja",
+                "messages": [{"lang": lang_ja, "message": ja_name}, {"lang": lang_en, "message": en_name}],
+                "default_lang": lang_ja,
             },
             "color": {"red": color[0], "green": color[1], "blue": color[2]},
             "keybind": [],
