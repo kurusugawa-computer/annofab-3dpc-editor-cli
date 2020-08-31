@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
 from annofabapi.models import AnnotationSpecsV2, LabelV2
 from dataclasses_json import DataClassJsonMixin
 
 from anno3d.annofab.constant import lang_en, lang_ja
+from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
 
 
 @dataclass
@@ -69,8 +70,38 @@ class Project:
 
         return Label(annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]))
 
-    def put_label(
+    def put_cuboid_label(
         self, project_id: str, label_id: str, ja_name: str, en_name: str, color: Tuple[int, int, int]
+    ) -> List[Label]:
+        return self.put_label(project_id, label_id, ja_name, en_name, color, CuboidLabelMetadata())
+
+    _default_segment_metadata = SegmentLabelMetadata(default_ignore="true")
+
+    def put_segment_label(
+        self,
+        project_id: str,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+        default_ignore: bool,
+        segment_kind: str = _default_segment_metadata.segment_kind,
+        layer: int = int(_default_segment_metadata.layer),
+    ) -> List[Label]:
+        metadata = SegmentLabelMetadata(
+            default_ignore=str(default_ignore).lower(), layer=str(layer), segment_kind=segment_kind
+        )
+
+        return self.put_label(project_id, label_id, ja_name, en_name, color, metadata)
+
+    def put_label(
+        self,
+        project_id: str,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+        metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
     ) -> List[Label]:
         client = self._client
 
@@ -79,6 +110,7 @@ class Project:
         labels: List[LabelV2] = specs["labels"]
         index: Optional[int]
         index, _ = next(filter(lambda ie: ie[1]["label_id"] == label_id, enumerate(labels)), (None, None))
+        meta_dic = metadata.to_dict()
 
         new_label: LabelV2 = {
             "label_id": label_id,
@@ -99,6 +131,7 @@ class Project:
             },
             "additional_data_definitions": [],
             "allow_out_of_image_bounds": False,
+            "metadata": meta_dic,
         }
 
         if index is not None:
