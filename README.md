@@ -112,13 +112,15 @@ popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} 
 
 ### ラベルの設定 
 
+2020/09/01 現在、3dpc-editorは、セグメンテーション結果のAnnoFabへの保存に対応していないため、`put_segment_label`を利用すると、保存時にエラーとなります。
+
 ```
 popy app.py project put_cuboid_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ}\
   --label_id "car" \
-  --ja_name "車" \ 
+  --ja_name "車" \
   --en_name "car" \
   --color "(255, 0, 0)"
 popy app.py project put_cuboid_label \
@@ -137,7 +139,7 @@ popy app.py project put_segment_label \
   --label_id "road" \
   --ja_name "道" \
   --en_name "road" \
-  --color "(0, 255, 0)" \
+  --color "(238, 130, 238)" \
   --default_ignore True
 popy app.py project put_segment_label \
   --annofab_id ${ANNO_ID} \
