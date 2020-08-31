@@ -15,6 +15,7 @@ class Label(DataClassJsonMixin):
     ja_name: str
     en_name: str
     color: Tuple[int, int, int]
+    metadata: Dict[str, str]
 
 
 class Project:
@@ -67,8 +68,11 @@ class Project:
         color = annofab_label["color"]
         ja_name = next(filter(lambda e: e["lang"] == lang_ja, messages), "")
         en_name = next(filter(lambda e: e["lang"] == lang_en, messages), "")
+        metadata = annofab_label["metadata"]
 
-        return Label(annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]))
+        return Label(
+            annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]), metadata
+        )
 
     def put_cuboid_label(
         self, project_id: str, label_id: str, ja_name: str, en_name: str, color: Tuple[int, int, int]
