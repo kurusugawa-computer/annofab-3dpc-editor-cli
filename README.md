@@ -102,18 +102,54 @@ poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
 * `alias popy='poetry run python'`が設定されているものとします。
 * 環境変数`ANNO_ID`にAnnoFabのIdが設定されているものとします。
 * 環境変数`ANNO_PASS`にAnnoFabのパスワードが設定されているものとします。
+* 環境変数`ANNO_PRJ`にAnnoFabの対象プロジェクトIdが設定されているものとします。
 
 ### プラグインプロジェクトの生成
 
 ```
-popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
+popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id ${ANNO_PRJ} --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
 ```
 
 ### ラベルの設定 
 
+2020/09/01 現在、3dpc-editorは、セグメンテーション結果のAnnoFabへの保存に対応していないため、`put_segment_label`を利用すると、保存時にエラーとなります。
+
 ```
-popy app.py project put_label --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --label_id "car" --ja_name "車" --en_name "car" --color "(255, 0, 0)"
-popy app.py project put_label --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id "3dpc-editor-trial" --label_id "human" --ja_name "人" --en_name "human" --color "(0, 255, 0)"
+popy app.py project put_cuboid_label \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ}\
+  --label_id "car" \
+  --ja_name "車" \
+  --en_name "car" \
+  --color "(255, 0, 0)"
+popy app.py project put_cuboid_label \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ} \
+  --label_id "human" \
+  --ja_name "人" \
+  --en_name "human" \
+  --color "(0, 255, 0)"
+
+popy app.py project put_segment_label \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ} \
+  --label_id "road" \
+  --ja_name "道" \
+  --en_name "road" \
+  --color "(238, 130, 238)" \
+  --default_ignore True
+popy app.py project put_segment_label \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ} \
+  --label_id "wall" \
+  --ja_name "壁" \
+  --en_name "wall" \
+  --color "(0, 182, 110)" \
+  --default_ignore False
 ```
 
 ### データの投入

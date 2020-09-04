@@ -130,8 +130,20 @@ class ProjectCommand:
         en_name: str,
         color: Tuple[int, int, int],
     ) -> None:
+        raise RuntimeError("この関数は廃止されました put_cuboid_label を利用してください")
+
+    @staticmethod
+    def put_cuboid_label(
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+    ) -> None:
         """
-        対象のプロジェクトのlabelを追加・更新します。
+        対象のプロジェクトにcuboidのlabelを追加・更新します。
         Args:
             annofab_id:
             annofab_pass:
@@ -146,7 +158,43 @@ class ProjectCommand:
         """
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            labels = Project(api).put_label(project_id, label_id, ja_name, en_name, color)
+            labels = Project(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
+            labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
+            logger.info("Label(=%s) を作成・更新しました", label_id)
+            logger.info(labels_json)
+
+    @staticmethod
+    def put_segment_label(
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+        default_ignore: bool,
+        # layer / segment_typeは3dpcエディタ側で未実装なので入力させない
+        # layer: int,
+        # segment_type: str,
+    ) -> None:
+        """
+        対象のプロジェクトにsegmentのlabelを追加・更新します。
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 対象プロジェクト
+            label_id: 追加・更新するラベルのid
+            ja_name: 日本語名称
+            en_name: 　英語名称
+            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
+            default_ignore: このラベルがついた領域を、デフォルトでは他のアノテーションから除外するかどうか。 Trueであれば除外する
+
+        Returns:
+
+        """
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            labels = Project(api).put_segment_label(project_id, label_id, ja_name, en_name, color, default_ignore)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
