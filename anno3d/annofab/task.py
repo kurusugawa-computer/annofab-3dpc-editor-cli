@@ -3,9 +3,11 @@ from pathlib import Path
 from typing import List, Optional, cast
 
 from annofabapi import AnnofabApi
+from annofabapi import models as afm
+from annofabapi.dataclass.task import Task
 from annofabapi.models import TaskStatus
 
-from anno3d.annofab.model import CuboidAnnotationDetail, JobInfo, Project, Task, TaskGenerateResponse
+from anno3d.annofab.model import CuboidAnnotationDetail, TaskGenerateResponse
 from anno3d.annofab.project import ProjectApi
 from anno3d.annofab.uploader import Uploader
 
@@ -19,6 +21,11 @@ class TaskApi:
         self._client = client
         self._project = project
         self._project_id = project_id
+
+    @staticmethod
+    def _decode_task(task: afm.Task) -> Task:
+        # pylint: disable=no-member
+        return Task.from_dict(task)  # type: ignore
 
     def create_tasks_by_csv(self, csv_path: Path) -> TaskGenerateResponse:
         client = self._client
@@ -37,9 +44,7 @@ class TaskApi:
         }
         task_generate_result, _ = client.initiate_tasks_generation(project_id, query_params, body_params)
 
-        return TaskGenerateResponse(
-            project=Project.decode(task_generate_result["project"]), job=JobInfo.decode(task_generate_result["job"]),
-        )
+        return TaskGenerateResponse.from_dict(task_generate_result)
 
     def get_task(self, task_id: str) -> Optional[Task]:
         client = self._client
@@ -48,7 +53,7 @@ class TaskApi:
         if response.status_code != 200:
             return None
 
-        return Task.decode(result)
+        return self._decode_task(result)
 
     def put_cuboid_annotations(self, task_id: str, input_data_id: str, annotations: CuboidAnnotationDetail) -> None:
         client = self._client
@@ -79,7 +84,7 @@ class TaskApi:
             "account_id": client.account_id,
         }
         result, _ = client.operate_task(project_id, task_id, params)
-        return Task.decode(result)
+        return self._decode_task(result)
 
     def finish_annotate(self, task_id: str):
         """ 対象タスクの担当者を空にして、not_started状態にする """
@@ -92,4 +97,4 @@ class TaskApi:
 
         params = {"status": TaskStatus.NOT_STARTED, "last_updated_datetime": task.updated_datetime}
         result, _ = client.operate_task(project_id, task_id, params)
-        return Task.decode(result)
+        return self._decode_task(result)

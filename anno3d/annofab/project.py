@@ -2,11 +2,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
+from annofabapi.dataclass.job import JobInfo
+from annofabapi.dataclass.project import Project
 from annofabapi.models import AnnotationSpecsV2, LabelV2
 from more_itertools import first_true
 
 from anno3d.annofab.constant import lang_en, lang_ja
-from anno3d.annofab.model import JobInfo, Label, Project
+from anno3d.annofab.model import Label
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
 
 
@@ -15,6 +17,24 @@ class ProjectApi:
 
     def __init__(self, client: AnnofabApi):
         self._client = client
+
+    @staticmethod
+    def _decode_project(project: afm.Project) -> Project:
+        # pylint: disable=no-member
+        return Project.from_dict(project)  # type: ignore
+
+    def get_project(self, project_id) -> Optional[Project]:
+        client = self._client
+        result, response = client.get_project(project_id)
+        if response.status_code != 200:
+            return None
+
+        return self._decode_project(result)
+
+    @staticmethod
+    def _decode_jobinfo(info: afm.JobInfo) -> JobInfo:
+        # pylint: disable=no-member
+        return JobInfo.from_dict(info)  # type: ignore
 
     def create_custom_project(
         self, project_id: str, organization_name: str, plugin_id: str, title: str = "", overview: str = ""
@@ -25,6 +45,7 @@ class ProjectApi:
         Args:
             project_id:
             organization_name:
+            plugin_id:
             title:
             overview:
 
@@ -53,18 +74,6 @@ class ProjectApi:
 
         created_id: str = project["project_id"]
         return created_id
-
-    @staticmethod
-    def _decode_project(project: afm.Project) -> Project:
-        return Project.decode(project)
-
-    def get_project(self, project_id) -> Optional[Project]:
-        client = self._client
-        result, response = client.get_project(project_id)
-        if response.status_code != 200:
-            return None
-
-        return self._decode_project(result)
 
     @staticmethod
     def _from_annofab_label(annofab_label: LabelV2) -> Label:
@@ -160,10 +169,6 @@ class ProjectApi:
 
         created_specs, _ = client.put_annotation_specs(project_id, new_specs)
         return [self._from_annofab_label(label) for label in created_specs["labels"]]
-
-    @staticmethod
-    def _decode_jobinfo(info: afm.JobInfo) -> JobInfo:
-        return JobInfo.decode(info)
 
     def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
         client = self._client
