@@ -23,7 +23,7 @@ class Uploader:
         self._client = client
         self._project = project
 
-    def _upload_tempdata(self, upload_file: Path) -> str:
+    def upload_tempdata(self, upload_file: Path) -> str:
         client = self._client
 
         data_path_dict, _ = client.create_temp_path(self._project, {"Content-Type": "application/octet-stream"})
@@ -36,7 +36,7 @@ class Uploader:
         return data_path.path
 
     def upload_input_data(self, input_data_id: str, file: Path) -> str:
-        path = self._upload_tempdata(file)
+        path = self.upload_tempdata(file)
 
         data_id = input_data_id
         body = {"input_data_name": file.name, "input_data_path": path}
@@ -46,7 +46,7 @@ class Uploader:
         return data_id
 
     def upload_supplementary(self, input_data_id: str, supplementary_id: str, file: Path) -> str:
-        path = self._upload_tempdata(file)
+        path = self.upload_tempdata(file)
 
         body = {
             "supplementary_data_name": supplementary_id,

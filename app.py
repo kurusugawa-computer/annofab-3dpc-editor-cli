@@ -8,7 +8,7 @@ from typing import Optional, Tuple
 import fire
 
 from anno3d.annofab.client import ClientLoader
-from anno3d.annofab.project import Label, Project
+from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
@@ -115,7 +115,7 @@ class ProjectCommand:
         """
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            created_project_id = Project(api).create_custom_project(
+            created_project_id = ProjectApi(api).create_custom_project(
                 project_id, organization_name, plugin_id, title, overview
             )
             logger.info("プロジェクト(=%s)を作成しました。", created_project_id)
@@ -158,7 +158,7 @@ class ProjectCommand:
         """
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            labels = Project(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
+            labels = ProjectApi(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
@@ -194,7 +194,7 @@ class ProjectCommand:
         """
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            labels = Project(api).put_segment_label(project_id, label_id, ja_name, en_name, color, default_ignore)
+            labels = ProjectApi(api).put_segment_label(project_id, label_id, ja_name, en_name, color, default_ignore)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
