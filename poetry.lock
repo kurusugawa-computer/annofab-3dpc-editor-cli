@@ -227,7 +227,7 @@ python-versions = "*"
 version = "0.6.1"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "More routines for operating on iterables, beyond itertools"
 name = "more-itertools"
 optional = false
@@ -485,7 +485,7 @@ python-versions = "*"
 version = "1.12.1"
 
 [metadata]
-content-hash = "8e2a1ae029e131c479957d83f1dd90036daca14774f62e2e7273f25cb5ea0002"
+content-hash = "fc33cc36658b44d6f634a442faa0bbbb33120b7c4ea8be2c6dd49482f74d5ee7"
 python-versions = "^3.8"
 
 [metadata.files]
