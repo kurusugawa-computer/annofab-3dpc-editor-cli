@@ -2,9 +2,10 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
+from annofabapi.dataclass.annotation_specs import AnnotationSpecsV2
 from annofabapi.dataclass.job import JobInfo
 from annofabapi.dataclass.project import Project
-from annofabapi.models import AnnotationSpecsV2, LabelV2
+from annofabapi.models import LabelV2
 from more_itertools import first_true
 
 from anno3d.annofab.constant import lang_en, lang_ja
@@ -20,8 +21,7 @@ class ProjectApi:
 
     @staticmethod
     def _decode_project(project: afm.Project) -> Project:
-        # pylint: disable=no-member
-        return Project.from_dict(project)  # type: ignore
+        return Project.from_dict(project)
 
     def get_project(self, project_id) -> Optional[Project]:
         client = self._client
@@ -33,8 +33,7 @@ class ProjectApi:
 
     @staticmethod
     def _decode_jobinfo(info: afm.JobInfo) -> JobInfo:
-        # pylint: disable=no-member
-        return JobInfo.from_dict(info)  # type: ignore
+        return JobInfo.from_dict(info)
 
     def create_custom_project(
         self, project_id: str, organization_name: str, plugin_id: str, title: str = "", overview: str = ""
@@ -111,6 +110,12 @@ class ProjectApi:
 
         return self.put_label(project_id, label_id, ja_name, en_name, color, metadata)
 
+    def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV2:
+        client = self._client
+        specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
+
+        return AnnotationSpecsV2.from_dict(specs)
+
     def put_label(
         self,
         project_id: str,
@@ -122,7 +127,7 @@ class ProjectApi:
     ) -> List[Label]:
         client = self._client
 
-        specs: AnnotationSpecsV2
+        specs: afm.AnnotationSpecsV2
         specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
         labels: List[LabelV2] = specs["labels"]
         index: Optional[int]

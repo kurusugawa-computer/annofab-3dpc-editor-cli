@@ -70,5 +70,13 @@ class CuboidAnnotationDetail(DataClassJsonMixin):
     account_id: str
     label_id: str
     is_protected: bool
-    data: List[CuboidAnnotationDetailData]
+    data: CuboidAnnotationDetailData
     data_holding_type: str = "inner"
+
+
+@dataclass
+class CuboidAnnotations(DataClassJsonMixin):
+    project_id: str
+    task_id: str
+    input_data_id: str
+    details: List[CuboidAnnotationDetail]

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import ClassVar, List, Optional
 
 
@@ -10,7 +11,7 @@ class KittiLabel:
     width: float
     """y方向の幅"""
     depth: float
-    """z方向の幅"""
+    """x方向の幅"""
     x: float
     """x位置 底辺の中心"""
     y: float
@@ -42,3 +43,8 @@ class KittiLabel:
     def decode_many(cls, csv: str) -> List["KittiLabel"]:
         lines = csv.split("\n")
         return [label for line in lines for label in [cls.decode(line)] if label is not None]
+
+    @classmethod
+    def decode_path(cls, csv_path: Path) -> List["KittiLabel"]:
+        with csv_path.open("r") as reader:
+            return cls.decode_many(reader.read())

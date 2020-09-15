@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List, Optional, cast
+from typing import List, Optional
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
@@ -22,10 +22,13 @@ class TaskApi:
         self._project = project
         self._project_id = project_id
 
+    @property
+    def project_id(self) -> str:
+        return self._project_id
+
     @staticmethod
     def _decode_task(task: afm.Task) -> Task:
-        # pylint: disable=no-member
-        return Task.from_dict(task)  # type: ignore
+        return Task.from_dict(task)
 
     def create_tasks_by_csv(self, csv_path: Path) -> TaskGenerateResponse:
         client = self._client
@@ -55,12 +58,13 @@ class TaskApi:
 
         return self._decode_task(result)
 
-    def put_cuboid_annotations(self, task_id: str, input_data_id: str, annotations: CuboidAnnotationDetail) -> None:
+    def put_cuboid_annotations(
+        self, task_id: str, input_data_id: str, annotations: List[CuboidAnnotationDetail]
+    ) -> None:
         client = self._client
         project_id = self._project_id
 
-        # Listが返ってくるはずだけど dump の返り値の型がdictになっていて、型エラーを起こすのでキャストする
-        details: List[dict] = cast(List[dict], annotations.schema().dump(annotations, many=True))
+        details: List[dict] = CuboidAnnotationDetail.schema().dump(annotations, many=True)
         for d in details:
             data: dict = d["data"]
             d["data"] = json.dumps(data, ensure_ascii=False)
