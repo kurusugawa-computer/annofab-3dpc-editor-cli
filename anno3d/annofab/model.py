@@ -33,14 +33,14 @@ class TaskGenerateResponse(DataClassJsonMixin):
 
 
 @dataclass
-class XYZ:
+class XYZ(DataClassJsonMixin):
     x: float
     y: float
     z: float
 
 
 @dataclass
-class Size:
+class Size(DataClassJsonMixin):
     width: float
     height: float
     depth: float
