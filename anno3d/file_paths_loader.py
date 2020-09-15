@@ -30,7 +30,7 @@ class FilePathsLoader:
             return FilePaths(
                 FrameKey(kind, frame_id),
                 pcd=pcd_dir / f"{frame_id}.bin",
-                images=[ImagePaths(image_dir / f"{frame_id}.png", calib_dir / f"{frame_id}.txt")],
+                images=[ImagePaths(image_dir / f"{frame_id}.png", calib_dir / f"{frame_id}.txt", None)],
                 labels=[],
             )
 

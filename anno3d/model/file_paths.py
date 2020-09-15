@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
+
+from anno3d.model.scene import CameraViewSettings
 
 
 class FrameKind(Enum):
@@ -19,6 +21,7 @@ class FrameKey:
 class ImagePaths:
     image: Path
     calib: Path
+    cameraSettings: Optional[CameraViewSettings]
 
 
 @dataclass(frozen=True)

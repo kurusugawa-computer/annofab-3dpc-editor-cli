@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import numpy as np
+from scipy.spatial.transform import Rotation
+
 from anno3d.annofab.uploader import Uploader
 from anno3d.calib_loader import read_kitti_calib
 from anno3d.model.common import Vector3
@@ -13,6 +16,7 @@ from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
 from anno3d.model.image import ImageCamera, ImageCameraFov, ImageMeta
 from anno3d.model.input_files import InputData, InputDataBody, Supplementary, SupplementaryBody
+from anno3d.model.scene import CameraViewSettings
 from anno3d.supplementary_id import camera_image_calib_id, camera_image_id, frame_meta_id
 
 logger = logging.getLogger(__name__)
@@ -44,7 +48,12 @@ def create_frame_meta(
 
 
 def _create_image_meta(
-    parent_dir: Path, calib_path: Path, input_data_id: str, number: int, camera_horizontal_fov: Optional[int]
+    parent_dir: Path,
+    calib_path: Path,
+    input_data_id: str,
+    number: int,
+    settings: Optional[CameraViewSettings],
+    camera_horizontal_fov: Optional[int],
 ) -> SupplementaryData:
     """
 
@@ -62,13 +71,25 @@ def _create_image_meta(
 
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
-    horizontal_fov = camera_horizontal_fov if camera_horizontal_fov is not None else 90
+    horizontal_fov = 90.0 / 180.0 * math.pi
+    camera_height = 1.65
+    yaw = 0.0
+    if settings is not None:
+        horizontal_fov = settings.fov
+        camera_height = settings.position.z
+        yaw = settings.direction
+    if camera_horizontal_fov is not None:
+        horizontal_fov = camera_horizontal_fov
+
+    rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, yaw]))
+    direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
+
     meta = ImageMeta(
         read_kitti_calib(calib_path),
         ImageCamera(
-            direction=Vector3(1, 0, 0),
-            fov=ImageCameraFov(horizontal_fov / 180.0 * math.pi, 35.0 / 180.0 * math.pi),
-            camera_height=1.65,
+            direction=Vector3(direction[0], direction[1], direction[2]),
+            fov=ImageCameraFov(horizontal_fov, 35.0 / 180.0 * math.pi),
+            camera_height=camera_height,
         ),
     )
 
@@ -127,7 +148,12 @@ def upload(
         for image_paths in paths.images:
             image = SupplementaryData(camera_image_id(input_data_id, image_count), image_paths.image)
             image_meta = _create_image_meta(
-                tempdir, image_paths.calib, input_data_id, image_count, camera_horizontal_fov
+                tempdir,
+                image_paths.calib,
+                input_data_id,
+                image_count,
+                image_paths.cameraSettings,
+                camera_horizontal_fov,
             )
             image_count += 1
 
@@ -149,7 +175,7 @@ def upload(
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
     create_frame_meta(parent_dir, "sample_input_id", 2, None)
-    _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None)
+    _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None, None)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
 
@@ -185,7 +211,9 @@ def create_kitti_files(
         for _ in [shutil.copyfile(image.image, image_path)]
         for meta in [
             SupplementaryData(image_id, image_path),
-            _create_image_meta(input_data_dir, image.calib, input_data_id, i, camera_horizontal_fov),
+            _create_image_meta(
+                input_data_dir, image.calib, input_data_id, i, image.cameraSettings, camera_horizontal_fov
+            ),
         ]
     ]
 
