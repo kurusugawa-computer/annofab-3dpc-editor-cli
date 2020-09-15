@@ -18,7 +18,7 @@ class KittiVelodyneSeries(Series):
     type_value: ClassVar[str] = "kitti_velodyne"
 
 
-@dataclass
+@dataclass(frozen=True)
 class XYZ(DataClassJsonMixin):
     x: float
     y: float
@@ -26,7 +26,7 @@ class XYZ(DataClassJsonMixin):
 
 
 @dataclass(frozen=True)
-class CameraViewSettings(Series):
+class CameraViewSettings(DataClassJsonMixin):
     fov: float
     direction: float
     position: XYZ
@@ -35,8 +35,8 @@ class CameraViewSettings(Series):
 @dataclass(frozen=True)
 class KittiImageSeries(Series):
     image_dir: str
-    calib_dir: str
-    camera_view_setting: Optional[CameraViewSettings]
+    calib_dir: Optional[str] = None
+    camera_view_setting: Optional[CameraViewSettings] = None
     type: str = "kitti_image"
     type_value: ClassVar[str] = "kitti_image"
 
