@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import ClassVar, List, Optional, Type, cast
 
 from dataclasses_json import DataClassJsonMixin
@@ -94,3 +95,8 @@ class Scene(DataClassJsonMixin):
         labels = [label for label in json_scene.serieses if isinstance(label, KittiLabelSeries)]
 
         return Scene(json_scene.id_list, velodyne, images, labels)
+
+    @classmethod
+    def decode_path(cls, json_file: Path) -> "Scene":
+        with json_file.open("r") as fp:
+            return cls.decode(fp.read())
