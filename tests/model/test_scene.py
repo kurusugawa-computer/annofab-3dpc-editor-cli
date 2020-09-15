@@ -60,6 +60,7 @@ def test_decode_scene():
     image1 = scene.images[0]
     assert image1.image_dir == "image_rf"
     assert image1.calib_dir is None
+    assert image1.camera_view_setting is not None
     assert image1.camera_view_setting.fov == 1.57
     assert image1.camera_view_setting.direction == 0.92
     assert image1.camera_view_setting.position == XYZ(-2.0, -1.0, 0.8)

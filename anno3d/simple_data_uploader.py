@@ -123,14 +123,20 @@ def upload(
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
         frame_meta = create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1, sensor_height)
-        image = SupplementaryData(camera_image_id(input_data_id, 0), paths.image)
-        image_meta = _create_image_meta(tempdir, paths.calib, input_data_id, 0, camera_horizontal_fov)
+        image_count = 0
+        for image_paths in paths.images:
+            image = SupplementaryData(camera_image_id(input_data_id, image_count), image_paths.image)
+            image_meta = _create_image_meta(
+                tempdir, image_paths.calib, input_data_id, image_count, camera_horizontal_fov
+            )
+            image_count += 1
+
         dummy_image_supps = [
             meta
-            for i in range(1, len(dummy_images) + 1)
+            for i in range(0, len(dummy_images))
             for meta in [
-                _create_dummy_image_meta(tempdir, input_data_id, i),
-                SupplementaryData(camera_image_id(input_data_id, i), dummy_images[i - 1]),
+                _create_dummy_image_meta(tempdir, input_data_id, i + image_count),
+                SupplementaryData(camera_image_id(input_data_id, i + image_count), dummy_images[i]),
             ]
         ]
 
@@ -143,7 +149,7 @@ def upload(
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
     create_frame_meta(parent_dir, "sample_input_id", 2, None)
-    _create_image_meta(parent_dir, paths.calib, "sample_input_id", 0, None)
+    _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
 
@@ -170,15 +176,21 @@ def create_kitti_files(
 
     frame_meta = create_frame_meta(input_data_dir, input_data_id, image_count=1, sensor_height=sensor_height)
 
-    image_id = camera_image_id(input_data_id, 0)
-    image_path = input_data_dir / paths.image.name
-    shutil.copyfile(paths.image, image_path)
-    image = SupplementaryData(image_id, paths.image)
-
-    image_meta = _create_image_meta(input_data_dir, paths.calib, input_data_id, 0, camera_horizontal_fov)
+    images = [
+        meta
+        for i in range(0, len(paths.images))
+        for image in [paths.images[i]]
+        for image_id in [camera_image_id(input_data_id, i)]
+        for image_path in [input_data_dir / image.image.name]
+        for _ in [shutil.copyfile(image.image, image_path)]
+        for meta in [
+            SupplementaryData(image_id, image_path),
+            _create_image_meta(input_data_dir, image.calib, input_data_id, i, camera_horizontal_fov),
+        ]
+    ]
 
     return InputData(
         input_data_id,
         InputDataBody(paths.pcd.name, input_data_path.absolute().as_posix()),
-        [create_supplementary(frame_meta), create_supplementary(image), create_supplementary(image_meta)],
+        [create_supplementary(frame_meta)] + [create_supplementary(image) for image in images],
     )

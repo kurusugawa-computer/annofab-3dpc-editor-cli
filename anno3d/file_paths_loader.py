@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-from anno3d.model.file_paths import FilePaths, FrameKey, FrameKind
+from anno3d.model.file_paths import FilePaths, FrameKey, FrameKind, ImagePaths
 
 
 class FilePathsLoader:
@@ -29,9 +29,9 @@ class FilePathsLoader:
             frame_id = pcd_file[0:-4]
             return FilePaths(
                 FrameKey(kind, frame_id),
-                pcd_dir / f"{frame_id}.bin",
-                image_dir / f"{frame_id}.png",
-                calib_dir / f"{frame_id}.txt",
+                pcd=pcd_dir / f"{frame_id}.bin",
+                images=[ImagePaths(image_dir / f"{frame_id}.png", calib_dir / f"{frame_id}.txt")],
+                labels=[],
             )
 
         return [id_to_paths(pcd_file) for pcd_file in os.listdir(pcd_dir)]
