@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import ClassVar, List, Optional, Type, cast
 
@@ -78,10 +78,11 @@ class Scene(DataClassJsonMixin):
         if cls is None:
             return None
 
-        return cls.from_dict(series_dict)
+        result = cls.from_dict(series_dict)
+        return result
 
     @classmethod
-    def decode(cls, json_str: str) -> "Scene":
+    def decode(cls, scene_dir: Path, json_str: str) -> "Scene":
         scene_dict: dict = json.loads(json_str)
 
         id_list: List[str] = scene_dict["id_list"]
@@ -98,12 +99,29 @@ class Scene(DataClassJsonMixin):
         if velodyne is None:
             raise RuntimeError("sceneにkitti_velodyneが含まれていません")
 
-        images = [image for image in json_scene.serieses if isinstance(image, KittiImageSeries)]
-        labels = [label for label in json_scene.serieses if isinstance(label, KittiLabelSeries)]
+        def convert_path(path: str) -> str:
+            return (scene_dir / path).as_posix()
+
+        velodyne = replace(velodyne, velodyne_dir=convert_path(velodyne.velodyne_dir))
+
+        def convert_image(image: KittiImageSeries) -> KittiImageSeries:
+            calib_dir = convert_path(image.calib_dir) if image.calib_dir is not None else None
+            return replace(image, image_dir=convert_path(image.image_dir), calib_dir=calib_dir)
+
+        def convert_label(label: KittiLabelSeries) -> KittiLabelSeries:
+            return replace(
+                label,
+                label_dir=convert_path(label.label_dir),
+                image_dir=convert_path(label.image_dir),
+                calib_dir=convert_path(label.calib_dir),
+            )
+
+        images = [convert_image(image) for image in json_scene.serieses if isinstance(image, KittiImageSeries)]
+        labels = [convert_label(label) for label in json_scene.serieses if isinstance(label, KittiLabelSeries)]
 
         return Scene(json_scene.id_list, velodyne, images, labels)
 
     @classmethod
     def decode_path(cls, json_file: Path) -> "Scene":
         with json_file.open("r") as fp:
-            return cls.decode(fp.read())
+            return cls.decode(json_file.parent, fp.read())

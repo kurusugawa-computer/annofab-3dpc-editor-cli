@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from anno3d.model.scene import XYZ, Scene
 
@@ -49,16 +50,16 @@ def test_decode_scene():
   "dummy": "value"
 }"""
     comment_removed = "\n".join([re.sub("//.*", "", line) for line in json.split("\n")])
-    scene = Scene.decode(comment_removed)
+    scene = Scene.decode(Path("/root/"), comment_removed)
     assert len(scene.id_list) == 2
     assert scene.id_list[0] == "006497"
     assert scene.id_list[1] == "012187"
-    assert scene.velodyne.velodyne_dir == "velodyne"
+    assert scene.velodyne.velodyne_dir == "/root/velodyne"
     assert len(scene.images) == 2
     assert len(scene.labels) == 1
 
     image1 = scene.images[0]
-    assert image1.image_dir == "image_rf"
+    assert image1.image_dir == "/root/image_rf"
     assert image1.calib_dir is None
     assert image1.camera_view_setting is not None
     assert image1.camera_view_setting.fov == 1.57
@@ -66,11 +67,11 @@ def test_decode_scene():
     assert image1.camera_view_setting.position == XYZ(-2.0, -1.0, 0.8)
 
     image2 = scene.images[1]
-    assert image2.image_dir == "image_2"
-    assert image2.calib_dir == "calib"
+    assert image2.image_dir == "/root/image_2"
+    assert image2.calib_dir == "/root/calib"
     assert image2.camera_view_setting is None
 
     label = scene.labels[0]
-    assert label.label_dir == "label_2"
-    assert label.image_dir == "image_2"
-    assert label.calib_dir == "calib"
+    assert label.label_dir == "/root/label_2"
+    assert label.image_dir == "/root/image_2"
+    assert label.calib_dir == "/root/calib"
