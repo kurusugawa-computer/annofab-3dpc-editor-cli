@@ -11,6 +11,7 @@ from scipy.spatial.transform import Rotation
 
 from anno3d.annofab.uploader import Uploader
 from anno3d.calib_loader import read_kitti_calib
+from anno3d.kitti.calib import read_calibration
 from anno3d.model.common import Vector3
 from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
@@ -74,10 +75,16 @@ def _create_image_meta(
     horizontal_fov = 90.0 / 180.0 * math.pi
     camera_height = 1.65
     yaw = 0.0
+    if calib_path is not None:
+        # XXX ここで read_calibration を呼ぶの微妙だなぁ…
+        calib = read_calibration(calib_path)
+        horizontal_fov = calib.camera_horizontal_fov
+
     if settings is not None:
         horizontal_fov = settings.fov
         camera_height = settings.position.z
         yaw = settings.direction
+
     if camera_horizontal_fov is not None:
         horizontal_fov = camera_horizontal_fov
 

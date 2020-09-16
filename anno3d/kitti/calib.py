@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
@@ -16,10 +17,12 @@ class Calib:
     V2C: np.ndarray
     V2C_R: np.ndarray = field(init=False)
     V2C_t: np.ndarray = field(init=False)
+    camera_horizontal_fov: float = field(init=False)
 
     def __post_init__(self):
         self.V2C_R = self.V2C[:, :3]
         self.V2C_t = self.V2C[:, 3]
+        self.camera_horizontal_fov = math.atan(self.P0[0, 2] / self.P0[0, 0]) * 2
 
 
 # calibデータの読み込み部
