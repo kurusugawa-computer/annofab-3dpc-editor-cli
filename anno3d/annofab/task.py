@@ -68,6 +68,7 @@ class TaskApi:
         for d in details:
             data: dict = d["data"]
             d["data"] = json.dumps(data, ensure_ascii=False)
+            d["additional_data_list"] = []
 
         body = {"project_id": project_id, "task_id": task_id, "input_data_id": input_data_id, "details": details}
 
