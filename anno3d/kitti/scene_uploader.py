@@ -190,30 +190,35 @@ class SceneUploader:
 
             task.put_cuboid_annotations(task_id, input_data_id, self._label_to_cuboids(id_to_label, transformed_labels))
 
-    def upload_scene(self, scene: Scene, input: SceneUploaderInput) -> None:
-        uploader = Uploader(self._client, input.project_id)
+    def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
+        uploader = Uploader(self._client, uploader_input.project_id)
         pathss = self._scene_to_paths(scene)
-        specs = self._project.get_annotation_specs(input.project_id)
+        specs = self._project.get_annotation_specs(uploader_input.project_id)
         annofab_labels = specs.labels
         if annofab_labels is None:
-            raise RuntimeError(f"対象プロジェクト(={input.project_id})のラベル設定が存在しません")
+            raise RuntimeError(f"対象プロジェクト(={uploader_input.project_id})のラベル設定が存在しません")
 
         data_and_pathss: List[Tuple[DataId, FilePaths]] = [
             (input_data_id, paths)
             for paths in pathss
-            for input_data_id, _ in [upload(input.input_data_id_prefix, uploader, paths, [], None, input.sensor_height)]
+            for input_data_id, _ in [
+                upload(uploader_input.input_data_id_prefix, uploader, paths, [], None, uploader_input.sensor_height)
+            ]
         ]
 
         with tempfile.TemporaryDirectory() as tempdir_str:
             csv_path = Path(tempdir_str) / "task_create.csv"
             task_to_data_dict = self._create_task_def_csv(
-                csv_path, input.task_id_prefix, data_and_pathss, input.frame_per_task
+                csv_path, uploader_input.task_id_prefix, data_and_pathss, uploader_input.frame_per_task
             )
-            self._create_task(input.project_id, csv_path)
+            self._create_task(uploader_input.project_id, csv_path)
 
         id_to_label: Dict[str, LabelV2] = {anno_label.label_id: anno_label for anno_label in annofab_labels}
 
         for task_id, data_id_and_pathss in task_to_data_dict:
             self._create_annotations(
-                TaskApi(self._client, self._project, input.project_id), id_to_label, task_id, data_id_and_pathss
+                TaskApi(self._client, self._project, uploader_input.project_id),
+                id_to_label,
+                task_id,
+                data_id_and_pathss,
             )
