@@ -16,6 +16,7 @@ def test_load_training():
     assert pathss[0].key.id == "000001"
     assert pathss[0].pcd.name == "000001.bin"
     assert pathss[0].images[0].image.name == "000001.png"
+    assert pathss[0].images[0].calib is not None
     assert pathss[0].images[0].calib.name == "000001.txt"
     assert pathss[0].pcd.exists()
     assert pathss[0].images[0].image.exists()
@@ -31,4 +32,5 @@ def test_load_testing():
     for paths in pathss:
         assert paths.pcd.exists()
         assert paths.images[0].image.exists()
+        assert paths.images[0].calib is not None
         assert paths.images[0].calib.exists()

@@ -3,11 +3,12 @@ import logging
 import tempfile
 import time
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import ClassVar, Dict, List, NewType, Tuple
 
 import more_itertools
-from annofabapi import AnnofabApi, dataclass
+from annofabapi import AnnofabApi
 from annofabapi.dataclass.annotation_specs import LabelV2
 from annofabapi.models import JobStatus
 
@@ -21,7 +22,7 @@ from anno3d.model.kitti_label import KittiLabel
 from anno3d.model.scene import KittiImageSeries, KittiLabelSeries, KittiVelodyneSeries, Scene
 from anno3d.simple_data_uploader import upload
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -34,16 +35,16 @@ class SceneUploaderInput:
 
 
 class Defaults:
-    scene_meta_file = "scene.meta"
-    velo_dir = "velodyne"
-    image_dir = "image_2"
-    calib_dir = "calib"
-    label_dir = "label_2"
+    scene_meta_file: ClassVar[str] = "scene.meta"
+    velo_dir: ClassVar[str] = "velodyne"
+    image_dir: ClassVar[str] = "image_2"
+    calib_dir: ClassVar[str] = "calib"
+    label_dir: ClassVar[str] = "label_2"
 
 
-TaskId = str
+TaskId = NewType("TaskId", str)
 
-DataId = str
+DataId = NewType("DataId", str)
 
 
 class SceneUploader:
@@ -99,14 +100,18 @@ class SceneUploader:
     def _scene_to_paths(scene: Scene) -> List[FilePaths]:
         def id_to_paths(frame_id: str) -> FilePaths:
             images = [
-                ImagePaths(Path(image.image_dir) / f"{frame_id}.png", Path(image.calib_dir / f"{frame_id}.txt"))
+                ImagePaths(
+                    Path(image.image_dir) / f"{frame_id}.png",
+                    Path(image.calib_dir) / f"{frame_id}.txt" if image.calib_dir is not None else None,
+                    image.camera_view_setting,
+                )
                 for image in scene.images
             ]
             labels = [
                 LabelPaths(
                     Path(label.label_dir) / f"{frame_id}.txt",
                     Path(label.image_dir) / f"{frame_id}.png",
-                    Path(label.calib_dir / f"{frame_id}.txt"),
+                    Path(label.calib_dir) / f"{frame_id}.txt",
                 )
                 for label in scene.labels
             ]
@@ -127,12 +132,12 @@ class SceneUploader:
         with csv_path.open("w", encoding="UTF-8") as writer:
             for data_list in chunked_by_tasks:
                 task_id = f"{id_prefix}${task_count}"
-                inputs = [t[0] for t in data_list]
+                inputs: List[str] = [t[0] for t in data_list]
 
                 line = ",".join([task_id] + inputs)
                 writer.write(f"{line}\n")
                 task_count += 1
-                result_dict[task_id] = data_list
+                result_dict[TaskId(task_id)] = data_list
 
         return result_dict
 
@@ -145,8 +150,10 @@ class SceneUploader:
         while job.job_status == JobStatus.PROGRESS:
             logger.info("タスクの作成完了を待っています。")
             time.sleep(5)
-
-            job = project.get_job(project_id, response.job)
+            new_info = project.get_job(project_id, job)
+            if new_info is None:
+                raise RuntimeError(f"ジョブ(={job.job_id})が取得できませんでした。")
+            job = new_info
 
         if job.job_status == JobStatus.FAILED:
             detail = json.dumps(job.job_detail, ensure_ascii=False)
@@ -178,15 +185,22 @@ class SceneUploader:
             for label in labels
             if label.type in id_to_label
         ]
-        pass
 
     def _create_annotations(
-        self, task: TaskApi, id_to_label: Dict[str, LabelV2], task_id: str, pathss: List[Tuple[DataId, LabelPaths]]
+        self,
+        task: TaskApi,
+        id_to_label: Dict[str, LabelV2],
+        task_id: TaskId,
+        pathsss: List[Tuple[DataId, List[LabelPaths]]],
     ) -> None:
-        for input_data_id, paths in pathss:
-            labels = KittiLabel.decode_path(paths.label)
-            calib = read_calibration(paths.calib)
-            transformed_labels = transform_labels_into_lidar_coordinates(labels, calib)
+        for input_data_id, pathss in pathsss:
+            transformed_labels = [
+                transformed_label
+                for paths in pathss
+                for calib in [read_calibration(paths.calib)]
+                for labels in [KittiLabel.decode_path(paths.label)]
+                for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
+            ]
 
             task.put_cuboid_annotations(task_id, input_data_id, self._label_to_cuboids(id_to_label, transformed_labels))
 
@@ -199,7 +213,7 @@ class SceneUploader:
             raise RuntimeError(f"対象プロジェクト(={uploader_input.project_id})のラベル設定が存在しません")
 
         data_and_pathss: List[Tuple[DataId, FilePaths]] = [
-            (input_data_id, paths)
+            (DataId(input_data_id), paths)
             for paths in pathss
             for input_data_id, _ in [
                 upload(uploader_input.input_data_id_prefix, uploader, paths, [], None, uploader_input.sensor_height)
@@ -213,12 +227,15 @@ class SceneUploader:
             )
             self._create_task(uploader_input.project_id, csv_path)
 
-        id_to_label: Dict[str, LabelV2] = {anno_label.label_id: anno_label for anno_label in annofab_labels}
+        id_to_label: Dict[str, LabelV2] = {
+            anno_label.label_id: anno_label for anno_label in annofab_labels if anno_label.label_id is not None
+        }
 
-        for task_id, data_id_and_pathss in task_to_data_dict:
+        for task_id, data_id_and_pathss in task_to_data_dict.items():
+            data_and_label_pathss = [(data_id, pathss.labels) for data_id, pathss in data_id_and_pathss]
             self._create_annotations(
                 TaskApi(self._client, self._project, uploader_input.project_id),
                 id_to_label,
                 task_id,
-                data_id_and_pathss,
+                data_and_label_pathss,
             )

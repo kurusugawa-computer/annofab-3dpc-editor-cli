@@ -49,7 +49,7 @@ def create_frame_meta(
 
 def _create_image_meta(
     parent_dir: Path,
-    calib_path: Path,
+    calib_path: Optional[Path],
     input_data_id: str,
     number: int,
     settings: Optional[CameraViewSettings],
@@ -85,7 +85,7 @@ def _create_image_meta(
     direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
 
     meta = ImageMeta(
-        read_kitti_calib(calib_path),
+        read_kitti_calib(calib_path) if calib_path is not None else None,
         ImageCamera(
             direction=Vector3(direction[0], direction[1], direction[2]),
             fov=ImageCameraFov(horizontal_fov, 35.0 / 180.0 * math.pi),
