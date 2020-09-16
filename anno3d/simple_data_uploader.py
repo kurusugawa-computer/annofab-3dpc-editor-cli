@@ -143,19 +143,19 @@ def upload(
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
-        frame_meta = create_frame_meta(tempdir, input_data_id, len(dummy_images) + 1, sensor_height)
-        image_count = 0
-        for image_paths in paths.images:
-            image = SupplementaryData(camera_image_id(input_data_id, image_count), image_paths.image)
-            image_meta = _create_image_meta(
-                tempdir,
-                image_paths.calib,
-                input_data_id,
-                image_count,
-                image_paths.cameraSettings,
-                camera_horizontal_fov,
-            )
-            image_count += 1
+        frame_meta = create_frame_meta(tempdir, input_data_id, len(paths.images) + len(dummy_images), sensor_height)
+        image_supps: List[SupplementaryData] = [
+            meta
+            for i in range(0, len(paths.images))
+            for image_paths in [paths.images[i]]
+            for meta in [
+                SupplementaryData(camera_image_id(input_data_id, i), image_paths.image),
+                _create_image_meta(
+                    tempdir, image_paths.calib, input_data_id, i, image_paths.cameraSettings, camera_horizontal_fov,
+                ),
+            ]
+        ]
+        image_count = len(paths.images)
 
         dummy_image_supps = [
             meta
@@ -166,7 +166,7 @@ def upload(
             ]
         ]
 
-        all_supps = dummy_image_supps + [frame_meta, image, image_meta]
+        all_supps = dummy_image_supps + image_supps + [frame_meta]
         _upload_supplementaries(uploader, input_data_id, all_supps)
 
         logger.info("uploaded: %s", paths.pcd)
