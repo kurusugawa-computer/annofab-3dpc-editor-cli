@@ -21,7 +21,8 @@ E = TypeVar("E", bound=Enum)
 
 def _decode_enum(enum: Type[E], value: Any) -> E:
     for e in enum:
-        if e == value:
+        print(f"{e.value} == {value}")
+        if e.value == value:
             return e
 
     raise ValueError("{}は有効な、{}型の値ではありません".format(value, enum.__name__))

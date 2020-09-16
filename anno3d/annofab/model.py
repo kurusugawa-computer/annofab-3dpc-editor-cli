@@ -1,20 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Dict, List, Tuple, Type, TypeVar
+from typing import Dict, List, Tuple
 
 from annofabapi.dataclass.job import JobInfo
 from annofabapi.dataclass.project import Project
 from dataclasses_json import DataClassJsonMixin
-
-E = TypeVar("E", bound=Enum)
-
-
-def _decode_enum(enum: Type[E], value: Any) -> E:
-    for e in enum:
-        if e == value:
-            return e
-
-    raise ValueError("{}は有効な、{}型の値ではありません".format(value, enum.__name__))
 
 
 @dataclass
