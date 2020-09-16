@@ -131,14 +131,16 @@ class SceneUploader:
         result_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]] = {}
         with csv_path.open("w", encoding="UTF-8") as writer:
             for data_list in chunked_by_tasks:
-                task_id = f"{id_prefix}${task_count}"
+                task_id = f"{id_prefix}{task_count}"
                 inputs: List[str] = [t[0] for t in data_list]
 
                 line = ",".join([task_id] + inputs)
-                writer.write(f"{line}\n")
+                writer.write(f"{line}\r\n")
                 task_count += 1
                 result_dict[TaskId(task_id)] = data_list
 
+        with csv_path.open("r") as reader:
+            print(reader.read())
         return result_dict
 
     def _create_task(self, project_id: str, csv_path: Path) -> None:
@@ -158,6 +160,7 @@ class SceneUploader:
         if job.job_status == JobStatus.FAILED:
             detail = json.dumps(job.job_detail, ensure_ascii=False)
             raise RuntimeError(f"タスクの作成に失敗しました: {detail}")
+        logger.info("タスクの作成が完了しました")
 
     def _label_to_cuboids(
         self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
@@ -194,6 +197,7 @@ class SceneUploader:
         pathsss: List[Tuple[DataId, List[LabelPaths]]],
     ) -> None:
         for input_data_id, pathss in pathsss:
+            logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
             transformed_labels = [
                 transformed_label
                 for paths in pathss
@@ -205,6 +209,8 @@ class SceneUploader:
             task.put_cuboid_annotations(task_id, input_data_id, self._label_to_cuboids(id_to_label, transformed_labels))
 
     def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
+        logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
+
         uploader = Uploader(self._client, uploader_input.project_id)
         pathss = self._scene_to_paths(scene)
         specs = self._project.get_annotation_specs(uploader_input.project_id)
@@ -212,6 +218,7 @@ class SceneUploader:
         if annofab_labels is None:
             raise RuntimeError(f"対象プロジェクト(={uploader_input.project_id})のラベル設定が存在しません")
 
+        logger.info("input-dataのアップロードを開始します")
         data_and_pathss: List[Tuple[DataId, FilePaths]] = [
             (DataId(input_data_id), paths)
             for paths in pathss
@@ -219,6 +226,7 @@ class SceneUploader:
                 upload(uploader_input.input_data_id_prefix, uploader, paths, [], None, uploader_input.sensor_height)
             ]
         ]
+        logger.info("%d件のデータをアップロードしました", len(data_and_pathss))
 
         with tempfile.TemporaryDirectory() as tempdir_str:
             csv_path = Path(tempdir_str) / "task_create.csv"
