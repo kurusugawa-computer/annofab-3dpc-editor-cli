@@ -169,7 +169,6 @@ class SceneUploader:
         if job.job_status == JobStatus.FAILED:
             detail = json.dumps(job.job_detail, ensure_ascii=False)
             raise RuntimeError(f"タスクの作成に失敗しました: {detail}")
-        logger.info("タスクの作成が完了しました")
 
     def _label_to_cuboids(
         self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
