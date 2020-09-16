@@ -177,7 +177,9 @@ class ProjectApi:
 
     def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
         client = self._client
-        params = {"type": job.job_type, "limit": "200"}
+        if job.job_type is None:
+            raise RuntimeError(f"ジョブ(={job.job_id})のjob_typeがありません")
+        params = {"type": job.job_type.value, "limit": "200"}
         result, _ = client.get_project_job(project_id, params)
         jobs: List[afm.JobInfo] = result["list"]
         jobs2 = [self._decode_jobinfo(j) for j in jobs]
