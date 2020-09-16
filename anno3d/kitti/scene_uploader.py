@@ -132,15 +132,16 @@ class SceneUploader:
         with csv_path.open("w", encoding="UTF-8") as writer:
             for data_list in chunked_by_tasks:
                 task_id = f"{id_prefix}{task_count}"
-                inputs: List[str] = [t[0] for t in data_list]
-
-                line = ",".join([task_id] + inputs)
-                writer.write(f"{line}\r\n")
-                task_count += 1
                 result_dict[TaskId(task_id)] = data_list
+                task_count += 1
+                for data_id, paths in data_list:
+                    # XXX ここで `paths.pcd.name` は input_data_nameの指定なんだけど、ファイル名がinput_data_nameである
+                    # というのは、ただの実装詳細なので、本来はやりたくない…
+                    line = f"{task_id},{paths.pcd.name},{data_id}"
+                    writer.write(f"{line}\r\n")
 
         with csv_path.open("r") as reader:
-            print(reader.read())
+            logger.info(f"task def csv: \n%s", reader.read())
         return result_dict
 
     def _create_task(self, project_id: str, csv_path: Path) -> None:
