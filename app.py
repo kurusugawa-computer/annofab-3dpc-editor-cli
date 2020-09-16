@@ -11,6 +11,7 @@ from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
+from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput
 from anno3d.model.file_paths import FrameKind
 from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload
 
@@ -210,7 +211,7 @@ class ProjectCommand:
         input_id_prefix: str = "",
         camera_horizontal_fov: Optional[int] = None,
         sensor_height: Optional[float] = None,
-    ):
+    ) -> None:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
         Args:
@@ -248,6 +249,29 @@ class ProjectCommand:
             logger.info("%d 件のinput dataをuploadしました", len(uploaded))
             for input_id, supp_count in uploaded:
                 logger.info("id: %s, 補助データ件数: %d", input_id, supp_count)
+
+    @staticmethod
+    def upload_scene(
+        annofab_id: str,
+        annofab_pass: str,
+        project_id: str,
+        frame_per_task: int,
+        input_data_id_prefix: str,
+        task_id_prefix: str,
+        sensor_height: float,
+        scene_path: str,
+    ) -> None:
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            uploader = SceneUploader(api)
+            uploader_input = SceneUploaderInput(
+                project_id=project_id,
+                input_data_id_prefix=input_data_id_prefix,
+                frame_per_task=frame_per_task,
+                sensor_height=sensor_height,
+                task_id_prefix=task_id_prefix,
+            )
+            uploader.upload_from_path(Path(scene_path), uploader_input)
 
 
 class LocalCommand:
