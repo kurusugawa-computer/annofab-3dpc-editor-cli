@@ -4,8 +4,9 @@ import tempfile
 import time
 import uuid
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
-from typing import ClassVar, Dict, List, NewType, Tuple
+from typing import ClassVar, Dict, List, NewType, Optional, Tuple
 
 import more_itertools
 from annofabapi import AnnofabApi
@@ -25,13 +26,20 @@ from anno3d.simple_data_uploader import upload
 logger: logging.Logger = logging.getLogger(__name__)
 
 
+class UploadKind(Enum):
+    DATA_ONLY = "data"
+    CREATE_TASK = "task"
+    CREATE_ANNOTATION = "annotation"
+
+
 @dataclass
 class SceneUploaderInput:
     project_id: str
     input_data_id_prefix: str
     frame_per_task: int
-    sensor_height: float
+    sensor_height: Optional[float]
     task_id_prefix: str
+    kind: UploadKind
 
 
 class Defaults:
@@ -141,7 +149,7 @@ class SceneUploader:
                     writer.write(f"{line}\r\n")
 
         with csv_path.open("r") as reader:
-            logger.info(f"task def csv: \n%s", reader.read())
+            logger.info("task def csv: \n%s", reader.read())
         return result_dict
 
     def _create_task(self, project_id: str, csv_path: Path) -> None:
@@ -228,6 +236,8 @@ class SceneUploader:
             ]
         ]
         logger.info("%d件のデータをアップロードしました", len(data_and_pathss))
+        if uploader_input.kind == UploadKind.DATA_ONLY:
+            return
 
         with tempfile.TemporaryDirectory() as tempdir_str:
             csv_path = Path(tempdir_str) / "task_create.csv"
@@ -235,6 +245,10 @@ class SceneUploader:
                 csv_path, uploader_input.task_id_prefix, data_and_pathss, uploader_input.frame_per_task
             )
             self._create_task(uploader_input.project_id, csv_path)
+
+        logger.info("タスクの作成が完了しました")
+        if uploader_input.kind == UploadKind.CREATE_TASK:
+            return
 
         id_to_label: Dict[str, LabelV2] = {
             anno_label.label_id: anno_label for anno_label in annofab_labels if anno_label.label_id is not None
@@ -248,3 +262,5 @@ class SceneUploader:
                 task_id,
                 data_and_label_pathss,
             )
+
+        logger.info("アノテーションの登録が完了しました")

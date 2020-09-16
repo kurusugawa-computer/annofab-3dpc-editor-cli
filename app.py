@@ -2,8 +2,9 @@ import logging
 import os
 import shutil
 import tempfile
+from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple, Type, TypeVar
 
 import fire
 
@@ -11,9 +12,19 @@ from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
-from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput
+from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.file_paths import FrameKind
 from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload
+
+E = TypeVar("E", bound=Enum)
+
+
+def _decode_enum(enum: Type[E], value: Any) -> E:
+    for e in enum:
+        if e == value:
+            return e
+
+    raise ValueError("{}は有効な、{}型の値ではありません".format(value, enum.__name__))
 
 
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
@@ -255,12 +266,35 @@ class ProjectCommand:
         annofab_id: str,
         annofab_pass: str,
         project_id: str,
-        frame_per_task: int,
-        input_data_id_prefix: str,
-        task_id_prefix: str,
-        sensor_height: float,
         scene_path: str,
+        input_data_id_prefix: str = "",
+        task_id_prefix: str = "",
+        sensor_height: Optional[float] = None,
+        frame_per_task: int = 10,
+        upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
     ) -> None:
+        """
+        拡張kitti形式のファイル群をAnnoFabにアップロードします
+
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 登録先のプロジェクトid
+            scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
+            input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
+            task_id_prefix: 生成するtaskのidにつけるprefix
+            sensor_height: velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。
+                           省略した場合、kittiのセンサ高(1.73)を採用する
+            frame_per_task: タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 10
+            upload_kind: 処理の種類　省略した場合 "annotation" //
+                         data => 入力データと補助データの登録のみを行う //
+                         task => 上記に加えて、タスクの生成を行う //
+                         annotation => 上記に加えて、アノテーションの登録を行う
+
+        Returns:
+
+        """
+
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             uploader = SceneUploader(api)
@@ -270,6 +304,7 @@ class ProjectCommand:
                 frame_per_task=frame_per_task,
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
+                kind=_decode_enum(UploadKind, upload_kind),
             )
             uploader.upload_from_path(Path(scene_path), uploader_input)
 
