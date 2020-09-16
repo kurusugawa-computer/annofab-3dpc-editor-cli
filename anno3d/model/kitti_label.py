@@ -24,7 +24,7 @@ class KittiLabel:
 
     @classmethod
     def decode(cls, line: str) -> Optional["KittiLabel"]:
-        fields = [field.strip() for field in line.split(",")]
+        fields = [field.strip() for field in line.split(" ")]
         label = KittiLabel(
             fields[0],
             float(fields[8]),
@@ -42,7 +42,7 @@ class KittiLabel:
     @classmethod
     def decode_many(cls, csv: str) -> List["KittiLabel"]:
         lines = csv.split("\n")
-        return [label for line in lines for label in [cls.decode(line)] if label is not None]
+        return [label for line in lines if len(line.strip()) > 0 for label in [cls.decode(line)] if label is not None]
 
     @classmethod
     def decode_path(cls, csv_path: Path) -> List["KittiLabel"]:
