@@ -158,7 +158,7 @@ def upload(
             for meta in [
                 SupplementaryData(camera_image_id(input_data_id, i), image_paths.image),
                 _create_image_meta(
-                    tempdir, image_paths.calib, input_data_id, i, image_paths.cameraSettings, camera_horizontal_fov,
+                    tempdir, image_paths.calib, input_data_id, i, image_paths.camera_settings, camera_horizontal_fov,
                 ),
             ]
         ]
@@ -219,7 +219,7 @@ def create_kitti_files(
         for meta in [
             SupplementaryData(image_id, image_path),
             _create_image_meta(
-                input_data_dir, image.calib, input_data_id, i, image.cameraSettings, camera_horizontal_fov
+                input_data_dir, image.calib, input_data_id, i, image.camera_settings, camera_horizontal_fov
             ),
         ]
     ]

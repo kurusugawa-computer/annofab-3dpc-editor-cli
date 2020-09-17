@@ -21,7 +21,7 @@ class FrameKey:
 class ImagePaths:
     image: Path
     calib: Optional[Path]
-    cameraSettings: Optional[CameraViewSettings]
+    camera_settings: Optional[CameraViewSettings]
 
 
 @dataclass(frozen=True)
