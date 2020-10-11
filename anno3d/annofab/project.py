@@ -1,28 +1,39 @@
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
-from annofabapi.models import AnnotationSpecsV2, LabelV2
-from dataclasses_json import DataClassJsonMixin
+from annofabapi import models as afm
+from annofabapi.dataclass.annotation_specs import AnnotationSpecsV2
+from annofabapi.dataclass.job import JobInfo
+from annofabapi.dataclass.project import Project
+from annofabapi.models import LabelV2
+from more_itertools import first_true
 
 from anno3d.annofab.constant import lang_en, lang_ja
+from anno3d.annofab.model import Label
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
 
 
-@dataclass
-class Label(DataClassJsonMixin):
-    label_id: str
-    ja_name: str
-    en_name: str
-    color: Tuple[int, int, int]
-    metadata: Dict[str, str]
-
-
-class Project:
+class ProjectApi:
     _client: AnnofabApi
 
     def __init__(self, client: AnnofabApi):
         self._client = client
+
+    @staticmethod
+    def _decode_project(project: afm.Project) -> Project:
+        return Project.from_dict(project)
+
+    def get_project(self, project_id) -> Optional[Project]:
+        client = self._client
+        result, response = client.get_project(project_id)
+        if response.status_code != 200:
+            return None
+
+        return self._decode_project(result)
+
+    @staticmethod
+    def _decode_jobinfo(info: afm.JobInfo) -> JobInfo:
+        return JobInfo.from_dict(info)
 
     def create_custom_project(
         self, project_id: str, organization_name: str, plugin_id: str, title: str = "", overview: str = ""
@@ -33,6 +44,7 @@ class Project:
         Args:
             project_id:
             organization_name:
+            plugin_id:
             title:
             overview:
 
@@ -55,7 +67,7 @@ class Project:
         }
 
         project: Dict[str, Any]
-        project, response = client.put_project(project_id, body)
+        project, response = client.put_project(project_id, request_body=body)
         if response.status_code != 200:
             raise RuntimeError("Project新規作成時のhttp status codeは200ですが、{}が返されました。".format(response.status_code))
 
@@ -98,6 +110,12 @@ class Project:
 
         return self.put_label(project_id, label_id, ja_name, en_name, color, metadata)
 
+    def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV2:
+        client = self._client
+        specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
+
+        return AnnotationSpecsV2.from_dict(specs)
+
     def put_label(
         self,
         project_id: str,
@@ -109,7 +127,7 @@ class Project:
     ) -> List[Label]:
         client = self._client
 
-        specs: AnnotationSpecsV2
+        specs: afm.AnnotationSpecsV2
         specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
         labels: List[LabelV2] = specs["labels"]
         index: Optional[int]
@@ -156,3 +174,14 @@ class Project:
 
         created_specs, _ = client.put_annotation_specs(project_id, new_specs)
         return [self._from_annofab_label(label) for label in created_specs["labels"]]
+
+    def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
+        client = self._client
+        if job.job_type is None:
+            raise RuntimeError(f"ジョブ(={job.job_id})のjob_typeがありません")
+        params = {"type": job.job_type.value, "limit": "200"}
+        result, _ = client.get_project_job(project_id, params)
+        jobs: List[afm.JobInfo] = result["list"]
+        jobs2 = [self._decode_jobinfo(j) for j in jobs]
+
+        return first_true(jobs2, pred=lambda j: j.job_id == job.job_id)
