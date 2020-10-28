@@ -72,9 +72,11 @@ popy app.py project put_segment_label \
   --default_ignore False
 ```
 
-### データの投入
+### データの投入（KITTI 3D object detection形式）
 
-kitti 3d detectionのデータのAnnoFabへの登録
+`project upload_kitti_data`により、
+[KITTI 3D object detetection](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)
+の形式を持つファイル群をAnnoFabへ登録できます。
 
 ```
 popy app.py project upload_kitti_data \
@@ -88,10 +90,11 @@ popy app.py project upload_kitti_data \
   --sensor_height 0
 ```
 
-### データの投入・タスク作成・アノテーション登録
+### データの投入（拡張KITTI形式）
 
-`project upload_scene`により、拡張kitti形式のファイル群のアップロードを行うことが出来ます。
-構造はは https://kurusugawa.jp/confluence/pages/viewpage.action?pageId=1123123957 を参照
+`project upload_scene` により、[拡張KITTI形式（社内ページへの参照）](https://kurusugawa.jp/confluence/pages/viewpage.action?pageId=1123123957)の形式をもつ
+ファイル群をAnnoFabへ登録できます。
+あわせて `--upload_kind` を指定することで、タスク作成やアノテーション登録も同時に行うことができます。
 
 TODO データ形式の正式な置き場ができたら、URLを書き換える
 
