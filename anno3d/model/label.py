@@ -16,11 +16,13 @@ class CuboidLabelMetadata(DataClassJsonMixin):
 class SegmentLabelMetadata(DataClassJsonMixin):
     """
     Args:
+        ignore: ignore設定に利用するAdditionalDataのid
         layer: レイヤーを表す数値文字列
         segment_kind: "SEMANTIC" | "INSTANCE"
         type: "SEGMENT" 固定
     """
 
+    ignore: str
     layer: str = "100"
     segment_kind: str = "SEMANTIC"
     type: str = "SEGMENT"

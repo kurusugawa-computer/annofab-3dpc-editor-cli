@@ -9,6 +9,7 @@ from typing import Any, Optional, Tuple, Type, TypeVar
 import fire
 
 from anno3d.annofab.client import ClientLoader
+from anno3d.annofab.constant import segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
@@ -207,7 +208,16 @@ class ProjectCommand:
         """
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            labels = ProjectApi(api).put_segment_label(project_id, label_id, ja_name, en_name, color, default_ignore)
+            labels = ProjectApi(api).put_segment_label(
+                project_id,
+                label_id,
+                ja_name,
+                en_name,
+                color,
+                default_ignore,
+                segment_kind=segment_type_semantic,
+                layer=100,
+            )
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
