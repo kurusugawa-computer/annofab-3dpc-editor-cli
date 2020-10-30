@@ -26,15 +26,88 @@ poetry install
 
 ### プラグインプロジェクトの生成
 
+#### ヘルプ
+
+```
+$ popy app.py project create --help | cat
+INFO: Showing help with the command 'app.py project create -- --help'.
+
+NAME
+    app.py project create - 新しいカスタムプロジェクトを生成します。
+
+SYNOPSIS
+    app.py project create ANNOFAB_ID ANNOFAB_PASS PROJECT_ID ORGANIZATION_NAME PLUGIN_ID <flags>
+
+DESCRIPTION
+    新しいカスタムプロジェクトを生成します。
+
+POSITIONAL ARGUMENTS
+    ANNOFAB_ID
+    ANNOFAB_PASS
+    PROJECT_ID
+        作成するprojectのid
+    ORGANIZATION_NAME
+        projectを所属させる組織の名前
+    PLUGIN_ID
+        このプロジェクトで使用する、組織に登録されているプラグインのid。
+
+FLAGS
+    --title=TITLE
+        projectのタイトル。　省略した場合 project_id と同様
+    --overview=OVERVIEW
+        projectの概要。 省略した場合 project_id と同様
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+```
+
+
+#### コマンド例
+
 ```
 popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id ${ANNO_PRJ} --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
 ```
 
 ### ラベルの設定 
 
-2020/09/01 現在、3dpc-editorは、セグメンテーション結果のAnnoFabへの保存に対応していないため、`put_segment_label`を利用すると、保存時にエラーとなります。
+#### ヘルプ
 
 ```
+$ popy app.py project put_cuboid_label --help | cat
+INFO: Showing help with the command 'app.py project put_cuboid_label -- --help'.
+
+NAME
+    app.py project put_cuboid_label - 対象のプロジェクトにcuboidのlabelを追加・更新します。
+
+SYNOPSIS
+    app.py project put_cuboid_label ANNOFAB_ID ANNOFAB_PASS PROJECT_ID LABEL_ID JA_NAME EN_NAME COLOR
+
+DESCRIPTION
+    対象のプロジェクトにcuboidのlabelを追加・更新します。
+
+POSITIONAL ARGUMENTS
+    ANNOFAB_ID
+    ANNOFAB_PASS
+    PROJECT_ID
+        対象プロジェクト
+    LABEL_ID
+        追加・更新するラベルのid
+    JA_NAME
+        日本語名称
+    EN_NAME
+        英語名称
+    COLOR
+        ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+
+```
+
+#### コマンド例
+
+```
+# バウンディングボックスのラベルを追加
 popy app.py project put_cuboid_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
@@ -52,6 +125,8 @@ popy app.py project put_cuboid_label \
   --en_name "human" \
   --color "(0, 255, 0)"
 
+# セマンティックセグメンテーションのラベルを追加
+# defaultで無視属性が有効
 popy app.py project put_segment_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
@@ -61,6 +136,9 @@ popy app.py project put_segment_label \
   --en_name "road" \
   --color "(238, 130, 238)" \
   --default_ignore True
+  --segment_type SEMANTIC
+
+# defaultで無視属性が無効
 popy app.py project put_segment_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
@@ -70,6 +148,20 @@ popy app.py project put_segment_label \
   --en_name "wall" \
   --color "(0, 182, 110)" \
   --default_ignore False
+  --segment_type SEMANTIC
+
+# インスタンスセグメンテーションのラベルを追加
+popy app.py project put_segment_label \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ} \
+  --label_id "car" \
+  --ja_name "車(seg)" \
+  --en_name "car-seg" \
+  --color "(255, 0, 0)" \
+  --default_ignore False
+  --segment_type INSTANCE
+
 ```
 
 ### データの投入（KITTI 3D object detection形式）
@@ -77,6 +169,49 @@ popy app.py project put_segment_label \
 `project upload_kitti_data`により、
 [KITTI 3D object detetection](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d)
 の形式を持つファイル群をAnnoFabへ登録できます。
+
+#### ヘルプ
+
+```
+$ popy app.py project upload_kitti_data --help | cat
+INFO: Showing help with the command 'app.py project upload_kitti_data -- --help'.
+
+NAME
+    app.py project upload_kitti_data - kitti 3d detection形式のファイル群を3dpc-editorに登録します。
+
+SYNOPSIS
+    app.py project upload_kitti_data ANNOFAB_ID ANNOFAB_PASS PROJECT_ID KITTI_DIR <flags>
+
+DESCRIPTION
+    kitti 3d detection形式のファイル群を3dpc-editorに登録します。
+
+POSITIONAL ARGUMENTS
+    ANNOFAB_ID
+    ANNOFAB_PASS
+    PROJECT_ID
+        登録先のプロジェクトid
+    KITTI_DIR
+        登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
+
+FLAGS
+    --skip=SKIP
+        見つけたデータの先頭何件をスキップするか
+    --size=SIZE
+        最大何件のinput_dataを登録するか
+    --input_id_prefix=INPUT_ID_PREFIX
+        input_data_idの先頭に付与する文字列
+    --camera_horizontal_fov=CAMERA_HORIZONTAL_FOV
+        カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
+    --sensor_height=SENSOR_HEIGHT
+        点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+
+```
+
+
+#### コマンド例
 
 ```
 popy app.py project upload_kitti_data \
@@ -101,6 +236,7 @@ TODO データ形式の正式な置き場ができたら、URLを書き換える
 #### ヘルプ
 
 ```
+$ popy app.py project upload_scene --help | cat
 INFO: Showing help with the command 'app.py project upload_scene -- --help'.
 
 NAME
@@ -134,6 +270,7 @@ FLAGS
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
+
 ```
 
 #### コマンド例
