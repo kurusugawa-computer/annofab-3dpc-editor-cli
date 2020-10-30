@@ -2,10 +2,17 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
-from annofabapi.dataclass.annotation_specs import AnnotationSpecsV2
+from annofabapi.dataclass.annotation_specs import (
+    AnnotationEditorFeature,
+    AnnotationSpecsV2,
+    Color,
+    InternationalizationMessage,
+    InternationalizationMessageMessages,
+    LabelV2,
+)
 from annofabapi.dataclass.job import JobInfo
 from annofabapi.dataclass.project import Project
-from annofabapi.models import LabelV2
+from annofabapi.models import AnnotationType
 from more_itertools import first_true
 
 from anno3d.annofab.constant import lang_en, lang_ja
@@ -75,11 +82,12 @@ class ProjectApi:
         return created_id
 
     @staticmethod
-    def _from_annofab_label(annofab_label: LabelV2) -> Label:
+    def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
         messages = annofab_label["label_name"]["messages"]
         color = annofab_label["color"]
-        ja_name = next(filter(lambda e: e["lang"] == lang_ja, messages), "")
-        en_name = next(filter(lambda e: e["lang"] == lang_en, messages), "")
+        empty_message: dict = InternationalizationMessageMessages("", "").to_dict()
+        ja_name = next(filter(lambda e: e["lang"] == lang_ja, messages), empty_message)["message"]
+        en_name = next(filter(lambda e: e["lang"] == lang_en, messages), empty_message)["message"]
         metadata = annofab_label["metadata"]
 
         return Label(
@@ -91,7 +99,7 @@ class ProjectApi:
     ) -> List[Label]:
         return self.put_label(project_id, label_id, ja_name, en_name, color, CuboidLabelMetadata())
 
-    _default_segment_metadata = SegmentLabelMetadata(default_ignore="true")
+    _default_segment_metadata = SegmentLabelMetadata()
 
     def put_segment_label(
         self,
@@ -104,9 +112,7 @@ class ProjectApi:
         segment_kind: str = _default_segment_metadata.segment_kind,
         layer: int = int(_default_segment_metadata.layer),
     ) -> List[Label]:
-        metadata = SegmentLabelMetadata(
-            default_ignore=str(default_ignore).lower(), layer=str(layer), segment_kind=segment_kind
-        )
+        metadata = SegmentLabelMetadata(layer=str(layer), segment_kind=segment_kind)
 
         return self.put_label(project_id, label_id, ja_name, en_name, color, metadata)
 
@@ -115,6 +121,8 @@ class ProjectApi:
         specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
 
         return AnnotationSpecsV2.from_dict(specs)
+
+    # def _put_ignore_additional_if_necessary(self, specs: AnnotationSpecsV2,):
 
     def put_label(
         self,
@@ -127,47 +135,48 @@ class ProjectApi:
     ) -> List[Label]:
         client = self._client
 
-        specs: afm.AnnotationSpecsV2
-        specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
-        labels: List[LabelV2] = specs["labels"]
+        specs = self.get_annotation_specs(project_id)
+        specs_dict: dict = specs.to_dict(encode_json=True)
+        labels: List[LabelV2] = specs.labels if specs.labels is not None else list([])
         index: Optional[int]
-        index, _ = next(filter(lambda ie: ie[1]["label_id"] == label_id, enumerate(labels)), (None, None))
-        meta_dic = metadata.to_dict()
+        index, _ = next(filter(lambda ie: ie[1].label_id == label_id, enumerate(labels)), (None, None))
+        meta_dic: dict = metadata.to_dict(encode_json=True)
 
-        new_label: LabelV2 = {
-            "label_id": label_id,
-            "label_name": {
-                "messages": [{"lang": lang_ja, "message": ja_name}, {"lang": lang_en, "message": en_name}],
-                "default_lang": lang_ja,
-            },
-            "color": {"red": color[0], "green": color[1], "blue": color[2]},
-            "keybind": [],
-            "annotation_type": "custom",
-            "annotation_editor_feature": {
-                "append": False,
-                "erase": False,
-                "freehand": False,
-                "rectangle_fill": False,
-                "polygon_fill": False,
-                "fill_near": False,
-            },
-            "additional_data_definitions": [],
-            "allow_out_of_image_bounds": False,
-            "metadata": meta_dic,
-        }
+        new_label: LabelV2 = LabelV2(
+            label_id=label_id,
+            label_name=InternationalizationMessage(
+                [
+                    InternationalizationMessageMessages(lang_ja, ja_name),
+                    InternationalizationMessageMessages(lang_en, en_name),
+                ],
+                lang_ja,
+            ),
+            keybind=[],
+            annotation_type=AnnotationType.CUSTOM,
+            bounding_box_metadata=None,
+            segmentation_metadata=None,
+            additional_data_definitions=[],
+            color=Color(red=color[0], green=color[1], blue=color[2]),
+            annotation_editor_feature=AnnotationEditorFeature(
+                append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
+            ),
+            allow_out_of_image_bounds=False,
+            metadata=meta_dic,
+        )
 
         if index is not None:
             labels[index] = new_label
         else:
             labels.append(new_label)
 
+        # XXX AnnotationSpecsRequestV2 の dataclassなかった…
         new_specs = {
-            "labels": labels,
-            "additionals": specs["additionals"],
-            "restrictions": specs["restrictions"],
-            "inspection_phrases": specs["inspection_phrases"],
-            "format_version": specs["format_version"],
-            "last_updated_datetime": specs["updated_datetime"],
+            "labels": LabelV2.schema().dump(labels, many=True),
+            "additionals": specs_dict["additionals"],
+            "restrictions": specs_dict["restrictions"],
+            "inspection_phrases": specs_dict["inspection_phrases"],
+            "format_version": specs_dict["format_version"],
+            "last_updated_datetime": specs_dict["updated_datetime"],
             "comment": "",
             "auto_marking": False,
         }
