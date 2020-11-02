@@ -9,6 +9,7 @@ from typing import Any, Optional, Tuple, Type, TypeVar
 import fire
 
 from anno3d.annofab.client import ClientLoader
+from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
@@ -186,9 +187,8 @@ class ProjectCommand:
         en_name: str,
         color: Tuple[int, int, int],
         default_ignore: bool,
-        # layer / segment_typeは3dpcエディタ側で未実装なので入力させない
-        # layer: int,
-        # segment_type: str,
+        segment_type: str,
+        layer: int = 100,
     ) -> None:
         """
         対象のプロジェクトにsegmentのlabelを追加・更新します。
@@ -201,13 +201,28 @@ class ProjectCommand:
             en_name: 　英語名称
             color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
             default_ignore: このラベルがついた領域を、デフォルトでは他のアノテーションから除外するかどうか。 Trueであれば除外する
+            segment_type: "SEMANTIC" or "INSTANCE" を指定する。
+                          "SEMANTIC"の場合、このラベルのインスタンスは唯一つとなる。
+                          "INSTANCE"の場合複数のインスタンスを作成可能となる
+            layer: このラベルのレイヤーを指定する。 同じレイヤーのラベルは、頂点を共有することが出来ない。
+                   また、大きな値のレイヤーが優先して表示される。
+                   指定しない場合は 100
 
         Returns:
 
         """
+        if segment_type not in (segment_type_semantic, segment_type_instance):
+            raise RuntimeError(
+                f"segment_typeの値は、{segment_type_semantic} もしくは {segment_type_instance} でなければなりませんが、 {segment_type} でした"
+            )
+        if layer < 0:
+            raise RuntimeError(f"layerは、0以上の整数である必要がありますが、{layer} でした")
+
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            labels = ProjectApi(api).put_segment_label(project_id, label_id, ja_name, en_name, color, default_ignore)
+            labels = ProjectApi(api).put_segment_label(
+                project_id, label_id, ja_name, en_name, color, default_ignore, segment_kind=segment_type, layer=layer,
+            )
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)

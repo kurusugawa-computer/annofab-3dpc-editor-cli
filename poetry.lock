@@ -4,11 +4,12 @@ description = "Python Clinet Library of AnnoFab WebAPI (https://annofab.com/docs
 name = "annofabapi"
 optional = false
 python-versions = ">=3.6,<4.0"
-version = "0.38.9"
+version = "0.38.11"
 
 [package.dependencies]
 backoff = "*"
 dataclasses-json = "*"
+more-itertools = "*"
 python-dateutil = "*"
 requests = "*"
 
@@ -509,8 +510,8 @@ python-versions = "^3.8"
 
 [metadata.files]
 annofabapi = [
-    {file = "annofabapi-0.38.9-py3-none-any.whl", hash = "sha256:6a1a2586947d0ac01bdb6b892e285add323311a7dfed0b85ba6bbbd95a7e46b9"},
-    {file = "annofabapi-0.38.9.tar.gz", hash = "sha256:145b970afb3e07e1c6aea2f97b83863a7a03eafdcf36f3c0e92c22d49804f3ea"},
+    {file = "annofabapi-0.38.11-py3-none-any.whl", hash = "sha256:441fef07c62528845a693c1bc35768a0f8ee65ae5cc7381176001e6093d9e1e3"},
+    {file = "annofabapi-0.38.11.tar.gz", hash = "sha256:3eb3841c9bb2d3103de48bc99e041fd7ff013e0c40ac66ba2053dfad36d55120"},
 ]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
