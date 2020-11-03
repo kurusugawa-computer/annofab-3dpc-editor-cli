@@ -135,7 +135,7 @@ popy app.py project put_segment_label \
   --ja_name "道" \
   --en_name "road" \
   --color "(238, 130, 238)" \
-  --default_ignore True
+  --default_ignore True \
   --segment_type SEMANTIC
 
 # defaultで無視属性が無効
@@ -147,7 +147,7 @@ popy app.py project put_segment_label \
   --ja_name "壁" \
   --en_name "wall" \
   --color "(0, 182, 110)" \
-  --default_ignore False
+  --default_ignore False \
   --segment_type SEMANTIC
 
 # インスタンスセグメンテーションのラベルを追加
@@ -159,7 +159,7 @@ popy app.py project put_segment_label \
   --ja_name "車(seg)" \
   --en_name "car-seg" \
   --color "(255, 0, 0)" \
-  --default_ignore False
+  --default_ignore False \
   --segment_type INSTANCE
 
 ```
@@ -304,6 +304,9 @@ popy app.py local make_kitti_data --kitti_dir "path/to/kitti3d/dir" --output_dir
 
 poetryのインストール手順一例を以下に示す  
 2020/05/21 ubuntu 18.04 にて確認
+
+ローカルの環境に以下の手順でインストールする以外に，
+python 3.8 および poetry の導入がなされた `docker/Dockerfile` を用いても良い．
 
 ### pyenv
 
