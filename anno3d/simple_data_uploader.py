@@ -72,7 +72,7 @@ def _create_image_meta(
 
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
-    horizontal_fov = 90.0 / 180.0 * math.pi
+    horizontal_fov = math.radians(90.0)
     camera_height = 1.65
     yaw = 0.0
     if calib_path is not None:
@@ -86,7 +86,7 @@ def _create_image_meta(
         yaw = settings.direction
 
     if camera_horizontal_fov is not None:
-        horizontal_fov = camera_horizontal_fov
+        horizontal_fov = math.radians(camera_horizontal_fov)
 
     rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, yaw]))
     direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
