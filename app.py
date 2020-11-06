@@ -249,7 +249,7 @@ class ProjectCommand:
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
-            camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
+            camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
