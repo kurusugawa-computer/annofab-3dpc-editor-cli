@@ -1,8 +1,16 @@
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
+from annofabapi.dataclass.annotation_specs import (
+    AdditionalDataDefinitionV2,
+    AdditionalDataRestriction,
+    AnnotationSpecsV2,
+    InspectionPhrase,
+    LabelV2,
+)
 from annofabapi.dataclass.job import JobInfo
 from annofabapi.dataclass.project import Project
+from annofabapi.models import AnnotationSpecsMovieOption
 from dataclasses_json import DataClassJsonMixin
 
 
@@ -69,3 +77,32 @@ class CuboidAnnotations(DataClassJsonMixin):
     task_id: str
     input_data_id: str
     details: List[CuboidAnnotationDetail]
+
+
+@dataclass
+class AnnotationSpecsRequestV2(DataClassJsonMixin):
+    labels: List[LabelV2]
+    additionals: List[AdditionalDataDefinitionV2]
+    restrictions: List[AdditionalDataRestriction]
+    inspection_phrases: List[InspectionPhrase]
+    comment: str
+    auto_marking: bool
+    format_version: str
+    last_updated_datetime: Optional[str]
+    option: Union[AnnotationSpecsMovieOption, None]
+    metadata: Optional[Dict[str, str]]
+
+    @staticmethod
+    def from_specs(specs: AnnotationSpecsV2) -> "AnnotationSpecsRequestV2":
+        return AnnotationSpecsRequestV2(
+            labels=specs.labels if specs.labels is not None else [],
+            additionals=specs.additionals if specs.additionals is not None else [],
+            restrictions=specs.restrictions if specs.restrictions is not None else [],
+            inspection_phrases=specs.inspection_phrases if specs.inspection_phrases is not None else [],
+            comment="",
+            auto_marking=False,
+            format_version=specs.format_version if specs.format_version is not None else "2.1.0",
+            last_updated_datetime=specs.updated_datetime,
+            option=specs.option,
+            metadata=specs.metadata,
+        )
