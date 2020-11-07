@@ -13,8 +13,9 @@ class ProjectMetadataVersion(DataClassJsonMixin):
     version: str = "1"
 
 
+@pascalcase
 @dataclass(frozen=True)
-class ProjectMetadata:
+class ProjectMetadata(DataClassJsonMixin):
     annotation_area: AnnotationArea
     version: ProjectMetadataVersion = ProjectMetadataVersion()
 

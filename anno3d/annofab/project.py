@@ -107,14 +107,14 @@ class ProjectApi:
 
     def _mod_project_specs_metadata(
         self, project_id: str, mod_func: Callable[[ProjectMetadata], ProjectMetadata]
-    ) -> Dict[str, str]:
+    ) -> ProjectMetadata:
         def mod(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
             metadata = decode_project_meta(specs.metadata if specs.metadata is not None else {})
             new_metadata = mod_func(metadata)
             return replace(specs, metadata=encode_project_meta(new_metadata))
 
         new_spec = self._mod_project_specs(project_id, mod)
-        return new_spec.metadata if new_spec.metadata is not None else {}
+        return decode_project_meta(new_spec.metadata if new_spec.metadata is not None else {})
 
     @staticmethod
     def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
@@ -248,7 +248,10 @@ class ProjectApi:
         return [self._from_annofab_label(label.to_dict(encode_json=True)) for label in created_specs.labels]
 
     def set_annotation_area(self, project_id: str, area: AnnotationArea) -> ProjectMetadata:
-        pass
+        def mod(meta: ProjectMetadata) -> ProjectMetadata:
+            return replace(meta, annotation_area=area)
+
+        return self._mod_project_specs_metadata(project_id, mod)
 
     def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
         client = self._client

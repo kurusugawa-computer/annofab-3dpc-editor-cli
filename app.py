@@ -14,6 +14,7 @@ from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
+from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
 from anno3d.model.file_paths import FrameKind
 from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload
 
@@ -226,6 +227,78 @@ class ProjectCommand:
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
+
+    @staticmethod
+    def set_whole_annotation_area(annofab_id: str, annofab_pass: str, project_id: str,) -> None:
+        """
+        対象プロジェクトのアノテーション範囲を、「全体」に設定します。
+        すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 対象プロジェクト
+
+        Returns:
+
+        """
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            new_meta = ProjectApi(api).set_annotation_area(project_id, WholeAnnotationArea())
+            logger.info("メタデータを更新しました。")
+            logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
+
+    @staticmethod
+    def set_sphere_annotation_area(annofab_id: str, annofab_pass: str, project_id: str, radius: float) -> None:
+        """
+        対象プロジェクトのアノテーション範囲を、「球形」に設定します。
+        すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 対象プロジェクト
+            radius: アノテーション範囲の半径
+
+        Returns:
+
+        """
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            new_meta = ProjectApi(api).set_annotation_area(project_id, SphereAnnotationArea(area_radius=str(radius)))
+            logger.info("メタデータを更新しました。")
+            logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
+
+    @staticmethod
+    def set_rect_annotation_area(
+        annofab_id: str, annofab_pass: str, project_id: str, x: Tuple[float, float], y: Tuple[float, float]
+    ) -> None:
+        """
+        対象プロジェクトのアノテーション範囲を、「矩形」に設定します。
+        すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 対象プロジェクト
+            x: アノテーション範囲のx座標の範囲
+            y: アノテーション範囲のy座標の範囲
+
+        Returns:
+
+        """
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+
+        min_x = str(min(x))
+        max_x = str(max(x))
+        min_y = str(min(y))
+        max_y = str(max(x))
+        with client_loader.open_api() as api:
+            new_meta = ProjectApi(api).set_annotation_area(
+                project_id, RectAnnotationArea(area_min_x=min_x, area_max_x=max_x, area_min_y=min_y, area_max_y=max_y)
+            )
+            logger.info("メタデータを更新しました。")
+            logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
     @staticmethod
     def upload_kitti_data(
