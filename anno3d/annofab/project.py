@@ -27,7 +27,9 @@ from anno3d.annofab.constant import (
     lang_ja,
 )
 from anno3d.annofab.model import AnnotationSpecsRequestV2, Label
+from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
+from anno3d.model.project_specs_meta import ProjectMetadata, decode_project_meta, encode_project_meta
 
 
 class ProjectApi:
@@ -100,12 +102,19 @@ class ProjectApi:
         new_specs = mod_func(specs)
         request = AnnotationSpecsRequestV2.from_specs(new_specs)
 
-        print(specs.to_json(ensure_ascii=False, indent=2))
-        print("==============")
-        print(request.to_json(ensure_ascii=False, indent=2))
-
         created_specs, _ = client.put_annotation_specs(project_id, request.to_dict(encode_json=True))
         return AnnotationSpecsV2.from_dict(created_specs)
+
+    def _mod_project_specs_metadata(
+        self, project_id: str, mod_func: Callable[[ProjectMetadata], ProjectMetadata]
+    ) -> Dict[str, str]:
+        def mod(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
+            metadata = decode_project_meta(specs.metadata if specs.metadata is not None else {})
+            new_metadata = mod_func(metadata)
+            return replace(specs, metadata=encode_project_meta(new_metadata))
+
+        new_spec = self._mod_project_specs(project_id, mod)
+        return new_spec.metadata if new_spec.metadata is not None else {}
 
     @staticmethod
     def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
@@ -237,6 +246,9 @@ class ProjectApi:
             return []
 
         return [self._from_annofab_label(label.to_dict(encode_json=True)) for label in created_specs.labels]
+
+    def set_annotation_area(self, project_id: str, area: AnnotationArea) -> ProjectMetadata:
+        pass
 
     def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
         client = self._client

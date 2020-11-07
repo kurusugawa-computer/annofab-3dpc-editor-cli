@@ -26,3 +26,4 @@ class SegmentLabelMetadata(DataClassJsonMixin):
     layer: str = "100"
     segment_kind: str = "SEMANTIC"
     type: str = "SEGMENT"
+    version: str = "1"
