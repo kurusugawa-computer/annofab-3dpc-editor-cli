@@ -1,5 +1,6 @@
 import copy
-from typing import Any, Dict, List, Optional, Tuple, Union
+from dataclasses import replace
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import more_itertools
 from annofabapi import AnnofabApi
@@ -25,8 +26,10 @@ from anno3d.annofab.constant import (
     lang_en,
     lang_ja,
 )
-from anno3d.annofab.model import Label
+from anno3d.annofab.model import AnnotationSpecsRequestV2, Label
+from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
+from anno3d.model.project_specs_meta import ProjectMetadata, decode_project_meta, encode_project_meta
 
 
 class ProjectApi:
@@ -89,6 +92,29 @@ class ProjectApi:
 
         created_id: str = project["project_id"]
         return created_id
+
+    def _mod_project_specs(
+        self, project_id: str, mod_func: Callable[[AnnotationSpecsV2], AnnotationSpecsV2]
+    ) -> AnnotationSpecsV2:
+        client = self._client
+
+        specs = self.get_annotation_specs(project_id)
+        new_specs = mod_func(specs)
+        request = AnnotationSpecsRequestV2.from_specs(new_specs)
+
+        created_specs, _ = client.put_annotation_specs(project_id, request.to_dict(encode_json=True))
+        return AnnotationSpecsV2.from_dict(created_specs)
+
+    def _mod_project_specs_metadata(
+        self, project_id: str, mod_func: Callable[[ProjectMetadata], ProjectMetadata]
+    ) -> ProjectMetadata:
+        def mod(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
+            metadata = decode_project_meta(specs.metadata if specs.metadata is not None else {})
+            new_metadata = mod_func(metadata)
+            return replace(specs, metadata=encode_project_meta(new_metadata))
+
+        new_spec = self._mod_project_specs(project_id, mod)
+        return decode_project_meta(new_spec.metadata if new_spec.metadata is not None else {})
 
     @staticmethod
     def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
@@ -175,60 +201,57 @@ class ProjectApi:
         metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
         ignore_additional: Optional[IgnoreAdditionalDef],
     ) -> List[Label]:
-        client = self._client
+        def update_specs(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
+            labels: List[LabelV2] = specs.labels if specs.labels is not None else list([])
+            index: Optional[int]
+            index, _ = next(filter(lambda ie: ie[1].label_id == label_id, enumerate(labels)), (None, None))
+            meta_dic: dict = metadata.to_dict(encode_json=True)
 
-        specs = self.get_annotation_specs(project_id)
-        specs_dict: dict = specs.to_dict(encode_json=True)
-        labels: List[LabelV2] = specs.labels if specs.labels is not None else list([])
-        index: Optional[int]
-        index, _ = next(filter(lambda ie: ie[1].label_id == label_id, enumerate(labels)), (None, None))
-        meta_dic: dict = metadata.to_dict(encode_json=True)
+            additionals = specs.additionals
+            if ignore_additional is not None:
+                additionals = self._create_ignore_additional_if_necessary(specs, ignore_additional)
 
-        additionals = specs.additionals
-        if ignore_additional is not None:
-            additionals = self._create_ignore_additional_if_necessary(specs, ignore_additional)
+            new_label: LabelV2 = LabelV2(
+                label_id=label_id,
+                label_name=InternationalizationMessage(
+                    [
+                        InternationalizationMessageMessages(lang_ja, ja_name),
+                        InternationalizationMessageMessages(lang_en, en_name),
+                    ],
+                    lang_ja,
+                ),
+                keybind=[],
+                annotation_type=AnnotationType.CUSTOM,
+                bounding_box_metadata=None,
+                segmentation_metadata=None,
+                additional_data_definitions=[ignore_additional.id] if ignore_additional is not None else [],
+                color=Color(red=color[0], green=color[1], blue=color[2]),
+                annotation_editor_feature=AnnotationEditorFeature(
+                    append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
+                ),
+                allow_out_of_image_bounds=False,
+                metadata=meta_dic,
+            )
 
-        new_label: LabelV2 = LabelV2(
-            label_id=label_id,
-            label_name=InternationalizationMessage(
-                [
-                    InternationalizationMessageMessages(lang_ja, ja_name),
-                    InternationalizationMessageMessages(lang_en, en_name),
-                ],
-                lang_ja,
-            ),
-            keybind=[],
-            annotation_type=AnnotationType.CUSTOM,
-            bounding_box_metadata=None,
-            segmentation_metadata=None,
-            additional_data_definitions=[ignore_additional.id] if ignore_additional is not None else [],
-            color=Color(red=color[0], green=color[1], blue=color[2]),
-            annotation_editor_feature=AnnotationEditorFeature(
-                append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
-            ),
-            allow_out_of_image_bounds=False,
-            metadata=meta_dic,
-        )
+            if index is not None:
+                labels[index] = new_label
+            else:
+                labels.append(new_label)
 
-        if index is not None:
-            labels[index] = new_label
-        else:
-            labels.append(new_label)
+            return replace(specs, labels=labels, additionals=additionals)
 
-        # XXX AnnotationSpecsRequestV2 の dataclassなかった…
-        new_specs = {
-            "labels": LabelV2.schema().dump(labels, many=True),
-            "additionals": AdditionalDataDefinitionV2.schema().dump(additionals, many=True),
-            "restrictions": specs_dict["restrictions"],
-            "inspection_phrases": specs_dict["inspection_phrases"],
-            "format_version": specs_dict["format_version"],
-            "last_updated_datetime": specs_dict["updated_datetime"],
-            "comment": "",
-            "auto_marking": False,
-        }
+        created_specs = self._mod_project_specs(project_id, update_specs)
 
-        created_specs, _ = client.put_annotation_specs(project_id, new_specs)
-        return [self._from_annofab_label(label) for label in created_specs["labels"]]
+        if created_specs.labels is None:
+            return []
+
+        return [self._from_annofab_label(label.to_dict(encode_json=True)) for label in created_specs.labels]
+
+    def set_annotation_area(self, project_id: str, area: AnnotationArea) -> ProjectMetadata:
+        def mod(meta: ProjectMetadata) -> ProjectMetadata:
+            return replace(meta, annotation_area=area)
+
+        return self._mod_project_specs_metadata(project_id, mod)
 
     def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
         client = self._client

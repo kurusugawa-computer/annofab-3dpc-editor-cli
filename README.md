@@ -68,6 +68,119 @@ NOTES
 popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id ${ANNO_PRJ} --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
 ```
 
+
+### アノテーション範囲の設定
+
+#### ヘルプ
+
+```
+$ popy app.py project set_whole_annotation_area --help | cat
+INFO: Showing help with the command 'app.py project set_whole_annotation_area -- --help'.
+
+NAME
+    app.py project set_whole_annotation_area - 対象プロジェクトのアノテーション範囲を、「全体」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+SYNOPSIS
+    app.py project set_whole_annotation_area ANNOFAB_ID ANNOFAB_PASS PROJECT_ID
+
+DESCRIPTION
+    対象プロジェクトのアノテーション範囲を、「全体」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+POSITIONAL ARGUMENTS
+    ANNOFAB_ID
+    ANNOFAB_PASS
+    PROJECT_ID
+        対象プロジェクト
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+```
+
+```
+$ popy app.py project set_sphere_annotation_area --help | cat
+INFO: Showing help with the command 'app.py project set_sphere_annotation_area -- --help'.
+
+NAME
+    app.py project set_sphere_annotation_area - 対象プロジェクトのアノテーション範囲を、「球形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+SYNOPSIS
+    app.py project set_sphere_annotation_area ANNOFAB_ID ANNOFAB_PASS PROJECT_ID RADIUS
+
+DESCRIPTION
+    対象プロジェクトのアノテーション範囲を、「球形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+POSITIONAL ARGUMENTS
+    ANNOFAB_ID
+    ANNOFAB_PASS
+    PROJECT_ID
+        対象プロジェクト
+    RADIUS
+        アノテーション範囲の半径
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+```
+
+```
+$ popy app.py project set_rect_annotation_area --help | cat
+INFO: Showing help with the command 'app.py project set_rect_annotation_area -- --help'.
+
+NAME
+    app.py project set_rect_annotation_area - 対象プロジェクトのアノテーション範囲を、「矩形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+SYNOPSIS
+    app.py project set_rect_annotation_area ANNOFAB_ID ANNOFAB_PASS PROJECT_ID X Y
+
+DESCRIPTION
+    対象プロジェクトのアノテーション範囲を、「矩形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+
+POSITIONAL ARGUMENTS
+    ANNOFAB_ID
+    ANNOFAB_PASS
+    PROJECT_ID
+        対象プロジェクト
+    X
+        アノテーション範囲のx座標の範囲
+    Y
+        アノテーション範囲のy座標の範囲
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+
+```
+
+#### コマンド例
+
+##### アノテーション範囲を「全体」に設定
+
+```
+popy app.py project set_whole_annotation_area \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ}
+```
+
+##### アノテーション範囲を「半径10」に設定
+
+```
+popy app.py project set_sphere_annotation_area \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ} \
+  --radius 10.0
+```
+
+##### アノテーション範囲を「-10 < x < 20, -5 < y < 10の矩形」に設定
+
+```
+popy app.py project set_rect_annotation_area \
+  --annofab_id ${ANNO_ID} \
+  --annofab_pass ${ANNO_PASS} \
+  --project_id ${ANNO_PRJ} \
+  --x "(-10.0, 20.0)" \
+  --y "(-5.0, 10.0)"
+```
+
 ### ラベルの設定 
 
 #### ヘルプ
