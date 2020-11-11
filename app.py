@@ -292,7 +292,7 @@ class ProjectCommand:
         min_x = str(min(x))
         max_x = str(max(x))
         min_y = str(min(y))
-        max_y = str(max(x))
+        max_y = str(max(y))
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(
                 project_id, RectAnnotationArea(area_min_x=min_x, area_max_x=max_x, area_min_y=min_y, area_max_y=max_y)
