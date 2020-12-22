@@ -131,17 +131,22 @@ class SceneUploader:
 
     @staticmethod
     def _create_task_def_csv(
-        csv_path: Path, id_prefix: str, data_and_pathss: List[Tuple[DataId, FilePaths]], chunk_size: int
+        csv_path: Path, id_prefix: str, data_and_pathss: List[Tuple[DataId, FilePaths]], chunk_size: Optional[int] = None,
     ) -> Dict[TaskId, List[Tuple[DataId, FilePaths]]]:
-        chunked_by_tasks = more_itertools.chunked(data_and_pathss, chunk_size)
 
-        task_count = 0
+        if chunk_size is None:
+            chunked_by_tasks = [data_and_pathss]
+            task_id_template = "{id_prefix}"
+
+        else:
+            chunked_by_tasks = more_itertools.chunked(data_and_pathss, chunk_size)
+            task_id_template = "{id_prefix}_{task_count}"
+
         result_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]] = {}
         with csv_path.open("w", encoding="UTF-8") as writer:
-            for data_list in chunked_by_tasks:
-                task_id = f"{id_prefix}_{task_count}"
+            for task_count, data_list in enumerate(chunked_by_tasks):
+                task_id = task_id_template.format(id_prefix=id_prefix, task_count=task_count)
                 result_dict[TaskId(task_id)] = data_list
-                task_count += 1
                 for data_id, paths in data_list:
                     # XXX ここで `paths.pcd.name` は input_data_nameの指定なんだけど、ファイル名がinput_data_nameである
                     # というのは、ただの実装詳細なので、本来はやりたくない…
