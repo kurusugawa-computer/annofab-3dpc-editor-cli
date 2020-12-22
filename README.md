@@ -377,7 +377,7 @@ FLAGS
     --sensor_height=SENSOR_HEIGHT
         velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。 省略した場合、kittiのセンサ高(1.73)を採用する
     --frame_per_task=FRAME_PER_TASK
-        タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 10
+        タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
     --upload_kind=UPLOAD_KIND
         処理の種類　省略した場合 "annotation" // data => 入力データと補助データの登録のみを行う // task => 上記に加えて、タスクの生成を行う // annotation => 上記に加えて、アノテーションの登録を行う
 
