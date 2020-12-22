@@ -139,7 +139,7 @@ class SceneUploader:
         result_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]] = {}
         with csv_path.open("w", encoding="UTF-8") as writer:
             for data_list in chunked_by_tasks:
-                task_id = f"{id_prefix}{task_count}"
+                task_id = f"{id_prefix}_{task_count}"
                 result_dict[TaskId(task_id)] = data_list
                 task_count += 1
                 for data_id, paths in data_list:
