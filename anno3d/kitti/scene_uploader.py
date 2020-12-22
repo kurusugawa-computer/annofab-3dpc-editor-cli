@@ -36,7 +36,7 @@ class UploadKind(Enum):
 class SceneUploaderInput:
     project_id: str
     input_data_id_prefix: str
-    frame_per_task: int
+    frame_per_task: Optional[int]
     sensor_height: Optional[float]
     task_id_prefix: str
     kind: UploadKind
