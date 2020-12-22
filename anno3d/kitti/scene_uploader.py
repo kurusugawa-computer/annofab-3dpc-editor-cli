@@ -131,7 +131,10 @@ class SceneUploader:
 
     @staticmethod
     def _create_task_def_csv(
-        csv_path: Path, id_prefix: str, data_and_pathss: List[Tuple[DataId, FilePaths]], chunk_size: Optional[int] = None,
+        csv_path: Path,
+        id_prefix: str,
+        data_and_pathss: List[Tuple[DataId, FilePaths]],
+        chunk_size: Optional[int] = None,
     ) -> Dict[TaskId, List[Tuple[DataId, FilePaths]]]:
 
         if chunk_size is None:
