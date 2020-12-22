@@ -138,7 +138,7 @@ class SceneUploader:
     ) -> Dict[TaskId, List[Tuple[DataId, FilePaths]]]:
 
         if chunk_size is None:
-            chunked_by_tasks = [data_and_pathss]
+            chunked_by_tasks = iter([data_and_pathss])
             task_id_template = "{id_prefix}"
 
         else:
