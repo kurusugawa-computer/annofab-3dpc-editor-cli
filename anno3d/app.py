@@ -457,5 +457,9 @@ class Command:
         self.local = LocalCommand()
 
 
-if __name__ == "__main__":
+def main():
     fire.Fire(Command)
+
+
+if __name__ == "__main__":
+    main()
