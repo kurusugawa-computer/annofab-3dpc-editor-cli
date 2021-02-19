@@ -1,5 +1,14 @@
 # annofab-3dpc-editor-cli
 
+## 社内PyPIからインストール
+
+```
+$ pip install --extra-index-url https://kurusugawa.jp/nexus3/repository/KRS-pypi/simple anno3d
+```
+
+※ ConfluenceのユーザIDとパスワードを入力してください。
+
+
 ## 開発環境
 
  * poetry
@@ -19,7 +28,7 @@ poetry install
 
 ## コマンドサンプル
 
-* `alias popy='poetry run python'`が設定されているものとします。
+
 * 環境変数`ANNO_ID`にAnnoFabのIdが設定されているものとします。
 * 環境変数`ANNO_PASS`にAnnoFabのパスワードが設定されているものとします。
 * 環境変数`ANNO_PRJ`にAnnoFabの対象プロジェクトIdが設定されているものとします。
@@ -29,7 +38,7 @@ poetry install
 #### ヘルプ
 
 ```
-$ popy app.py project create --help | cat
+$ anno3d project create --help | cat
 INFO: Showing help with the command 'app.py project create -- --help'.
 
 NAME
@@ -65,7 +74,7 @@ NOTES
 #### コマンド例
 
 ```
-popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id ${ANNO_PRJ} --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
+anno3d project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --project_id ${ANNO_PRJ} --organization_name "3dpc-editor-devel" --plugin_id "ace7bf49-aefb-4db2-96ad-805496bd40aa"
 ```
 
 
@@ -74,7 +83,7 @@ popy app.py project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} 
 #### ヘルプ
 
 ```
-$ popy app.py project set_whole_annotation_area --help | cat
+$ anno3d project set_whole_annotation_area --help | cat
 INFO: Showing help with the command 'app.py project set_whole_annotation_area -- --help'.
 
 NAME
@@ -97,7 +106,7 @@ NOTES
 ```
 
 ```
-$ popy app.py project set_sphere_annotation_area --help | cat
+$ anno3d project set_sphere_annotation_area --help | cat
 INFO: Showing help with the command 'app.py project set_sphere_annotation_area -- --help'.
 
 NAME
@@ -122,7 +131,7 @@ NOTES
 ```
 
 ```
-$ popy app.py project set_rect_annotation_area --help | cat
+$ anno3d project set_rect_annotation_area --help | cat
 INFO: Showing help with the command 'app.py project set_rect_annotation_area -- --help'.
 
 NAME
@@ -154,7 +163,7 @@ NOTES
 ##### アノテーション範囲を「全体」に設定
 
 ```
-popy app.py project set_whole_annotation_area \
+anno3d project set_whole_annotation_area \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ}
@@ -163,7 +172,7 @@ popy app.py project set_whole_annotation_area \
 ##### アノテーション範囲を「半径10」に設定
 
 ```
-popy app.py project set_sphere_annotation_area \
+anno3d project set_sphere_annotation_area \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -173,7 +182,7 @@ popy app.py project set_sphere_annotation_area \
 ##### アノテーション範囲を「-10 < x < 20, -5 < y < 10の矩形」に設定
 
 ```
-popy app.py project set_rect_annotation_area \
+anno3d project set_rect_annotation_area \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -186,7 +195,7 @@ popy app.py project set_rect_annotation_area \
 #### ヘルプ
 
 ```
-$ popy app.py project put_cuboid_label --help | cat
+$ anno3d project put_cuboid_label --help | cat
 INFO: Showing help with the command 'app.py project put_cuboid_label -- --help'.
 
 NAME
@@ -221,7 +230,7 @@ NOTES
 
 ```
 # バウンディングボックスのラベルを追加
-popy app.py project put_cuboid_label \
+anno3d project put_cuboid_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ}\
@@ -229,7 +238,7 @@ popy app.py project put_cuboid_label \
   --ja_name "車" \
   --en_name "car" \
   --color "(255, 0, 0)"
-popy app.py project put_cuboid_label \
+anno3d project put_cuboid_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -240,7 +249,7 @@ popy app.py project put_cuboid_label \
 
 # セマンティックセグメンテーションのラベルを追加
 # defaultで無視属性が有効
-popy app.py project put_segment_label \
+anno3d project put_segment_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -252,7 +261,7 @@ popy app.py project put_segment_label \
   --segment_type SEMANTIC
 
 # defaultで無視属性が無効
-popy app.py project put_segment_label \
+anno3d project put_segment_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -264,7 +273,7 @@ popy app.py project put_segment_label \
   --segment_type SEMANTIC
 
 # インスタンスセグメンテーションのラベルを追加
-popy app.py project put_segment_label \
+anno3d project put_segment_label \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -286,7 +295,7 @@ popy app.py project put_segment_label \
 #### ヘルプ
 
 ```
-$ popy app.py project upload_kitti_data --help | cat
+$ anno3d project upload_kitti_data --help | cat
 INFO: Showing help with the command 'app.py project upload_kitti_data -- --help'.
 
 NAME
@@ -327,7 +336,7 @@ NOTES
 #### コマンド例
 
 ```
-popy app.py project upload_kitti_data \
+anno3d project upload_kitti_data \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id "3dpc-editor-trial" \
@@ -349,7 +358,7 @@ TODO データ形式の正式な置き場ができたら、URLを書き換える
 #### ヘルプ
 
 ```
-$ popy app.py project upload_scene --help | cat
+$ anno3d project upload_scene --help | cat
 INFO: Showing help with the command 'app.py project upload_scene -- --help'.
 
 NAME
@@ -389,7 +398,7 @@ NOTES
 #### コマンド例
 
 ```
-popy app.py project upload_scene \
+anno3d project upload_scene \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
@@ -406,7 +415,7 @@ popy app.py project upload_scene \
 プライベートストレージなどを使用する場合に、kitti 3d detectionのデータを元に、AnnoFabに投入可能なデータ群を作る
 
 ```
-popy app.py local make_kitti_data --kitti_dir "path/to/kitti3d/dir" --output_dir "./output" --size 30 --input_id_prefix "prefix" --camera_horizontal_fov 56
+anno3d local make_kitti_data --kitti_dir "path/to/kitti3d/dir" --output_dir "./output" --size 30 --input_id_prefix "prefix" --camera_horizontal_fov 56
 ```
 
 ----
@@ -494,4 +503,20 @@ fish:
 ```
 pipx install poetry
 poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
+```
+
+
+----
+## 社内PyPIにアップロードする手順
+
+1. 事前に以下のコマンドを実行しておき、社内PyPIのURLを設定する。
+
+```   
+$ poetry config repositories.kci-upload https://kurusugawa.jp/nexus3/repository/KRS-pypi/
+```
+
+2. 以下のコマンドを実行する。user_idとpasswordの入力が求められるので、Confluenceのuser_idとpasswordを入力する。
+
+```
+$ poetry publish --repository kci-upload --build
 ```
