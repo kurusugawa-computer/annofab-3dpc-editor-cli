@@ -6,7 +6,7 @@ lint:
 	poetry run flake8 anno3d tests sandbox.py
 	poetry run mypy anno3d tests sandbox.py
 	poetry run black --check .
-	poetry run pylint --jobs=$(shell nproc) anno3d tests sandbox app --rcfile .pylintrc
+	poetry run pylint --jobs=$(shell nproc) anno3d tests sandbox --rcfile .pylintrc
 
 format:
 	poetry run isort --verbose --recursive anno3d tests
