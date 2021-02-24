@@ -52,7 +52,9 @@ class Sandbox:
     """ sandboxの再現 """
 
     @staticmethod
-    def upload(annofab_id: str, annofab_pass: str, kitti_dir: str, skip: int = 0, size: int = 10) -> None:
+    def upload(
+        annofab_id: str, annofab_pass: str, kitti_dir: str, skip: int = 0, size: int = 10, force: bool = False
+    ) -> None:
         project = "66241367-9175-40e3-8f2f-391d6891590b"
 
         kitti_dir_path = Path(kitti_dir)
@@ -60,7 +62,7 @@ class Sandbox:
         pathss = loader.load(FrameKind.testing)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = Uploader(api, project)
+            uploader = Uploader(api, project, force=force)
             for paths in pathss:
                 upload("", uploader, paths, [hidari, migi], None, None)
 
@@ -84,6 +86,7 @@ class Sandbox:
         velo_dir: str,
         data_id_prefix: str = "",
         sensor_height: Optional[float] = None,
+        force: bool = False,
     ) -> None:
         velo_files = [Path(velo_dir) / path for path in os.listdir(velo_dir)]
 
@@ -91,7 +94,7 @@ class Sandbox:
         with client_loader.open_api() as api:
             with tempfile.TemporaryDirectory() as tempdir_str:
                 tempdir = Path(tempdir_str)
-                uploader = Uploader(api, project_id)
+                uploader = Uploader(api, project_id, force=force)
                 for velo_file in velo_files:
                     data_id = data_id_prefix + velo_file.name
                     uploader.upload_input_data(data_id, velo_file)
@@ -311,6 +314,7 @@ class ProjectCommand:
         input_id_prefix: str = "",
         camera_horizontal_fov: Optional[int] = None,
         sensor_height: Optional[float] = None,
+        force: bool = False,
     ) -> None:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
@@ -325,6 +329,7 @@ class ProjectCommand:
             camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+            force: 入力データと補助データを上書きしてアップロードするかどうか。
         Returns:
 
         """
@@ -335,7 +340,7 @@ class ProjectCommand:
         pathss = loader.load(None)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = Uploader(api, project)
+            uploader = Uploader(api, project, force=force)
             # fmt: off
             uploaded = [
                 (input_id, len(supps))
@@ -361,6 +366,7 @@ class ProjectCommand:
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
+        force: bool = False,
     ) -> None:
         """
         拡張kitti形式のファイル群をAnnoFabにアップロードします
@@ -379,11 +385,11 @@ class ProjectCommand:
                          data => 入力データと補助データの登録のみを行う //
                          task => 上記に加えて、タスクの生成を行う //
                          annotation => 上記に加えて、アノテーションの登録を行う
+            force: 入力データと補助データを上書きしてアップロードするかどうか。
 
         Returns:
 
         """
-
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             uploader = SceneUploader(api)
@@ -395,7 +401,7 @@ class ProjectCommand:
                 task_id_prefix=task_id_prefix,
                 kind=_decode_enum(UploadKind, upload_kind),
             )
-            uploader.upload_from_path(Path(scene_path), uploader_input)
+            uploader.upload_from_path(Path(scene_path), uploader_input, force=force)
 
 
 class LocalCommand:

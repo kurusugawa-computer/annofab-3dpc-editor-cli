@@ -326,6 +326,8 @@ FLAGS
         カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
     --sensor_height=SENSOR_HEIGHT
         点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+    --force=FORCE
+        入力データと補助データを上書きしてアップロードするかどうか。
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -389,6 +391,8 @@ FLAGS
         タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
     --upload_kind=UPLOAD_KIND
         処理の種類　省略した場合 "annotation" // data => 入力データと補助データの登録のみを行う // task => 上記に加えて、タスクの生成を行う // annotation => 上記に加えて、アノテーションの登録を行う
+    --force=FORCE
+        入力データと補助データを上書きしてアップロードするかどうか。
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS

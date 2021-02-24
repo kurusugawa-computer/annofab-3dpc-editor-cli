@@ -84,7 +84,7 @@ class SceneUploader:
             labels=[KittiLabelSeries(str(label_dir.absolute()), str(image_dir.absolute()), str(calib_dir.absolute()))],
         )
 
-    def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput) -> None:
+    def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput, force: bool = False) -> None:
         """
         Args:
             scene_path: 読み込み対象パス。　以下の何れかとなる
@@ -93,6 +93,7 @@ class SceneUploader:
                          * scene.metaが存在しないアップロード対象ディレクトリのパス
                              * "velodyne/image_2/calib/label_2" のディレクトリがあるという前提で、読み込みを行う
             uploader_input:
+            force:
 
         Returns:
 
@@ -102,7 +103,7 @@ class SceneUploader:
             file = scene_path / Defaults.scene_meta_file
 
         scene = Scene.decode_path(file) if file.is_file() else self._default_scene(scene_path)
-        return self.upload_scene(scene, uploader_input)
+        return self.upload_scene(scene, uploader_input, force=force)
 
     @staticmethod
     def _scene_to_paths(scene: Scene) -> List[FilePaths]:
@@ -224,10 +225,10 @@ class SceneUploader:
 
             task.put_cuboid_annotations(task_id, input_data_id, self._label_to_cuboids(id_to_label, transformed_labels))
 
-    def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
+    def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput, force: bool = False) -> None:
         logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
 
-        uploader = Uploader(self._client, uploader_input.project_id)
+        uploader = Uploader(self._client, uploader_input.project_id, force=force)
         pathss = self._scene_to_paths(scene)
         specs = self._project.get_annotation_specs(uploader_input.project_id)
         annofab_labels = specs.labels
