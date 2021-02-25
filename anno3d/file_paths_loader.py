@@ -55,7 +55,6 @@ def load_scene_file_paths(scene_path: Path) -> List[FilePaths]:
         file = scene_path / Defaults.scene_meta_file
 
     scene_dir = file.parent
-    # TODO: protected memberを呼び出している
     scene = Scene.decode_path(file) if file.is_file() else SceneUploader.default_scene(scene_path)
 
     def scene_to_paths(frame_id: str) -> FilePaths:
