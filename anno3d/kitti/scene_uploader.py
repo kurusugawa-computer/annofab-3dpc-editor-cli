@@ -64,7 +64,7 @@ class SceneUploader:
         self._project = ProjectApi(client)
 
     @staticmethod
-    def default_scene(path: Path) -> Scene:
+    def _default_scene(path: Path) -> Scene:
         velo_dir = path / Defaults.velo_dir
         image_dir = path / Defaults.image_dir
         calib_dir = path / Defaults.calib_dir
@@ -102,7 +102,7 @@ class SceneUploader:
         if scene_path.is_dir():
             file = scene_path / Defaults.scene_meta_file
 
-        scene = Scene.decode_path(file) if file.is_file() else self.default_scene(scene_path)
+        scene = Scene.decode_path(file) if file.is_file() else self._default_scene(scene_path)
         return self.upload_scene(scene, uploader_input, force=force)
 
     @staticmethod
