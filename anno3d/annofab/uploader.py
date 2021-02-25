@@ -19,6 +19,13 @@ logger = getLogger(__name__)
 
 
 class Uploader:
+    """
+
+    Args:
+        client:
+        project: プロジェクトID
+        force: 入力データと補助データを上書きしてアップロードするかどうか。
+    """
     _client: AnnofabApi
     _project: str
 
