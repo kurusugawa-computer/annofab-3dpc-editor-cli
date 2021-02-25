@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Optional, Tuple, Type, TypeVar
 
 import fire
 
@@ -12,10 +12,11 @@ from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import Uploader
-from anno3d.file_paths_loader import FilePathsLoader
+from anno3d.file_paths_loader import FilePathsLoader, load_scene_file_paths
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
 from anno3d.model.file_paths import FrameKind
+from anno3d.model.input_files import InputData
 from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload
 
 E = TypeVar("E", bound=Enum)
@@ -408,6 +409,17 @@ class LocalCommand:
     """ ローカルファイルシステムに対する処理を行います """
 
     @staticmethod
+    def _write_all_files_json(inputs: List[InputData], output_dir_path: Path):
+        all_files_json = output_dir_path / "_all_data.jsonl"
+        with all_files_json.open(mode="w", encoding="UTF-8") as writer:
+            for input_data in inputs:
+                writer.write(input_data.to_json(ensure_ascii=False, sort_keys=True))
+                writer.write("\n")
+
+        logger.info("%d 件のinput dataを、%sに出力しました", len(inputs), output_dir_path)
+        logger.info("メタデータ: %s", all_files_json.absolute())
+
+    @staticmethod
     def make_kitti_data(
         kitti_dir: str,
         output_dir: str,
@@ -452,6 +464,36 @@ class LocalCommand:
 
         logger.info("%d 件のinput dataを、%sに出力しました", len(inputs), output_dir_path)
         logger.info("メタデータ: %s", all_files_json.absolute())
+
+    @staticmethod
+    def make_scene(
+        scene_path: str, output_dir: str, input_data_id_prefix: str = "", sensor_height: Optional[float] = None,
+    ) -> None:
+        """
+        拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
+        annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+
+        Args:
+            scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
+            output_dir: 出力先ディレクトリ。
+            input_data_id_prefix: input_data_idの先頭に付与する文字列
+            sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
+                           3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+
+        Returns:
+
+        """
+        output_dir_path = Path(output_dir)
+        pathss = load_scene_file_paths(Path(scene_path))
+
+        inputs = [
+            create_kitti_files(
+                input_data_id_prefix, output_dir_path, paths, camera_horizontal_fov=None, sensor_height=sensor_height
+            )
+            for paths in pathss
+        ]
+
+        LocalCommand._write_all_files_json(inputs, output_dir_path)
 
 
 class Command:

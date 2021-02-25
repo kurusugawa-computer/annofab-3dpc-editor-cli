@@ -26,6 +26,7 @@ class Uploader:
         project: プロジェクトID
         force: 入力データと補助データを上書きしてアップロードするかどうか。
     """
+
     _client: AnnofabApi
     _project: str
 
