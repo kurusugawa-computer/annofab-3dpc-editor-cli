@@ -2,7 +2,9 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
+from anno3d.kitti.scene_uploader import Defaults, SceneUploader
 from anno3d.model.file_paths import FilePaths, FrameKey, FrameKind, ImagePaths
+from anno3d.model.scene import Scene
 
 
 class FilePathsLoader:
@@ -35,3 +37,41 @@ class FilePathsLoader:
             )
 
         return [id_to_paths(pcd_file) for pcd_file in os.listdir(pcd_dir)]
+
+
+def load_scene_file_paths(scene_path: Path) -> List[FilePaths]:
+    """
+    拡張KITTI形式のファイルを読み込む.
+
+    Args:
+        scene_path: 読み込み対象パス。　以下の何れかとなる
+                     * scene.metaファイルのパス
+                     * scene.metaファイルの存在するディレクトリのパス
+                     * scene.metaが存在しないアップロード対象ディレクトリのパス
+                         * "velodyne/image_2/calib/label_2" のディレクトリがあるという前提で、読み込みを行う
+    """
+    file = scene_path
+    if scene_path.is_dir():
+        file = scene_path / Defaults.scene_meta_file
+
+    scene_dir = file.parent
+    scene = Scene.decode_path(file) if file.is_file() else SceneUploader.default_scene(scene_path)
+
+    def scene_to_paths(frame_id: str) -> FilePaths:
+        images = [
+            ImagePaths(
+                scene_dir / f"{img.image_dir}/{frame_id}.png",
+                scene_dir / f"{img.calib_dir}/{frame_id}.txt",
+                img.camera_view_setting,
+            )
+            for img in scene.images
+        ]
+
+        return FilePaths(
+            FrameKey(None, frame_id),
+            pcd=scene_dir / f"{scene.velodyne.velodyne_dir}/{frame_id}.bin",
+            images=images,
+            labels=[],
+        )
+
+    return [scene_to_paths(frame_id) for frame_id in scene.id_list]
