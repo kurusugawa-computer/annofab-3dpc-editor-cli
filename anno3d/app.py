@@ -456,14 +456,7 @@ class LocalCommand:
             for paths in pathss
         ]
 
-        all_files_json = output_dir_path / "_all_data.jsonl"
-        with all_files_json.open(mode="w", encoding="UTF-8") as writer:
-            for input_data in inputs:
-                writer.write(input_data.to_json(ensure_ascii=False, sort_keys=True))
-                writer.write("\n")
-
-        logger.info("%d 件のinput dataを、%sに出力しました", len(inputs), output_dir_path)
-        logger.info("メタデータ: %s", all_files_json.absolute())
+        LocalCommand._write_all_files_json(inputs, output_dir_path)
 
     @staticmethod
     def make_scene(
