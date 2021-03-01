@@ -1,3 +1,4 @@
+import sys
 import logging
 import os
 import shutil
@@ -47,6 +48,23 @@ logger = logging.getLogger(__name__)
 resources = Path(__file__).parent / "resources"
 hidari = resources / "hidari.png"
 migi = resources / "migi.png"
+
+env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
+env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
+
+
+def validate_annofab_credentail(annofab_id: Optional[str], annofab_pass: Optional[str]):
+    """
+    AnnoFabの認証情報が指定されていることを確認します。
+    どちらかが指定されていない場合は処理を終了します。
+    """
+    if annofab_id is None:
+        print("AnnoFabのユーザIDが指定されていないため、終了します。環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--anno_id' にユーザIDを指定してください。",file=sys.stderr )
+        sys.exit(1)
+    if annofab_pass is None:
+        print("AnnoFabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--anno_pass' にパスワードを指定してください。",file=sys.stderr )
+        sys.exit(1)
+    return
 
 
 class Sandbox:
@@ -358,8 +376,6 @@ class ProjectCommand:
 
     @staticmethod
     def upload_scene(
-        annofab_id: str,
-        annofab_pass: str,
         project_id: str,
         scene_path: str,
         input_data_id_prefix: str = "",
@@ -368,6 +384,8 @@ class ProjectCommand:
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
         force: bool = False,
+        annofab_id: str = env_annofab_user_id,
+        annofab_pass: str = env_annofab_password,
     ) -> None:
         """
         拡張kitti形式のファイル群をAnnoFabにアップロードします
@@ -391,6 +409,7 @@ class ProjectCommand:
         Returns:
 
         """
+        validate_annofab_credentail(annofab_id, annofab_pass)
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             uploader = SceneUploader(api)
