@@ -203,6 +203,9 @@ class ProjectCommand:
         Returns:
 
         """
+        # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
+        label_id = str(label_id)
+
         if segment_type not in (segment_type_semantic, segment_type_instance):
             raise RuntimeError(
                 f"segment_typeの値は、{segment_type_semantic} もしくは {segment_type_instance} でなければなりませんが、 {segment_type} でした"
@@ -243,6 +246,8 @@ class ProjectCommand:
         Returns:
 
         """
+        # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
+        label_id = str(label_id)
         validate_annofab_credentail(annofab_id, annofab_pass)
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
