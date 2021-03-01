@@ -170,37 +170,6 @@ class ProjectCommand:
         raise RuntimeError("この関数は廃止されました put_cuboid_label を利用してください")
 
     @staticmethod
-    def put_cuboid_label(
-        annofab_id: str,
-        annofab_pass: str,
-        project_id: str,
-        label_id: str,
-        ja_name: str,
-        en_name: str,
-        color: Tuple[int, int, int],
-    ) -> None:
-        """
-        対象のプロジェクトにcuboidのlabelを追加・更新します。
-        Args:
-            annofab_id:
-            annofab_pass:
-            project_id: 対象プロジェクト
-            label_id: 追加・更新するラベルのid
-            ja_name: 日本語名称
-            en_name: 　英語名称
-            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
-
-        Returns:
-
-        """
-        client_loader = ClientLoader(annofab_id, annofab_pass)
-        with client_loader.open_api() as api:
-            labels = ProjectApi(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
-            labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
-            logger.info("Label(=%s) を作成・更新しました", label_id)
-            logger.info(labels_json)
-
-    @staticmethod
     def put_segment_label(
         annofab_id: str,
         annofab_pass: str,
@@ -246,6 +215,38 @@ class ProjectCommand:
             labels = ProjectApi(api).put_segment_label(
                 project_id, label_id, ja_name, en_name, color, default_ignore, segment_kind=segment_type, layer=layer,
             )
+            labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
+            logger.info("Label(=%s) を作成・更新しました", label_id)
+            logger.info(labels_json)
+
+    @staticmethod
+    def put_cuboid_label(
+        project_id: str,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+        annofab_id: str = env_annofab_user_id,
+        annofab_pass: str = env_annofab_password,
+    ) -> None:
+        """
+        対象のプロジェクトにcuboidのlabelを追加・更新します。
+        Args:
+            annofab_id:
+            annofab_pass:
+            project_id: 対象プロジェクト
+            label_id: 追加・更新するラベルのid
+            ja_name: 日本語名称
+            en_name: 　英語名称
+            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
+
+        Returns:
+
+        """
+        validate_annofab_credentail(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            labels = ProjectApi(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
