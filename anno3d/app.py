@@ -1,7 +1,7 @@
-import sys
 import logging
 import os
 import shutil
+import sys
 import tempfile
 from enum import Enum
 from pathlib import Path
@@ -53,18 +53,24 @@ env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
 env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
 
 
-def validate_annofab_credentail(annofab_id: Optional[str], annofab_pass: Optional[str]):
+def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optional[str]) -> bool:
     """
     AnnoFabの認証情報が指定されていることを確認します。
     どちらかが指定されていない場合は処理を終了します。
     """
     if annofab_id is None:
-        print("AnnoFabのユーザIDが指定されていないため、終了します。環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--anno_id' にユーザIDを指定してください。",file=sys.stderr )
-        sys.exit(1)
+        print(
+            "AnnoFabのユーザIDが指定されていないため、終了します。環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--anno_id' にユーザIDを指定してください。",
+            file=sys.stderr,
+        )
+        return False
     if annofab_pass is None:
-        print("AnnoFabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--anno_pass' にパスワードを指定してください。",file=sys.stderr )
-        sys.exit(1)
-    return
+        print(
+            "AnnoFabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--anno_pass' にパスワードを指定してください。",
+            file=sys.stderr,
+        )
+        return False
+    return True
 
 
 class Sandbox:
@@ -72,8 +78,16 @@ class Sandbox:
 
     @staticmethod
     def upload(
-        annofab_id: str, annofab_pass: str, kitti_dir: str, skip: int = 0, size: int = 10, force: bool = False
+        kitti_dir: str,
+        skip: int = 0,
+        size: int = 10,
+        force: bool = False,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+        assert annofab_id is not None and annofab_pass is not None
         project = "66241367-9175-40e3-8f2f-391d6891590b"
 
         kitti_dir_path = Path(kitti_dir)
@@ -99,14 +113,17 @@ class Sandbox:
 
     @staticmethod
     def upload_velodyne(
-        annofab_id: str,
-        annofab_pass: str,
         project_id: str,
         velo_dir: str,
         data_id_prefix: str = "",
         sensor_height: Optional[float] = None,
         force: bool = False,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+        assert annofab_id is not None and annofab_pass is not None
         velo_files = [Path(velo_dir) / path for path in os.listdir(velo_dir)]
 
         client_loader = ClientLoader(annofab_id, annofab_pass)
@@ -127,20 +144,20 @@ class ProjectCommand:
 
     @staticmethod
     def create(
-        annofab_id: str,
-        annofab_pass: str,
         project_id: str,
         organization_name: str,
         plugin_id: str,
         title: str = "",
         overview: str = "",
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
         新しいカスタムプロジェクトを生成します。
 
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 作成するprojectのid
             organization_name: projectを所属させる組織の名前
             plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
@@ -150,6 +167,9 @@ class ProjectCommand:
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+        assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             created_project_id = ProjectApi(api).create_custom_project(
@@ -159,20 +179,18 @@ class ProjectCommand:
 
     @staticmethod
     def put_label(
-        annofab_id: str,
-        annofab_pass: str,
         project_id: str,
         label_id: str,
         ja_name: str,
         en_name: str,
         color: Tuple[int, int, int],
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         raise RuntimeError("この関数は廃止されました put_cuboid_label を利用してください")
 
     @staticmethod
     def put_segment_label(
-        annofab_id: str,
-        annofab_pass: str,
         project_id: str,
         label_id: str,
         ja_name: str,
@@ -181,12 +199,14 @@ class ProjectCommand:
         default_ignore: bool,
         segment_type: str,
         layer: int = 100,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
         対象のプロジェクトにsegmentのlabelを追加・更新します。
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
             ja_name: 日本語名称
@@ -203,6 +223,9 @@ class ProjectCommand:
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+        assert annofab_id is not None and annofab_pass is not None
         # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
         label_id = str(label_id)
 
@@ -229,14 +252,14 @@ class ProjectCommand:
         ja_name: str,
         en_name: str,
         color: Tuple[int, int, int],
-        annofab_id: str = env_annofab_user_id,
-        annofab_pass: str = env_annofab_password,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
         対象のプロジェクトにcuboidのlabelを追加・更新します。
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
             ja_name: 日本語名称
@@ -246,9 +269,12 @@ class ProjectCommand:
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+        assert annofab_id is not None and annofab_pass is not None
         # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
         label_id = str(label_id)
-        validate_annofab_credentail(annofab_id, annofab_pass)
+        validate_annofab_credential(annofab_id, annofab_pass)
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
@@ -257,19 +283,27 @@ class ProjectCommand:
             logger.info(labels_json)
 
     @staticmethod
-    def set_whole_annotation_area(annofab_id: str, annofab_pass: str, project_id: str,) -> None:
+    def set_whole_annotation_area(
+        project_id: str,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
+    ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「全体」に設定します。
         すでにアノテーション範囲が設定されていた場合、上書きされます。
 
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 対象プロジェクト
 
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(project_id, WholeAnnotationArea())
@@ -277,20 +311,29 @@ class ProjectCommand:
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
     @staticmethod
-    def set_sphere_annotation_area(annofab_id: str, annofab_pass: str, project_id: str, radius: float) -> None:
+    def set_sphere_annotation_area(
+        project_id: str,
+        radius: float,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
+    ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「球形」に設定します。
         すでにアノテーション範囲が設定されていた場合、上書きされます。
 
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 対象プロジェクト
             radius: アノテーション範囲の半径
 
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(project_id, SphereAnnotationArea(area_radius=str(radius)))
@@ -299,15 +342,19 @@ class ProjectCommand:
 
     @staticmethod
     def set_rect_annotation_area(
-        annofab_id: str, annofab_pass: str, project_id: str, x: Tuple[float, float], y: Tuple[float, float]
+        project_id: str,
+        x: Tuple[float, float],
+        y: Tuple[float, float],
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「矩形」に設定します。
         すでにアノテーション範囲が設定されていた場合、上書きされます。
 
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 対象プロジェクト
             x: アノテーション範囲のx座標の範囲
             y: アノテーション範囲のy座標の範囲
@@ -315,6 +362,10 @@ class ProjectCommand:
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
 
         min_x = str(min(x))
@@ -330,8 +381,6 @@ class ProjectCommand:
 
     @staticmethod
     def upload_kitti_data(
-        annofab_id: str,
-        annofab_pass: str,
         project_id: str,
         kitti_dir: str,
         skip: int = 0,
@@ -340,12 +389,14 @@ class ProjectCommand:
         camera_horizontal_fov: Optional[int] = None,
         sensor_height: Optional[float] = None,
         force: bool = False,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 登録先のプロジェクトid
             kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
             skip: 見つけたデータの先頭何件をスキップするか
@@ -358,6 +409,10 @@ class ProjectCommand:
         Returns:
 
         """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert annofab_id is not None and annofab_pass is not None
         project = project_id
 
         kitti_dir_path = Path(kitti_dir)
@@ -390,15 +445,15 @@ class ProjectCommand:
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
         force: bool = False,
-        annofab_id: str = env_annofab_user_id,
-        annofab_pass: str = env_annofab_password,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
         拡張kitti形式のファイル群をAnnoFabにアップロードします
 
         Args:
-            annofab_id:
-            annofab_pass:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
             project_id: 登録先のプロジェクトid
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
             input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
@@ -415,7 +470,10 @@ class ProjectCommand:
         Returns:
 
         """
-        validate_annofab_credentail(annofab_id, annofab_pass)
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             uploader = SceneUploader(api)
