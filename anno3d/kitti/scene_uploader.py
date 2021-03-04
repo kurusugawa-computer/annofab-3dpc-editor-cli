@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import ClassVar, Dict, List, NewType, Optional, Tuple
+from typing import Dict, List, NewType, Optional, Tuple
 
 import more_itertools
 from annofabapi import AnnofabApi
@@ -20,7 +20,7 @@ from anno3d.annofab.uploader import Uploader
 from anno3d.kitti.calib import read_calibration, transform_labels_into_lidar_coordinates
 from anno3d.model.file_paths import FilePaths, FrameKey, ImagePaths, LabelPaths
 from anno3d.model.kitti_label import KittiLabel
-from anno3d.model.scene import KittiImageSeries, KittiLabelSeries, KittiVelodyneSeries, Scene
+from anno3d.model.scene import Defaults, Scene
 from anno3d.simple_data_uploader import upload
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -42,14 +42,6 @@ class SceneUploaderInput:
     kind: UploadKind
 
 
-class Defaults:
-    scene_meta_file: ClassVar[str] = "scene.meta"
-    velo_dir: ClassVar[str] = "velodyne"
-    image_dir: ClassVar[str] = "image_2"
-    calib_dir: ClassVar[str] = "calib"
-    label_dir: ClassVar[str] = "label_2"
-
-
 TaskId = NewType("TaskId", str)
 
 DataId = NewType("DataId", str)
@@ -62,27 +54,6 @@ class SceneUploader:
     def __init__(self, client: AnnofabApi):
         self._client = client
         self._project = ProjectApi(client)
-
-    @staticmethod
-    def _default_scene(path: Path) -> Scene:
-        velo_dir = path / Defaults.velo_dir
-        image_dir = path / Defaults.image_dir
-        calib_dir = path / Defaults.calib_dir
-        label_dir = path / Defaults.label_dir
-
-        # 画像名から .pngを取り除いたものがid
-        id_list = [file.name[0:-4] for file in image_dir.iterdir() if file.is_file()]
-
-        return Scene(
-            id_list=id_list,
-            velodyne=KittiVelodyneSeries(str(velo_dir.absolute())),
-            images=[
-                KittiImageSeries(
-                    image_dir=str(image_dir.absolute()), calib_dir=str(calib_dir.absolute()), camera_view_setting=None
-                )
-            ],
-            labels=[KittiLabelSeries(str(label_dir.absolute()), str(image_dir.absolute()), str(calib_dir.absolute()))],
-        )
 
     def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput, force: bool = False) -> None:
         """
@@ -102,7 +73,7 @@ class SceneUploader:
         if scene_path.is_dir():
             file = scene_path / Defaults.scene_meta_file
 
-        scene = Scene.decode_path(file) if file.is_file() else self._default_scene(scene_path)
+        scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(scene_path)
         return self.upload_scene(scene, uploader_input, force=force)
 
     @staticmethod
