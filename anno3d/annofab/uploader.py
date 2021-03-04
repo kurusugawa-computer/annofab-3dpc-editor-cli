@@ -122,6 +122,7 @@ class UploaderToS3(Uploader):
 
         if self._force or not self.s3_key_exists(key):
             client.upload_file(Filename=str(upload_file), Bucket=self._s3_bucket, Key=key)
+
             return self.get_s3_uri(key)
         else:
             raise RuntimeError(f"AWS S3にオブジェクトがすでに存在します。Bucket='{self._s3_bucket}', Key='{key}'")

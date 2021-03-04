@@ -7,6 +7,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional, Tuple, Type, TypeVar
 
+import boto3
 import fire
 
 from anno3d.annofab.client import ClientLoader
@@ -70,6 +71,23 @@ def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optiona
         )
         return False
     return True
+
+
+def validate_aws_credentail() -> bool:
+    client = boto3.client("sts")
+    try:
+        client.get_caller_identity()
+        return True
+    except Exception:  # pylint: disable=broad-except
+        # Exceptionでキャッチしている理由: どんな例外がスローされるか分からないため
+        # (NoCredentialsErrorだけでなくClientErrorも発生するかもしれない）
+        print(
+            "AWSの認証情報が正しくないため、終了します。"
+            "https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html "
+            "を参考にして認証情報を設定してください。",
+            file=sys.stderr,
+        )
+        return False
 
 
 class Sandbox:
@@ -522,8 +540,9 @@ class ProjectCommand:
         """
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return
-
         assert annofab_id is not None and annofab_pass is not None
+        if not validate_aws_credentail():
+            return
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             uploader = SceneUploader(api, UploaderToS3(api, project=project_id, force=force, s3_path=s3_path))
