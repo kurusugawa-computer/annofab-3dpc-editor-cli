@@ -501,6 +501,8 @@ class ProjectCommand:
         annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
         """
+        拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
+
         Args:
             s3_path: 登録先のS3パス（ex: "{bucket}/{key}"）
             project_id: 登録先のプロジェクトid
