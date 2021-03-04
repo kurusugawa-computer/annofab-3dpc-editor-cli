@@ -488,9 +488,9 @@ class ProjectCommand:
 
     @staticmethod
     def upload_scene_to_s3(
-        s3_path: str,
         project_id: str,
         scene_path: str,
+        s3_path: str,
         input_data_id_prefix: str = "",
         task_id_prefix: str = "",
         sensor_height: Optional[float] = None,
