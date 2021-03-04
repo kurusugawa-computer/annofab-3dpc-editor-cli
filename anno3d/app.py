@@ -12,7 +12,7 @@ import fire
 from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
-from anno3d.annofab.uploader import Uploader
+from anno3d.annofab.uploader import UploaderToAnnofab, UploaderToS3
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
@@ -94,7 +94,7 @@ class Sandbox:
         pathss = loader.load(FrameKind.testing)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = Uploader(api, project, force=force)
+            uploader = UploaderToAnnofab(api, project, force=force)
             for paths in pathss:
                 upload("", uploader, paths, [hidari, migi], None, None)
 
@@ -129,7 +129,7 @@ class Sandbox:
         with client_loader.open_api() as api:
             with tempfile.TemporaryDirectory() as tempdir_str:
                 tempdir = Path(tempdir_str)
-                uploader = Uploader(api, project_id, force=force)
+                uploader = UploaderToAnnofab(api, project_id, force=force)
                 for velo_file in velo_files:
                     data_id = data_id_prefix + velo_file.name
                     uploader.upload_input_data(data_id, velo_file)
@@ -419,7 +419,7 @@ class ProjectCommand:
         pathss = loader.load(None)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = Uploader(api, project, force=force)
+            uploader = UploaderToAnnofab(api, project, force=force)
             # fmt: off
             uploaded = [
                 (input_id, len(supps))
@@ -475,7 +475,7 @@ class ProjectCommand:
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = SceneUploader(api)
+            scene_uploader = SceneUploader(api, UploaderToAnnofab(api, project=project_id, force=force))
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
@@ -484,7 +484,56 @@ class ProjectCommand:
                 task_id_prefix=task_id_prefix,
                 kind=_decode_enum(UploadKind, upload_kind),
             )
-            uploader.upload_from_path(Path(scene_path), uploader_input, force=force)
+            scene_uploader.upload_from_path(Path(scene_path), uploader_input)
+
+    @staticmethod
+    def upload_scene_to_s3(
+        s3_path: str,
+        project_id: str,
+        scene_path: str,
+        input_data_id_prefix: str = "",
+        task_id_prefix: str = "",
+        sensor_height: Optional[float] = None,
+        frame_per_task: Optional[int] = None,
+        upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
+        force: bool = False,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
+    ) -> None:
+        """
+        Args:
+            s3_path: 登録先のS3パス（ex: "{bucket}/{key}"）
+            project_id: 登録先のプロジェクトid
+            scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
+            input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
+            task_id_prefix: 生成するtaskのidにつけるprefix
+            sensor_height: velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。
+                           省略した場合、kittiのセンサ高(1.73)を採用する
+            frame_per_task: タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
+            upload_kind: 処理の種類　省略した場合 "annotation" //
+                         data => 入力データと補助データの登録のみを行う //
+                         task => 上記に加えて、タスクの生成を行う //
+                         annotation => 上記に加えて、アノテーションの登録を行う
+            force: 入力データと補助データを上書きしてアップロードするかどうか。
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert annofab_id is not None and annofab_pass is not None
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+        with client_loader.open_api() as api:
+            uploader = SceneUploader(api, UploaderToS3(api, project=project_id, force=force, s3_path=s3_path))
+            uploader_input = SceneUploaderInput(
+                project_id=project_id,
+                input_data_id_prefix=input_data_id_prefix,
+                frame_per_task=frame_per_task,
+                sensor_height=sensor_height,
+                task_id_prefix=task_id_prefix,
+                kind=_decode_enum(UploadKind, upload_kind),
+            )
+            uploader.upload_from_path(Path(scene_path), uploader_input)
 
 
 class LocalCommand:

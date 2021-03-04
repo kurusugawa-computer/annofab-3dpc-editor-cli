@@ -1,12 +1,15 @@
+import abc
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Optional
 
+import boto3
 import more_itertools
 import requests
 from annofabapi import AnnofabApi
 from annofabapi.utils import allow_404_error
+from botocore.errorfactory import ClientError
 
 
 @dataclass(frozen=True)
@@ -18,7 +21,7 @@ class DataPath:
 logger = getLogger(__name__)
 
 
-class Uploader:
+class Uploader(abc.ABC):
     _client: AnnofabApi
     _project: str
 
@@ -32,17 +35,9 @@ class Uploader:
         result, _ = self._client.get_input_data(self._project, input_data_id)
         return result
 
+    @abc.abstractmethod
     def upload_tempdata(self, upload_file: Path) -> str:
-        client = self._client
-
-        data_path_dict, _ = client.create_temp_path(self._project, {"Content-Type": "application/octet-stream"})
-
-        data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
-        # XXX エラー処理とか例外処理とか何もないので注意
-        with upload_file.open(mode="rb") as data:
-            requests.put(data_path.url, data)
-
-        return data_path.path
+        pass
 
     def upload_input_data(self, input_data_id: str, file: Path) -> str:
         path = self.upload_tempdata(file)
@@ -78,3 +73,55 @@ class Uploader:
         supplementary, _ = self._client.put_supplementary_data(self._project, input_data_id, supplementary_id, body)
         logger.debug("uploaded supplementary data: %s", supplementary)
         return supplementary_id
+
+
+class UploaderToAnnofab(Uploader):
+    def upload_tempdata(self, upload_file: Path) -> str:
+        client = self._client
+
+        data_path_dict, _ = client.create_temp_path(self._project, {"Content-Type": "application/octet-stream"})
+
+        data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
+        # XXX エラー処理とか例外処理とか何もないので注意
+        with upload_file.open(mode="rb") as data:
+            requests.put(data_path.url, data)
+
+        return data_path.path
+
+
+class UploaderToS3(Uploader):
+    """
+    AWS S3にファイルをアップロードした上で、AnnoFabに入力データや補助情報を登録するクラス。
+    """
+
+    def __init__(self, client: AnnofabApi, project: str, s3_path: str, force: bool = False):
+        tmp = s3_path.split("/")
+        self._s3_bucket = tmp[0]
+        self._s3_prefix_key = s3_path[len(self._s3_bucket + "/") :]
+        self._s3_client = boto3.client("s3")
+        super().__init__(client=client, project=project, force=force)
+
+    @allow_404_error
+    def get_input_data(self, input_data_id: str) -> Optional[Any]:
+        result, _ = self._client.get_input_data(self._project, input_data_id)
+        return result
+
+    def s3_key_exists(self, key: str) -> bool:
+        try:
+            self._s3_client.head_object(Bucket=self._s3_bucket, Key=key)
+            return True
+        except ClientError:
+            return False
+
+    def get_s3_uri(self, key: str) -> str:
+        return f"s3://{self._s3_bucket}/{key}"
+
+    def upload_tempdata(self, upload_file: Path) -> str:
+        client = self._s3_client
+        key = self._s3_prefix_key + f"{upload_file.parent.name}/{upload_file.name}"
+
+        if self._force or not self.s3_key_exists(key):
+            client.upload(Filename=str(upload_file), Bucket=self._s3_bucket, Key=key)
+            return self.get_s3_uri(key)
+        else:
+            raise RuntimeError(f"AWS S3にオブジェクトがすでに存在します。Bucket='{self._s3_bucket}', Key='{key}'")

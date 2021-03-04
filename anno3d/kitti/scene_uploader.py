@@ -59,9 +59,10 @@ class SceneUploader:
     _client: AnnofabApi
     _project: ProjectApi
 
-    def __init__(self, client: AnnofabApi):
+    def __init__(self, client: AnnofabApi, uploader: Uploader):
         self._client = client
         self._project = ProjectApi(client)
+        self._uploader = uploader
 
     @staticmethod
     def _default_scene(path: Path) -> Scene:
@@ -84,7 +85,7 @@ class SceneUploader:
             labels=[KittiLabelSeries(str(label_dir.absolute()), str(image_dir.absolute()), str(calib_dir.absolute()))],
         )
 
-    def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput, force: bool = False) -> None:
+    def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput) -> None:
         """
         Args:
             scene_path: 読み込み対象パス。　以下の何れかとなる
@@ -93,7 +94,6 @@ class SceneUploader:
                          * scene.metaが存在しないアップロード対象ディレクトリのパス
                              * "velodyne/image_2/calib/label_2" のディレクトリがあるという前提で、読み込みを行う
             uploader_input:
-            force:
 
         Returns:
 
@@ -103,7 +103,7 @@ class SceneUploader:
             file = scene_path / Defaults.scene_meta_file
 
         scene = Scene.decode_path(file) if file.is_file() else self._default_scene(scene_path)
-        return self.upload_scene(scene, uploader_input, force=force)
+        return self.upload_scene(scene, uploader_input)
 
     @staticmethod
     def _scene_to_paths(scene: Scene) -> List[FilePaths]:
@@ -225,10 +225,10 @@ class SceneUploader:
 
             task.put_cuboid_annotations(task_id, input_data_id, self._label_to_cuboids(id_to_label, transformed_labels))
 
-    def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput, force: bool = False) -> None:
+    def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
         logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
 
-        uploader = Uploader(self._client, uploader_input.project_id, force=force)
+        uploader = self._uploader
         pathss = self._scene_to_paths(scene)
         specs = self._project.get_annotation_specs(uploader_input.project_id)
         annofab_labels = specs.labels

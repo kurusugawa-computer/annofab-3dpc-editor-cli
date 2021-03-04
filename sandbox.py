@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from anno3d.annofab.client import ClientLoader
-from anno3d.annofab.uploader import Uploader
+from anno3d.annofab.uploader import UploaderToAnnofab
 from anno3d.file_paths_loader import FilePathsLoader
 from anno3d.model.file_paths import FrameKind
 from anno3d.simple_data_uploader import create_meta_file, upload
@@ -41,7 +41,7 @@ def upload_files():
     pathss = loader.load(FrameKind.testing)[10:20]
     client_loader = ClientLoader(annofab_id, password)
     with client_loader.open_api() as api:
-        uploader = Uploader(api, project)
+        uploader = UploaderToAnnofab(api, project)
         for paths in pathss:
             upload("", uploader, paths, [hidari, migi], None, None)
 
