@@ -13,7 +13,7 @@ import fire
 from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
-from anno3d.annofab.uploader import UploaderToAnnofab, UploaderToS3
+from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
 from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
@@ -113,7 +113,7 @@ class Sandbox:
         pathss = loader.load(FrameKind.testing)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = UploaderToAnnofab(api, project, force=force)
+            uploader = AnnofabStorageUploader(api, project, force=force)
             for paths in pathss:
                 upload("", uploader, paths, [hidari, migi], None, None)
 
@@ -148,7 +148,7 @@ class Sandbox:
         with client_loader.open_api() as api:
             with tempfile.TemporaryDirectory() as tempdir_str:
                 tempdir = Path(tempdir_str)
-                uploader = UploaderToAnnofab(api, project_id, force=force)
+                uploader = AnnofabStorageUploader(api, project_id, force=force)
                 for velo_file in velo_files:
                     data_id = data_id_prefix + velo_file.name
                     uploader.upload_input_data(data_id, velo_file)
@@ -438,7 +438,7 @@ class ProjectCommand:
         pathss = loader.load(None)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = UploaderToAnnofab(api, project, force=force)
+            uploader = AnnofabStorageUploader(api, project, force=force)
             # fmt: off
             uploaded = [
                 (input_id, len(supps))
@@ -494,7 +494,7 @@ class ProjectCommand:
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            scene_uploader = SceneUploader(api, UploaderToAnnofab(api, project=project_id, force=force))
+            scene_uploader = SceneUploader(api, AnnofabStorageUploader(api, project=project_id, force=force))
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
@@ -546,7 +546,7 @@ class ProjectCommand:
             return
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = SceneUploader(api, UploaderToS3(api, project=project_id, force=force, s3_path=s3_path))
+            uploader = SceneUploader(api, S3Uploader(api, project=project_id, force=force, s3_path=s3_path))
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,

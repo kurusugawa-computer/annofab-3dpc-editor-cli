@@ -83,7 +83,7 @@ class Uploader(abc.ABC):
         return supplementary_id
 
 
-class UploaderToAnnofab(Uploader):
+class AnnofabStorageUploader(Uploader):
     def upload_tempdata(self, upload_file: Path) -> str:
         client = self._client
 
@@ -97,7 +97,7 @@ class UploaderToAnnofab(Uploader):
         return data_path.path
 
 
-class UploaderToS3(Uploader):
+class S3Uploader(Uploader):
     """
     AWS S3にファイルをアップロードした上で、AnnoFabに入力データや補助情報を登録するクラス。
     """
