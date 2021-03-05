@@ -75,20 +75,9 @@ def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optiona
 
 
 def validate_aws_credentail() -> bool:
-    client = boto3.client("sts")
-    try:
-        client.get_caller_identity()
-        return True
-    except Exception:  # pylint: disable=broad-except
-        # Exceptionでキャッチしている理由: どんな例外がスローされるか分からないため
-        # (NoCredentialsErrorだけでなくClientErrorも発生するかもしれない）
-        print(
-            "AWSの認証情報が正しくないため、終了します。"
-            "https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html "
-            "を参考にして認証情報を設定してください。",
-            file=sys.stderr,
-        )
-        return False
+    if boto3.DEFAULT_SESSION is None:
+        boto3.setup_default_session()
+    return boto3.DEFAULT_SESSION.get_credentials() is not None  # type: ignore
 
 
 class Sandbox:
