@@ -64,6 +64,14 @@ class JsonScene(DataClassJsonMixin):
     serieses: List[Series]
 
 
+class Defaults:
+    scene_meta_file: ClassVar[str] = "scene.meta"
+    velo_dir: ClassVar[str] = "velodyne"
+    image_dir: ClassVar[str] = "image_2"
+    calib_dir: ClassVar[str] = "calib"
+    label_dir: ClassVar[str] = "label_2"
+
+
 @dataclass(frozen=True)
 class Scene(DataClassJsonMixin):
     id_list: List[str]
@@ -125,3 +133,24 @@ class Scene(DataClassJsonMixin):
     def decode_path(cls, json_file: Path) -> "Scene":
         with json_file.open("r") as fp:
             return cls.decode(json_file.parent, fp.read())
+
+    @classmethod
+    def default_scene(cls, path: Path) -> "Scene":
+        velo_dir = path / Defaults.velo_dir
+        image_dir = path / Defaults.image_dir
+        calib_dir = path / Defaults.calib_dir
+        label_dir = path / Defaults.label_dir
+
+        # 画像名から .pngを取り除いたものがid
+        id_list = [file.name[0:-4] for file in image_dir.iterdir() if file.is_file()]
+
+        return Scene(
+            id_list=id_list,
+            velodyne=KittiVelodyneSeries(str(velo_dir.absolute())),
+            images=[
+                KittiImageSeries(
+                    image_dir=str(image_dir.absolute()), calib_dir=str(calib_dir.absolute()), camera_view_setting=None
+                )
+            ],
+            labels=[KittiLabelSeries(str(label_dir.absolute()), str(image_dir.absolute()), str(calib_dir.absolute()))],
+        )
