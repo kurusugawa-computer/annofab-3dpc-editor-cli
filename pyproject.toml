@@ -20,6 +20,10 @@ flake8 = "^3.8.1"
 black = "^19.10b0"
 isort = {extras = ["pyproject"], version = "^4.3.21"}
 pylint = "^2.5.2"
+# document
+sphinx = "^3.5.2"
+pydata-sphinx-theme = "^0.4.3"
+recommonmark = "^0.7.1"
 
 [tool.black]
 line-length = 120
