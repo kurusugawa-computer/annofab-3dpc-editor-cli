@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "annofab-3dpc-editor-cli"
-copyright = "2020"
-author = "kurusugawa"
+copyright = "2021"
+author = "Kurusugawa Computer Inc."
 
 
 # -- General configuration ---------------------------------------------------
