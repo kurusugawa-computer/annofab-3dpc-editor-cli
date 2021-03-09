@@ -326,7 +326,6 @@ anno3d project upload_kitti_data \
 ファイル群をAnnoFabへ登録できます。
 あわせて `--upload_kind` を指定することで、タスク作成やアノテーション登録も同時に行うことができます。
 
-TODO データ形式の正式な置き場ができたら、URLを書き換える
 
 #### ヘルプ
 
