@@ -9,7 +9,7 @@ from annofabapi.models import TaskStatus
 
 from anno3d.annofab.model import CuboidAnnotationDetail, TaskGenerateResponse
 from anno3d.annofab.project import ProjectApi
-from anno3d.annofab.uploader import Uploader
+from anno3d.annofab.uploader import AnnofabStorageUploader
 
 
 class TaskApi:
@@ -33,7 +33,7 @@ class TaskApi:
     def create_tasks_by_csv(self, csv_path: Path) -> TaskGenerateResponse:
         client = self._client
         project_id = self._project_id
-        uploader = Uploader(client, project_id)
+        uploader = AnnofabStorageUploader(client, project_id)
         project = self._project.get_project(project_id)
         if project is None:
             raise RuntimeError("指定されたプロジェクト(={})が見つかりませんでした。".format(project_id))
