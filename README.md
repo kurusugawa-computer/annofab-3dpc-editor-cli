@@ -475,7 +475,7 @@ anno3d project upload_scene_to_s3 \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
   --frame_per_task 4 \
-  --s3_path "my-bucket/foo/bar"
+  --s3_path "my-bucket/foo/bar" \
   --input_data_id_prefix scene1-1 \
   --task_id_prefix scene1-task-1- \
   --sensor_height 0 \
