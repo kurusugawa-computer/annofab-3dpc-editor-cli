@@ -77,7 +77,15 @@ def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optiona
 def validate_aws_credentail() -> bool:
     if boto3.DEFAULT_SESSION is None:
         boto3.setup_default_session()
-    return boto3.DEFAULT_SESSION.get_credentials() is not None  # type: ignore
+    result = boto3.DEFAULT_SESSION.get_credentials() is not None  # type: ignore
+    if not result:
+        print(
+            "AWSの認証情報が正しくないため、終了します。"
+            "https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html "
+            "を参考にして認証情報を設定してください。",
+            file=sys.stderr,
+        )
+    return result
 
 
 class Sandbox:
