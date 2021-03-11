@@ -260,7 +260,7 @@ anno3d project put_segment_label \
 ### データの投入（KITTI 3D object detection形式）
 
 `project upload_kitti_data`により、
-[KITTI 3D object detetection](kitti_3d_object_detection.md)
+[KITTI形式(KITTI 3D object detetection)](kitti_3d_object_detection.md)
 の形式を持つファイル群をAnnoFabへ登録できます。
 
 #### ヘルプ
@@ -456,7 +456,7 @@ anno3d project upload_scene_to_s3 \
 
 ### 投入データのローカルファイルシステムへの生成
 
-プライベートストレージなどを使用する場合に、kitti 3d detectionのデータを元に、AnnoFabに投入可能なデータ群を作る
+プライベートストレージなどを使用する場合に、KITTI形式のデータを元に、AnnoFabに投入可能なデータ群を作る例。
 
 ```
 anno3d local make_kitti_data --kitti_dir "path/to/kitti3d/dir" --output_dir "./output" --size 30 --input_id_prefix "prefix" --camera_horizontal_fov 56

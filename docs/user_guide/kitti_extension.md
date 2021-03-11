@@ -1,19 +1,20 @@
 
-# KITTI拡張形式
+# 拡張KITTI形式
 
 ## 概要
+[KITTI形式(KITTI 3D object detetection)](kitti_3d_object_detection.md) に以下の拡張性を持たせた、KCI独自のフォーマットです。以下の項目に該当する要件がある場合には本形式の走行データを入力としてください。それ以外の場合は、標準の[KITTI形式](kitti_3d_object_detection.md)をお使いいただくことを推奨します。
 
-[KITTI 3D object detetection形式](kitti_3d_object_detection.md)に以下の拡張性を持たせた、KCI独自のフォーマットです。
-
+* あるシーンに紐づく複数のカメラ画像（例：側方カメラ）をアップロードできる
 * `velodyne`, `image_2`などのディレクトリ名を変更できる
 * アノテーション情報が格納されたラベルファイルに、AnnoFabの`annotation_id`を格納できる
-* 3dpc-editorの視野角を設定できる
+* 3dpc-editorで表示されるカメラの向き及び視野角を設定できる
 
+※実用上の観点から定めている形式であり，将来的に変更される可能性があります。
 
 ## ディレクトリ構成
 
 `scene.meta`ファイルには、各データが格納されているディレクトリなどが記載されています。
-`scene.meta`ファイルが存在しない場合は、[KITTI 3D object detetection形式](kitti_3d_object_detection.md)として扱います。
+`scene.meta`ファイルが存在しない場合、入力走行データは[KITTI形式](kitti_3d_object_detection.md)として扱われます。
 
 
 ```
@@ -49,7 +50,7 @@
 ## scene.meta
 
 ### 基本的なパターン
-以下の`scene.meta`は、KITTI 3D object detetection形式と同じディレクトリ構成を表しています。
+以下の`scene.meta`は、KITTI形式と同じディレクトリ構成を表しています。
 
 ```json
 {
@@ -95,7 +96,7 @@ scene0/
 ├── scene.meta
 ```
 
-### 視野角を設定する場合
+### カメラの向き及び視野角を設定する場合
 
 
 ```json
