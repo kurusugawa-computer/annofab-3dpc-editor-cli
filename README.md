@@ -1,10 +1,12 @@
 # annofab-3dpc-editor-cli
 
-## Install
+## 社内PyPIからインストール
 
 ```
-$ pip install anno3d
+$ pip install --extra-index-url https://kurusugawa.jp/nexus3/repository/KRS-pypi/simple anno3d
 ```
+
+※ ConfluenceのユーザIDとパスワードを入力してください。
 
 
 ## 開発環境
@@ -24,8 +26,6 @@ poetry install
 
 ----
 
-
-=======
 ## コマンドサンプル
 
 
