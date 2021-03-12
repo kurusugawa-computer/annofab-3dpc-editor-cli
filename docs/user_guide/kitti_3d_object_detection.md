@@ -1,7 +1,8 @@
 # KITTI形式（`KITTI 3D object detetection`）
 
 ## 概要
-`project upload_kitti_data` コマンドで入力とするのは、3D物体検出で広く使われている KITTI形式（`KITTI 3D object detection`）の走行データになります。`KITTI 3D object detection` についての詳細は http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d を参照してください。
+`project upload_kitti_data` コマンドで入力とするのは、3D物体検出で広く使われている KITTI形式（`KITTI 3D object detection`）の走行データになります。
+`KITTI 3D object detection` についての詳細は [KITTIの公式サイト](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d) を参照してください。
 
 ## ディレクトリ構成
 
@@ -52,7 +53,7 @@ binファイルには以下の情報が含まれています。
 
 binファイルの読み方は、以下を参照してください。
 
-- https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L80:L87
+- [https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L80:L87](https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L80:L87)
 
 
 ### calib
@@ -72,8 +73,8 @@ annofab-3dpc-editor-cliでは以下の項目を読み込みます。
 
 各項目の詳細は以下を参照してください。
 
-- https://medium.com/test-ttile/kitti-3d-object-detection-dataset-d78a762b5a4
-- https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L142
+- [https://medium.com/test-ttile/kitti-3d-object-detection-dataset-d78a762b5a4](https://medium.com/test-ttile/kitti-3d-object-detection-dataset-d78a762b5a4)
+- [https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L142](https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L142)
 
 
 ### label_2
@@ -100,5 +101,5 @@ annofab-3dpc-editor-cliでは以下の項目を読み込みます。
 
 各項目の詳細は以下を参照してください。
 
-- https://github.com/NVIDIA/DIGITS/issues/866
-- http://hirotaka-hachiya.hatenablog.com/entry/2018/02/10/163432
+- [https://github.com/NVIDIA/DIGITS/issues/866](https://github.com/NVIDIA/DIGITS/issues/866)
+- [http://hirotaka-hachiya.hatenablog.com/entry/2018/02/10/163432](http://hirotaka-hachiya.hatenablog.com/entry/2018/02/10/163432)
