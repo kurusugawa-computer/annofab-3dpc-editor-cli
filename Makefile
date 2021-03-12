@@ -1,4 +1,4 @@
-.PHONY: lint test
+.PHONY: lint test docs
 
 ONLY=""
 
@@ -18,3 +18,7 @@ ifeq ($(ONLY),"")
 else
 		poetry run pytest ${ONLY}
 endif
+
+docs:
+	cd docs && poetry run make html
+
