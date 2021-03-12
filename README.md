@@ -27,7 +27,7 @@ poetry install
 ----
 
 ## コマンドサンプル
-https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli/docs/user_guide/command_sample.md 参照
+https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli/tree/master/docs/user_guide/command_sample.md 参照
 
 ----
 
