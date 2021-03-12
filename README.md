@@ -3,7 +3,8 @@
 ## 社内PyPIからインストール
 
 ```
-$ pip install --extra-index-url https://kurusugawa.jp/nexus3/repository/KRS-pypi/simple anno3d
+$ pip install --extra-index-url https://kurusugawa.jp/nexus3/repository/KRS-pypi/simple  annofab-3dpc-editor-cli
+
 ```
 
 ※ ConfluenceのユーザIDとパスワードを入力してください。

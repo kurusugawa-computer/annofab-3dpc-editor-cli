@@ -10,20 +10,18 @@
 
 ```
 $ anno3d project create --help | cat
-INFO: Showing help with the command 'app.py project create -- --help'.
+INFO: Showing help with the command 'anno3d project create -- --help'.
 
 NAME
-    app.py project create - 新しいカスタムプロジェクトを生成します。
+    anno3d project create - 新しいカスタムプロジェクトを生成します。
 
 SYNOPSIS
-    app.py project create ANNOFAB_ID ANNOFAB_PASS PROJECT_ID ORGANIZATION_NAME PLUGIN_ID <flags>
+    anno3d project create PROJECT_ID ORGANIZATION_NAME PLUGIN_ID <flags>
 
 DESCRIPTION
     新しいカスタムプロジェクトを生成します。
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         作成するprojectのid
     ORGANIZATION_NAME
@@ -36,9 +34,14 @@ FLAGS
         projectのタイトル。　省略した場合 project_id と同様
     --overview=OVERVIEW
         projectの概要。 省略した場合 project_id と同様
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
+
 ```
 
 
@@ -55,68 +58,76 @@ anno3d project create  --annofab_id ${ANNO_ID} --annofab_pass ${ANNO_PASS} --pro
 
 ```
 $ anno3d project set_whole_annotation_area --help | cat
-INFO: Showing help with the command 'app.py project set_whole_annotation_area -- --help'.
+INFO: Showing help with the command 'anno3d project set_whole_annotation_area -- --help'.
 
 NAME
-    app.py project set_whole_annotation_area - 対象プロジェクトのアノテーション範囲を、「全体」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+    anno3d project set_whole_annotation_area - 対象プロジェクトのアノテーション範囲を、「全体」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
 
 SYNOPSIS
-    app.py project set_whole_annotation_area ANNOFAB_ID ANNOFAB_PASS PROJECT_ID
+    anno3d project set_whole_annotation_area PROJECT_ID <flags>
 
 DESCRIPTION
     対象プロジェクトのアノテーション範囲を、「全体」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         対象プロジェクト
 
+FLAGS
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
+
 ```
 
 ```
 $ anno3d project set_sphere_annotation_area --help | cat
-INFO: Showing help with the command 'app.py project set_sphere_annotation_area -- --help'.
+INFO: Showing help with the command 'anno3d project set_sphere_annotation_area -- --help'.
 
 NAME
-    app.py project set_sphere_annotation_area - 対象プロジェクトのアノテーション範囲を、「球形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+    anno3d project set_sphere_annotation_area - 対象プロジェクトのアノテーション範囲を、「球形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
 
 SYNOPSIS
-    app.py project set_sphere_annotation_area ANNOFAB_ID ANNOFAB_PASS PROJECT_ID RADIUS
+    anno3d project set_sphere_annotation_area PROJECT_ID RADIUS <flags>
 
 DESCRIPTION
     対象プロジェクトのアノテーション範囲を、「球形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         対象プロジェクト
     RADIUS
         アノテーション範囲の半径
 
+FLAGS
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
+
 ```
 
 ```
 $ anno3d project set_rect_annotation_area --help | cat
-INFO: Showing help with the command 'app.py project set_rect_annotation_area -- --help'.
+INFO: Showing help with the command 'anno3d project set_rect_annotation_area -- --help'.
 
 NAME
-    app.py project set_rect_annotation_area - 対象プロジェクトのアノテーション範囲を、「矩形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
+    anno3d project set_rect_annotation_area - 対象プロジェクトのアノテーション範囲を、「矩形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
 
 SYNOPSIS
-    app.py project set_rect_annotation_area ANNOFAB_ID ANNOFAB_PASS PROJECT_ID X Y
+    anno3d project set_rect_annotation_area PROJECT_ID X Y <flags>
 
 DESCRIPTION
     対象プロジェクトのアノテーション範囲を、「矩形」に設定します。 すでにアノテーション範囲が設定されていた場合、上書きされます。
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         対象プロジェクト
     X
@@ -124,9 +135,14 @@ POSITIONAL ARGUMENTS
     Y
         アノテーション範囲のy座標の範囲
 
+FLAGS
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
-
 ```
 
 #### コマンド例
@@ -167,20 +183,18 @@ anno3d project set_rect_annotation_area \
 
 ```
 $ anno3d project put_cuboid_label --help | cat
-INFO: Showing help with the command 'app.py project put_cuboid_label -- --help'.
+INFO: Showing help with the command 'anno3d project put_cuboid_label -- --help'.
 
 NAME
-    app.py project put_cuboid_label - 対象のプロジェクトにcuboidのlabelを追加・更新します。
+    anno3d project put_cuboid_label - 対象のプロジェクトにcuboidのlabelを追加・更新します。
 
 SYNOPSIS
-    app.py project put_cuboid_label ANNOFAB_ID ANNOFAB_PASS PROJECT_ID LABEL_ID JA_NAME EN_NAME COLOR
+    anno3d project put_cuboid_label PROJECT_ID LABEL_ID JA_NAME EN_NAME COLOR <flags>
 
 DESCRIPTION
     対象のプロジェクトにcuboidのlabelを追加・更新します。
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         対象プロジェクト
     LABEL_ID
@@ -192,9 +206,14 @@ POSITIONAL ARGUMENTS
     COLOR
         ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
 
+FLAGS
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
-
 ```
 
 #### コマンド例
@@ -267,20 +286,18 @@ anno3d project put_segment_label \
 
 ```
 $ anno3d project upload_kitti_data --help | cat
-INFO: Showing help with the command 'app.py project upload_kitti_data -- --help'.
+INFO: Showing help with the command 'anno3d project upload_kitti_data -- --help'.
 
 NAME
-    app.py project upload_kitti_data - kitti 3d detection形式のファイル群を3dpc-editorに登録します。
+    anno3d project upload_kitti_data - kitti 3d detection形式のファイル群を3dpc-editorに登録します。
 
 SYNOPSIS
-    app.py project upload_kitti_data ANNOFAB_ID ANNOFAB_PASS PROJECT_ID KITTI_DIR <flags>
+    anno3d project upload_kitti_data PROJECT_ID KITTI_DIR <flags>
 
 DESCRIPTION
     kitti 3d detection形式のファイル群を3dpc-editorに登録します。
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         登録先のプロジェクトid
     KITTI_DIR
@@ -294,11 +311,15 @@ FLAGS
     --input_id_prefix=INPUT_ID_PREFIX
         input_data_idの先頭に付与する文字列
     --camera_horizontal_fov=CAMERA_HORIZONTAL_FOV
-        カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
+        カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
     --sensor_height=SENSOR_HEIGHT
         点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -331,20 +352,18 @@ anno3d project upload_kitti_data \
 
 ```
 $ anno3d project upload_scene --help | cat
-INFO: Showing help with the command 'app.py project upload_scene -- --help'.
+INFO: Showing help with the command 'anno3d project upload_scene -- --help'.
 
 NAME
-    app.py project upload_scene - 拡張kitti形式のファイル群をAnnoFabにアップロードします
+    anno3d project upload_scene - 拡張kitti形式のファイル群をAnnoFabにアップロードします
 
 SYNOPSIS
-    app.py project upload_scene ANNOFAB_ID ANNOFAB_PASS PROJECT_ID SCENE_PATH <flags>
+    anno3d project upload_scene PROJECT_ID SCENE_PATH <flags>
 
 DESCRIPTION
     拡張kitti形式のファイル群をAnnoFabにアップロードします
 
 POSITIONAL ARGUMENTS
-    ANNOFAB_ID
-    ANNOFAB_PASS
     PROJECT_ID
         登録先のプロジェクトid
     SCENE_PATH
@@ -363,6 +382,10 @@ FLAGS
         処理の種類　省略した場合 "annotation" // data => 入力データと補助データの登録のみを行う // task => 上記に加えて、タスクの生成を行う // annotation => 上記に加えて、アノテーションの登録を行う
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -389,12 +412,15 @@ anno3d project upload_scene \
 `project upload_scene_to_s3` により、[拡張KITTI形式](kitti_extension.md)の形式をもつ
 ファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
 
-事前にAWSの認証情報を設定しておく必要があります。https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html を参考にしてください。
+事前にAWSの認証情報を設定しておく必要があります。[boto3 : Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) を参考にしてください。
 
 
 #### ヘルプ
 
 ```
+$ anno3d project upload_scene_to_s3 --help | cat
+INFO: Showing help with the command 'anno3d project upload_scene_to_s3 -- --help'.
+
 NAME
     anno3d project upload_scene_to_s3 - 拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
 
@@ -432,8 +458,6 @@ FLAGS
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
-
-
 ```
 
 
@@ -459,6 +483,21 @@ anno3d project upload_scene_to_s3 \
 プライベートストレージなどを使用する場合に、KITTI形式のデータを元に、AnnoFabに投入可能なデータ群を作る例。
 
 ```
-anno3d local make_kitti_data --kitti_dir "path/to/kitti3d/dir" --output_dir "./output" --size 30 --input_id_prefix "prefix" --camera_horizontal_fov 56
+$ anno3d local make_kitti_data \
+ --kitti_dir "path/to/kitti3d/dir" \
+ --output_dir "./output" \
+ --size 30 \
+ --input_id_prefix "prefix" \
+ --camera_horizontal_fov 56
+```
+
+拡張KITTI形式のデータを元に出力する場合は、`anno3d local make_scene`コマンドを利用してください。
+
+```
+$ anno3d local make_scene \
+ --scene_path "/path/to/scene.meta" \
+ --output_dir "./output" \
+ --input_id_prefix "prefix" \
+ --sensor_height 0
 ```
 
