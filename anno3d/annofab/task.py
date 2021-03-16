@@ -40,12 +40,11 @@ class TaskApi:
 
         uploaded_path = uploader.upload_tempdata(csv_path)
 
-        query_params = {"v": "2"}
         body_params = {
             "task_generate_rule": {"csv_data_path": uploaded_path, "_type": "ByInputDataCsv"},
             "project_last_updated_datetime": project.updated_datetime,
         }
-        task_generate_result, _ = client.initiate_tasks_generation(project_id, query_params, body_params)
+        task_generate_result, _ = client.initiate_tasks_generation(project_id, request_body=body_params)
 
         return TaskGenerateResponse.from_dict(task_generate_result)
 
