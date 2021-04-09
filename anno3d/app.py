@@ -26,7 +26,6 @@ E = TypeVar("E", bound=Enum)
 
 def _decode_enum(enum: Type[E], value: Any) -> E:
     for e in enum:
-        print(f"{e.value} == {value}")
         if e.value == value:
             return e
 
