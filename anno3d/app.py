@@ -465,11 +465,6 @@ class ProjectCommand:
         with client_loader.open_api() as api:
             uploader = AnnofabStorageUploader(api, project, force=force)
 
-            # uploaded: List[Tuple[str, int]] = []
-            # for paths in pathss:
-            #     r = await upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
-            #     uploaded.append((r[0], len(r[1])))
-
             # fmt: off
             tasks = [
                 upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
