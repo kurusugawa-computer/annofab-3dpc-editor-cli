@@ -22,7 +22,7 @@ from anno3d.kitti.calib import read_calibration, transform_labels_into_lidar_coo
 from anno3d.model.file_paths import FilePaths, FrameKey, ImagePaths, LabelPaths
 from anno3d.model.kitti_label import KittiLabel
 from anno3d.model.scene import Defaults, Scene
-from anno3d.simple_data_uploader import upload_async
+from anno3d.simple_data_uploader import SupplementaryData, upload_async
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -51,11 +51,13 @@ DataId = NewType("DataId", str)
 class SceneUploader:
     _client: AnnofabApi
     _project: ProjectApi
+    _sem: Optional[asyncio.Semaphore]
 
-    def __init__(self, client: AnnofabApi, uploader: Uploader):
+    def __init__(self, client: AnnofabApi, uploader: Uploader, parallelism: Optional[int]):
         self._client = client
         self._project = ProjectApi(client)
         self._uploader = uploader
+        self._sem = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
     def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput) -> None:
         """
@@ -185,28 +187,52 @@ class SceneUploader:
         task_id: TaskId,
         pathsss: List[Tuple[DataId, List[LabelPaths]]],
     ) -> None:
-        loop = asyncio.get_event_loop()
-        for input_data_id, pathss in pathsss:
-            logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
-            transformed_labels = [
-                transformed_label
-                for paths in pathss
-                for calib in [read_calibration(paths.calib)]
-                for labels in [KittiLabel.decode_path(paths.label)]
-                for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
-            ]
+        async def run() -> None:
+            loop = asyncio.get_event_loop()
+            for input_data_id, pathss in pathsss:
+                logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
+                transformed_labels = [
+                    transformed_label
+                    for paths in pathss
+                    for calib in [read_calibration(paths.calib)]
+                    for labels in [KittiLabel.decode_path(paths.label)]
+                    for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
+                ]
 
-            await loop.run_in_executor(
-                None,
-                task.put_cuboid_annotations,
-                task_id,
-                input_data_id,
-                self._label_to_cuboids(id_to_label, transformed_labels),
-            )
+                await loop.run_in_executor(
+                    None,
+                    task.put_cuboid_annotations,
+                    task_id,
+                    input_data_id,
+                    self._label_to_cuboids(id_to_label, transformed_labels),
+                )
+
+        if self._sem is not None:
+            async with self._sem:
+                await run()
+        else:
+            await run()
 
     def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.upload_scene_async(scene, uploader_input))
+
+    async def _upload_data_async(
+        self,
+        input_data_id_prefix: str,
+        uploader: Uploader,
+        paths: FilePaths,
+        camera_horizontal_fov: Optional[int],
+        sensor_height: Optional[float],
+    ) -> Tuple[str, List[SupplementaryData]]:
+        async def run() -> Tuple[str, List[SupplementaryData]]:
+            return await upload_async(input_data_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+
+        if self._sem is not None:
+            async with self._sem:
+                return await run()
+        else:
+            return await run()
 
     async def upload_scene_async(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
         logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
@@ -220,7 +246,9 @@ class SceneUploader:
 
         logger.info("input-dataのアップロードを開始します")
         data_tasks = [
-            upload_async(uploader_input.input_data_id_prefix, uploader, paths, [], None, uploader_input.sensor_height)
+            self._upload_data_async(
+                uploader_input.input_data_id_prefix, uploader, paths, None, uploader_input.sensor_height
+            )
             for paths in pathss
         ]
         input_ids = [DataId(input_data_id) for input_data_id, _ in await asyncio.gather(*data_tasks)]

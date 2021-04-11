@@ -473,7 +473,7 @@ class ProjectCommand:
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
-        semOpt = asyncio.Semaphore(parallelism) if parallelism is not None else None
+        sem_opt = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
         async def run_without_sem(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
             return await upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
@@ -483,10 +483,10 @@ class ProjectCommand:
                 return await run_without_sem(paths)
 
         async def run(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
-            if semOpt is None:
+            if sem_opt is None:
                 return await run_without_sem(paths)
             else:
-                return await run_with_sem(paths, semOpt)
+                return await run_with_sem(paths, sem_opt)
 
         with client_loader.open_api() as api:
             uploader = AnnofabStorageUploader(api, project, force=force)
@@ -549,7 +549,9 @@ class ProjectCommand:
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            scene_uploader = SceneUploader(api, AnnofabStorageUploader(api, project=project_id, force=force))
+            scene_uploader = SceneUploader(
+                api, AnnofabStorageUploader(api, project=project_id, force=force), parallelism
+            )
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
@@ -570,6 +572,7 @@ class ProjectCommand:
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
+        parallelism: Optional[int] = None,
         force: bool = False,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
@@ -590,6 +593,7 @@ class ProjectCommand:
                          data => 入力データと補助データの登録のみを行う //
                          task => 上記に加えて、タスクの生成を行う //
                          annotation => 上記に加えて、アノテーションの登録を行う
+            parallelism: 非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
             force: 入力データと補助データを上書きしてアップロードするかどうか。
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
@@ -601,7 +605,9 @@ class ProjectCommand:
             return
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
-            uploader = SceneUploader(api, S3Uploader(api, project=project_id, force=force, s3_path=s3_path))
+            uploader = SceneUploader(
+                api, S3Uploader(api, project=project_id, force=force, s3_path=s3_path), parallelism
+            )
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
