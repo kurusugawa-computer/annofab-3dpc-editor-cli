@@ -18,9 +18,16 @@ from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
 from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
-from anno3d.model.file_paths import FrameKind
+from anno3d.model.file_paths import FilePaths, FrameKind
 from anno3d.model.input_files import InputData
-from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload, upload_async
+from anno3d.simple_data_uploader import (
+    SupplementaryData,
+    create_frame_meta,
+    create_kitti_files,
+    create_meta_file,
+    upload,
+    upload_async,
+)
 
 E = TypeVar("E", bound=Enum)
 
@@ -403,6 +410,7 @@ class ProjectCommand:
         input_id_prefix: str = "",
         camera_horizontal_fov: Optional[int] = None,
         sensor_height: Optional[float] = None,
+        parallelism: Optional[int] = None,
         force: bool = False,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
@@ -420,6 +428,7 @@ class ProjectCommand:
             camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+            parallelism: 非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
             force: 入力データと補助データを上書きしてアップロードするかどうか。
         Returns:
 
@@ -437,6 +446,7 @@ class ProjectCommand:
                 input_id_prefix,
                 camera_horizontal_fov,
                 sensor_height,
+                parallelism,
                 force,
                 annofab_id,
                 annofab_pass,
@@ -452,6 +462,7 @@ class ProjectCommand:
         input_id_prefix: str,
         camera_horizontal_fov: Optional[int],
         sensor_height: Optional[float],
+        parallelism: Optional[int],
         force: bool,
         annofab_id: str,
         annofab_pass: str,
@@ -462,12 +473,27 @@ class ProjectCommand:
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_id, annofab_pass)
+        semOpt = asyncio.Semaphore(parallelism) if parallelism is not None else None
+
+        async def run_without_sem(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
+            return await upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+
+        async def run_with_sem(paths: FilePaths, sem: asyncio.Semaphore) -> Tuple[str, List[SupplementaryData]]:
+            async with sem:
+                return await run_without_sem(paths)
+
+        async def run(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
+            if semOpt is None:
+                return await run_without_sem(paths)
+            else:
+                return await run_with_sem(paths, semOpt)
+
         with client_loader.open_api() as api:
             uploader = AnnofabStorageUploader(api, project, force=force)
 
             # fmt: off
             tasks = [
-                upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+                run(paths)
                 for paths in pathss
             ]
             uploaded: List[Tuple[str, int]] = [
@@ -489,6 +515,7 @@ class ProjectCommand:
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
+        parallelism: Optional[int] = None,
         force: bool = False,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
@@ -510,6 +537,7 @@ class ProjectCommand:
                          data => 入力データと補助データの登録のみを行う //
                          task => 上記に加えて、タスクの生成を行う //
                          annotation => 上記に加えて、アノテーションの登録を行う
+            parallelism: 非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
             force: 入力データと補助データを上書きしてアップロードするかどうか。
 
         Returns:
