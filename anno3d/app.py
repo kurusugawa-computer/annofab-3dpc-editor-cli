@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import shutil
@@ -19,7 +20,7 @@ from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, Uploa
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
 from anno3d.model.file_paths import FrameKind
 from anno3d.model.input_files import InputData
-from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload
+from anno3d.simple_data_uploader import create_frame_meta, create_kitti_files, create_meta_file, upload, upload_async
 
 E = TypeVar("E", bound=Enum)
 
@@ -427,6 +428,34 @@ class ProjectCommand:
             return
 
         assert annofab_id is not None and annofab_pass is not None
+        asyncio.run(
+            ProjectCommand._upload_kitti_data_async(
+                project_id,
+                kitti_dir,
+                skip,
+                size,
+                input_id_prefix,
+                camera_horizontal_fov,
+                sensor_height,
+                force,
+                annofab_id,
+                annofab_pass,
+            )
+        )
+
+    @staticmethod
+    async def _upload_kitti_data_async(
+        project_id: str,
+        kitti_dir: str,
+        skip: int,
+        size: int,
+        input_id_prefix: str,
+        camera_horizontal_fov: Optional[int],
+        sensor_height: Optional[float],
+        force: bool,
+        annofab_id: str,
+        annofab_pass: str,
+    ) -> None:
         project = project_id
 
         kitti_dir_path = Path(kitti_dir)
@@ -435,13 +464,20 @@ class ProjectCommand:
         client_loader = ClientLoader(annofab_id, annofab_pass)
         with client_loader.open_api() as api:
             uploader = AnnofabStorageUploader(api, project, force=force)
+
+            # uploaded: List[Tuple[str, int]] = []
+            # for paths in pathss:
+            #     r = await upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+            #     uploaded.append((r[0], len(r[1])))
+
             # fmt: off
-            uploaded = [
-                (input_id, len(supps))
+            tasks = [
+                upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
                 for paths in pathss
-                for input_id, supps in [
-                    upload(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
-                ]
+            ]
+            uploaded: List[Tuple[str, int]] = [
+                (input_id, len(supps))
+                for input_id, supps in await asyncio.gather(*tasks)
             ]
             # fmt: on
 
