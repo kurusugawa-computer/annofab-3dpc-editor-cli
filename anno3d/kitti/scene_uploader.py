@@ -171,9 +171,10 @@ class SceneUploader:
         return [
             CuboidAnnotationDetail(
                 label.annotation_id if label.annotation_id is not None else str(uuid.uuid4()),
+                label.tracking_id if label.tracking_id is not None else str(uuid.uuid4()),
                 self._client.account_id,
                 label.type,
-                False,
+                True,
                 detail_data(label),
             )
             for label in labels

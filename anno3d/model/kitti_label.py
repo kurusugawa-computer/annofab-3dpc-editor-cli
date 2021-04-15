@@ -19,6 +19,7 @@ class KittiLabel:
     z: float
     """x位置 底辺の中心？"""
     yaw: float
+    tracking_id: Optional[str]
     annotation_id: Optional[str]
     ignore_types: ClassVar[List[str]] = ["DontCare"]
 
@@ -26,7 +27,7 @@ class KittiLabel:
     def decode(cls, line: str) -> Optional["KittiLabel"]:
         fields = [field.strip() for field in line.split(" ")]
         label = KittiLabel(
-            fields[0],
+            fields[0].lower(),
             float(fields[8]),
             float(fields[9]),
             float(fields[10]),
@@ -35,6 +36,7 @@ class KittiLabel:
             float(fields[13]),
             float(fields[14]),
             fields[16] if len(fields) > 16 else None,
+            fields[17] if len(fields) > 17 else None
         )
 
         return label if label.type not in cls.ignore_types else None

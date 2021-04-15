@@ -64,6 +64,7 @@ class CuboidAnnotationDetailData(DataClassJsonMixin):
 @dataclass
 class CuboidAnnotationDetail(DataClassJsonMixin):
     annotation_id: str
+    tracking_id: str
     account_id: str
     label_id: str
     is_protected: bool

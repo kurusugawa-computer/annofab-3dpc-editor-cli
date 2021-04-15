@@ -67,10 +67,40 @@ class TaskApi:
         for d in details:
             data: dict = d["data"]
             d["data"] = json.dumps(data, ensure_ascii=False)
-            d["additional_data_list"] = []
+            d["additional_data_list"] = [
+                # tracking_id
+                {
+                    "additional_data_definition_id" : "4f859c10-599a-492a-ba63-d3703f9a26d9",
+                    "comment": d["tracking_id"]
+                },
+                # 前面
+                {
+                    "additional_data_definition_id" : "084c6f25-87b9-4e53-b819-1ad9225c74ad",
+                    "flag": True
+                },
+                # 後面
+                {
+                    "additional_data_definition_id" : "31039612-dee1-45f8-8acc-07dda090822d",
+                    "flag": True
+                },
+                # 右面
+                {
+                    "additional_data_definition_id" : "fac8648c-e71e-4476-9cea-02990f59f03f",
+                    "flag": True
+                },
+                # 左面
+                {
+                    "additional_data_definition_id" : "b5149aaf-5527-415f-9869-8237c9635e93",
+                    "flag": True
+                },
+                # nearest
+                {
+                    "additional_data_definition_id" : "007b197e-d3cb-4ae1-9e72-a1d15399680a",
+                    "flag": True
+                }
+            ]
 
         body = {"project_id": project_id, "task_id": task_id, "input_data_id": input_data_id, "details": details}
-
         client.put_annotation(project_id, task_id, input_data_id, body)
 
     def start_annotate(self, task_id: str) -> Optional[Task]:

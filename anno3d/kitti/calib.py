@@ -68,7 +68,8 @@ def transform_labels_into_lidar_coordinates(labels: List[KittiLabel], calib: Cal
             y=_xyz[1],
             z=_xyz[2],
             yaw=_yaw,
-            annotation_id=label.annotation_id,
+            tracking_id=label.tracking_id,
+            annotation_id=label.annotation_id
         )
         transformed.append(new_label)
 
