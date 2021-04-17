@@ -61,13 +61,13 @@ def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optiona
     """
     if annofab_id is None:
         print(
-            "AnnoFabのユーザIDが指定されていないため、終了します。環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--anno_id' にユーザIDを指定してください。",
+            "AnnoFabのユーザIDが指定されていないため、終了します。環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--annofab_id' にユーザIDを指定してください。",
             file=sys.stderr,
         )
         return False
     if annofab_pass is None:
         print(
-            "AnnoFabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--anno_pass' にパスワードを指定してください。",
+            "AnnoFabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
             file=sys.stderr,
         )
         return False
