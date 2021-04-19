@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import tempfile
@@ -21,7 +22,7 @@ from anno3d.kitti.calib import read_calibration, transform_labels_into_lidar_coo
 from anno3d.model.file_paths import FilePaths, FrameKey, ImagePaths, LabelPaths
 from anno3d.model.kitti_label import KittiLabel
 from anno3d.model.scene import Defaults, Scene
-from anno3d.simple_data_uploader import upload
+from anno3d.simple_data_uploader import SupplementaryData, upload_async
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -50,11 +51,13 @@ DataId = NewType("DataId", str)
 class SceneUploader:
     _client: AnnofabApi
     _project: ProjectApi
+    _sem: Optional[asyncio.Semaphore]
 
-    def __init__(self, client: AnnofabApi, uploader: Uploader):
+    def __init__(self, client: AnnofabApi, uploader: Uploader, parallelism: Optional[int]):
         self._client = client
         self._project = ProjectApi(client)
         self._uploader = uploader
+        self._sem = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
     def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput) -> None:
         """
@@ -177,26 +180,61 @@ class SceneUploader:
             if label.type in id_to_label
         ]
 
-    def _create_annotations(
+    async def _create_annotations(
         self,
         task: TaskApi,
         id_to_label: Dict[str, LabelV2],
         task_id: TaskId,
         pathsss: List[Tuple[DataId, List[LabelPaths]]],
     ) -> None:
-        for input_data_id, pathss in pathsss:
-            logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
-            transformed_labels = [
-                transformed_label
-                for paths in pathss
-                for calib in [read_calibration(paths.calib)]
-                for labels in [KittiLabel.decode_path(paths.label)]
-                for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
-            ]
+        async def run() -> None:
+            loop = asyncio.get_event_loop()
+            for input_data_id, pathss in pathsss:
+                logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
+                transformed_labels = [
+                    transformed_label
+                    for paths in pathss
+                    for calib in [read_calibration(paths.calib)]
+                    for labels in [KittiLabel.decode_path(paths.label)]
+                    for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
+                ]
 
-            task.put_cuboid_annotations(task_id, input_data_id, self._label_to_cuboids(id_to_label, transformed_labels))
+                await loop.run_in_executor(
+                    None,
+                    task.put_cuboid_annotations,
+                    task_id,
+                    input_data_id,
+                    self._label_to_cuboids(id_to_label, transformed_labels),
+                )
+
+        if self._sem is not None:
+            async with self._sem:
+                await run()
+        else:
+            await run()
 
     def upload_scene(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.upload_scene_async(scene, uploader_input))
+
+    async def _upload_data_async(
+        self,
+        input_data_id_prefix: str,
+        uploader: Uploader,
+        paths: FilePaths,
+        camera_horizontal_fov: Optional[int],
+        sensor_height: Optional[float],
+    ) -> Tuple[str, List[SupplementaryData]]:
+        async def run() -> Tuple[str, List[SupplementaryData]]:
+            return await upload_async(input_data_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+
+        if self._sem is not None:
+            async with self._sem:
+                return await run()
+        else:
+            return await run()
+
+    async def upload_scene_async(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
         logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
 
         uploader = self._uploader
@@ -207,13 +245,14 @@ class SceneUploader:
             raise RuntimeError(f"対象プロジェクト(={uploader_input.project_id})のラベル設定が存在しません")
 
         logger.info("input-dataのアップロードを開始します")
-        data_and_pathss: List[Tuple[DataId, FilePaths]] = [
-            (DataId(input_data_id), paths)
+        data_tasks = [
+            self._upload_data_async(
+                uploader_input.input_data_id_prefix, uploader, paths, None, uploader_input.sensor_height
+            )
             for paths in pathss
-            for input_data_id, _ in [
-                upload(uploader_input.input_data_id_prefix, uploader, paths, [], None, uploader_input.sensor_height)
-            ]
         ]
+        input_ids = [DataId(input_data_id) for input_data_id, _ in await asyncio.gather(*data_tasks)]
+        data_and_pathss = list(zip(input_ids, pathss))
         logger.info("%d件のデータをアップロードしました", len(data_and_pathss))
         if uploader_input.kind == UploadKind.DATA_ONLY:
             return
@@ -233,13 +272,17 @@ class SceneUploader:
             anno_label.label_id: anno_label for anno_label in annofab_labels if anno_label.label_id is not None
         }
 
-        for task_id, data_id_and_pathss in task_to_data_dict.items():
-            data_and_label_pathss = [(data_id, pathss.labels) for data_id, pathss in data_id_and_pathss]
+        annotation_tasks = [
             self._create_annotations(
                 TaskApi(self._client, self._project, uploader_input.project_id),
                 id_to_label,
                 task_id,
                 data_and_label_pathss,
             )
+            for task_id, data_id_and_pathss in task_to_data_dict.items()
+            for data_and_label_pathss in [[(data_id, pathss.labels) for data_id, pathss in data_id_and_pathss]]
+        ]
+
+        await asyncio.gather(*annotation_tasks)
 
         logger.info("アノテーションの登録が完了しました")

@@ -286,8 +286,7 @@ anno3d project put_segment_label \
 
 ```
 $ anno3d project upload_kitti_data --help | cat
-INFO: Showing help with the command 'anno3d project upload_kitti_data -- --help'.
-
+INFO: Showing help with the command 'anno3d project upload_kitti_data -- --help | cat
 NAME
     anno3d project upload_kitti_data - kitti 3d detection形式のファイル群を3dpc-editorに登録します。
 
@@ -314,6 +313,8 @@ FLAGS
         カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
     --sensor_height=SENSOR_HEIGHT
         点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+    --parallelism=PARALLELISM
+        非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
@@ -323,7 +324,6 @@ FLAGS
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
-
 ```
 
 
@@ -333,12 +333,13 @@ NOTES
 anno3d project upload_kitti_data \
   --annofab_id ${ANNO_ID} \
   --annofab_pass ${ANNO_PASS} \
-  --project_id "3dpc-editor-trial" \
+  --project_id ${ANNO_PRJ} \
   --kitti_dir "path/to/kitti3d/dir" \
   --skip 0 \
   --size 30 \
   --camera_horizontal_fov 56  \
-  --sensor_height 0
+  --sensor_height 0 \
+  --force
 ```
 
 ### データの投入（拡張KITTI形式）
@@ -351,9 +352,7 @@ anno3d project upload_kitti_data \
 #### ヘルプ
 
 ```
-$ anno3d project upload_scene --help | cat
-INFO: Showing help with the command 'anno3d project upload_scene -- --help'.
-
+$ anno3d project upload_scene -- --help | cat
 NAME
     anno3d project upload_scene - 拡張kitti形式のファイル群をAnnoFabにアップロードします
 
@@ -380,6 +379,8 @@ FLAGS
         タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
     --upload_kind=UPLOAD_KIND
         処理の種類　省略した場合 "annotation" // data => 入力データと補助データの登録のみを行う // task => 上記に加えて、タスクの生成を行う // annotation => 上記に加えて、アノテーションの登録を行う
+    --parallelism=PARALLELISM
+        非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
@@ -404,7 +405,8 @@ anno3d project upload_scene \
   --task_id_prefix scene1-task-1- \
   --sensor_height 0 \
   --upload_kind annotation \
-  --scene_path /path/to/scene.meta
+  --scene_path /path/to/scene.meta \
+  --force
 ```
 
 ### データの投入（S3プライベートストレージ）
@@ -418,9 +420,7 @@ anno3d project upload_scene \
 #### ヘルプ
 
 ```
-$ anno3d project upload_scene_to_s3 --help | cat
-INFO: Showing help with the command 'anno3d project upload_scene_to_s3 -- --help'.
-
+$ anno3d project upload_scene_to_s3 -- --help | cat
 NAME
     anno3d project upload_scene_to_s3 - 拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
 
@@ -449,6 +449,8 @@ FLAGS
         タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
     --upload_kind=UPLOAD_KIND
         処理の種類　省略した場合 "annotation" // data => 入力データと補助データの登録のみを行う // task => 上記に加えて、タスクの生成を行う // annotation => 上記に加えて、アノテーションの登録を行う
+    --parallelism=PARALLELISM
+        非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
@@ -474,7 +476,8 @@ anno3d project upload_scene_to_s3 \
   --task_id_prefix scene1-task-1- \
   --sensor_height 0 \
   --upload_kind annotation \
-  --scene_path /path/to/scene.meta
+  --scene_path /path/to/scene.meta \
+  --force
 ```
 
 

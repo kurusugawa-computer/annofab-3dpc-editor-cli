@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import math
 import shutil
@@ -135,6 +136,20 @@ def _upload_supplementaries(
 ) -> None:
     for supp in supplementary_list:
         uploader.upload_supplementary(input_data_id, supp.data_id, supp.path)
+
+
+async def upload_async(
+    input_data_id_prefix: str,
+    uploader: Uploader,
+    paths: FilePaths,
+    dummy_images: List[Path],
+    camera_horizontal_fov: Optional[int],
+    sensor_height: Optional[float],
+) -> Tuple[str, List[SupplementaryData]]:
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None, upload, input_data_id_prefix, uploader, paths, dummy_images, camera_horizontal_fov, sensor_height
+    )
 
 
 def upload(
