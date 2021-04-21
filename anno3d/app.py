@@ -11,6 +11,7 @@ from typing import Any, List, Optional, Tuple, Type, TypeVar
 import boto3
 import fire
 
+from anno3d import __version__
 from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
@@ -705,6 +706,11 @@ class Command:
         self.sandbox = Sandbox()
         self.project = ProjectCommand()
         self.local = LocalCommand()
+
+    @staticmethod
+    def version():
+        """ツールのバージョンを出力します。"""
+        print(f"annofab-3dpc-editor-cli {__version__}")
 
 
 def main():
