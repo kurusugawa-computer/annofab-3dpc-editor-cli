@@ -23,7 +23,7 @@ mypy = "^0.910"
 flake8 = "^3.8.1"
 black = "^19.10b0"
 isort = {extras = ["pyproject"], version = "^4.3.21"}
-pylint = "^2.5.2"
+pylint = "^2.9.3"
 # document
 sphinx = "^3.5.2"
 pydata-sphinx-theme = "^0.4.3"
