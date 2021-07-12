@@ -28,6 +28,7 @@ pylint = "^2.5.2"
 sphinx = "^3.5.2"
 pydata-sphinx-theme = "^0.4.3"
 recommonmark = "^0.7.1"
+types-requests = "^2.25.0"
 
 [tool.black]
 line-length = 120
