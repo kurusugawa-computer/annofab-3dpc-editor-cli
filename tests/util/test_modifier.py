@@ -69,3 +69,14 @@ def test_別の階層を変更するModifierを結合できること():
     replaced = mod_s.compose(mod_f)(base)
 
     assert replaced == Parent("str1", 1, 3.0, Child("str2str2", False))
+
+
+def test_specifierのand_thenでspecifierの結合が出来ること():
+    base = Parent("str1", 1, 1.5, Child("str2", False))
+    spec_pc = DataSpecifier.identity(Parent).zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+    spec_cs = DataSpecifier.identity(Child).zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+    spec_pcs = spec_pc.and_then(spec_cs)
+
+    replaced = spec_pcs.mod(lambda s: s + "hogege")(base)
+
+    assert replaced == Parent("str1", 1, 1.5, Child("str2hogege", False))

@@ -17,6 +17,9 @@ class DataSpecifier(Protocol[A, B]):
     def zoom(self, zoom_in: Callable[[B], C], zoom_out: Callable[[B, C], B]) -> "DataSpecifier[A, C]":
         ...
 
+    def and_then(self, that: "DataSpecifier[B, C]") -> "DataSpecifier[A, C]":
+        ...
+
     def mod(self, f: Callable[[B], B]) -> "DataModifier[A]":
         ...
 
@@ -41,6 +44,9 @@ class ZoomedDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
     def zoom(self, zoom_in: Callable[[C], D], zoom_out: Callable[[C, D], C]) -> "DataSpecifier[A, D]":
         return ZoomedDataSpecifier(self, zoom_in, zoom_out)
 
+    def and_then(self, that: "DataSpecifier[C, D]") -> "DataSpecifier[A, D]":
+        return AndThenDataSpecifier(self, that)
+
     def mod(self, f: Callable[[C], C]) -> "DataModifier[A]":
         def underlying_mod(b: B) -> B:
             zoom_in: Callable[[B], C] = self._zoom_in
@@ -51,9 +57,33 @@ class ZoomedDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
         return self._underlying.mod(underlying_mod)
 
 
+class AndThenDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
+    _left: DataSpecifier[A, B]
+    _right: DataSpecifier[B, C]
+
+    def __init__(self, left: DataSpecifier[A, B], right: DataSpecifier[B, C]):
+        self._left = left
+        self._right = right
+
+    def zoom(self, zoom_in: Callable[[C], D], zoom_out: Callable[[C, D], C]) -> "DataSpecifier[A, D]":
+        return AndThenDataSpecifier(self._left, self._right.zoom(zoom_in, zoom_out))
+
+    def and_then(self, that: "DataSpecifier[C, D]") -> "DataSpecifier[A, D]":
+        return AndThenDataSpecifier(self, that)
+
+    def mod(self, f: Callable[[C], C]) -> "DataModifier[A]":
+        def mod_b(b: B) -> B:
+            return self._right.mod(f)(b)
+
+        return self._left.mod(mod_b)
+
+
 class IdentityDataSpecifier(DataSpecifier[A, A]):
     def zoom(self, zoom_in: Callable[[A], C], zoom_out: Callable[[A, C], A]) -> "DataSpecifier[A, C]":
         return ZoomedDataSpecifier(self, zoom_in, zoom_out)
+
+    def and_then(self, that: "DataSpecifier[A, B]") -> "DataSpecifier[A, B]":
+        return that
 
     def mod(self, f: Callable[[A], A]) -> "DataModifier[A]":
         return DataModifier(f)
