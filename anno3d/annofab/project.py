@@ -204,6 +204,21 @@ class ProjectApi:
         metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
         ignore_additional: Optional[IgnoreAdditionalDef],
     ) -> List[Label]:
+        """
+
+        Args:
+            project_id:
+            label_id:
+            ja_name:
+            en_name:
+            color: ラベルの表示色。 "(R,G,B)"形式 R/G/Bは、それぞれ0〜255の整数値で指定する
+            metadata:
+            ignore_additional:
+
+        Returns:
+
+        """
+
         def update_specs(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
             labels: List[LabelV2] = specs.labels if specs.labels is not None else list([])
             index: Optional[int]
