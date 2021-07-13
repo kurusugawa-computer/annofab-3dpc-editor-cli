@@ -191,6 +191,9 @@ class ProjectApi:
 
         return additionals
 
+    def mod_label(self, project_id: str, label_id: str):
+        pass
+
     def put_label(
         self,
         project_id: str,
