@@ -24,8 +24,8 @@ from anno3d.annofab.constant import (
     lang_ja,
 )
 from anno3d.annofab.model import AnnotationSpecsRequestV2, Label
-from anno3d.annofab.modifiers.label_modifiers import LabelSpecifiers
-from anno3d.annofab.modifiers.project_modifiers import ProjectSpecifiers
+from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
+from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
 from anno3d.model.project_specs_meta import ProjectMetadata

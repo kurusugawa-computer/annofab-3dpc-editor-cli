@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 from annofabapi.dataclass.annotation_specs import Color, LabelV2
 
-from anno3d.annofab.modifiers.utils import GenList
+from anno3d.annofab.specifiers.utils import GenList
 from anno3d.util.modifier import DataSpecifier
 
 zero_color = Color(0, 0, 0)

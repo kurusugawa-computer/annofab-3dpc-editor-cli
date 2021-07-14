@@ -3,7 +3,7 @@ from typing import Callable, Dict, List, Optional, TypeVar
 
 from annofabapi.dataclass.annotation_specs import AdditionalDataDefinitionV2, AnnotationSpecsV2, LabelV2
 
-from anno3d.annofab.modifiers.utils import GenList
+from anno3d.annofab.specifiers.utils import GenList
 from anno3d.model.project_specs_meta import decode_project_meta, encode_project_meta
 from anno3d.util.modifier import DataSpecifier
 
