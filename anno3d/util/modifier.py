@@ -147,3 +147,7 @@ class DataModifier(Generic[A]):
     def __call__(self, a: A) -> A:
         mod = self._mod
         return mod(a)
+
+    @staticmethod
+    def identity(_: Type[A]) -> "DataModifier[A]":
+        return DataModifier(lambda a: a)
