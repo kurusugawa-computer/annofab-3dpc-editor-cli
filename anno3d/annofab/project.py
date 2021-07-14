@@ -1,8 +1,5 @@
-import copy
-from dataclasses import replace
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import more_itertools
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
 from annofabapi.dataclass.annotation_specs import (
@@ -27,9 +24,102 @@ from anno3d.annofab.constant import (
     lang_ja,
 )
 from anno3d.annofab.model import AnnotationSpecsRequestV2, Label
+from anno3d.annofab.modifiers.label_modifiers import LabelSpecifiers
+from anno3d.annofab.modifiers.project_modifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
-from anno3d.model.project_specs_meta import ProjectMetadata, decode_project_meta, encode_project_meta
+from anno3d.model.project_specs_meta import ProjectMetadata
+from anno3d.util.modifier import DataModifier
+
+
+class ProjectModifiers:
+    specifiers = ProjectSpecifiers
+
+    @classmethod
+    def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV2]:
+        return cls.specifiers.annotation_area.mod(lambda _: area)
+
+    @classmethod
+    def put_label(
+        cls,
+        label_id: str,
+        ja_name: str,
+        en_name: str,
+        color: Tuple[int, int, int],
+        metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
+        ignore_additional: Optional[IgnoreAdditionalDef],
+    ) -> DataModifier[AnnotationSpecsV2]:
+        def init_label() -> LabelV2:
+            return LabelV2(
+                label_id=label_id,
+                label_name=InternationalizationMessage(
+                    [
+                        InternationalizationMessageMessages(lang_ja, label_id),
+                        InternationalizationMessageMessages(lang_en, label_id),
+                    ],
+                    lang_ja,
+                ),
+                keybind=[],
+                annotation_type=AnnotationType.CUSTOM,
+                bounding_box_metadata=None,
+                segmentation_metadata=None,
+                additional_data_definitions=[],
+                color=Color(red=0, green=0, blue=0),
+                annotation_editor_feature=AnnotationEditorFeature(
+                    append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
+                ),
+                allow_out_of_image_bounds=False,
+                metadata={},
+            )
+
+        def mod(label_opt: Optional[LabelV2]) -> Optional[LabelV2]:
+            label = label_opt if label_opt is not None else init_label()
+            label.label_name = InternationalizationMessage(
+                [
+                    InternationalizationMessageMessages(lang_ja, ja_name),
+                    InternationalizationMessageMessages(lang_en, en_name),
+                ],
+                lang_ja,
+            )
+
+            if ignore_additional is not None:
+                label = LabelSpecifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
+
+            label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+            meta_dic: dict = metadata.to_dict(encode_json=True)
+            label.metadata = meta_dic
+
+            return label
+
+        label_specifier = cls.specifiers.label(label_id)
+        return label_specifier.mod(mod)
+
+    @classmethod
+    def create_ignore_additional_if_necessary(
+        cls, additional_def: IgnoreAdditionalDef
+    ) -> DataModifier[AnnotationSpecsV2]:
+        def mod(current: Optional[AdditionalDataDefinitionV2]) -> Optional[AdditionalDataDefinitionV2]:
+            if current is not None:
+                return current
+
+            return AdditionalDataDefinitionV2(
+                additional_data_definition_id=additional_def.id,
+                read_only=False,
+                name=InternationalizationMessage(
+                    [
+                        InternationalizationMessageMessages(lang_ja, additional_def.ja_name),
+                        InternationalizationMessageMessages(lang_en, additional_def.en_name),
+                    ],
+                    lang_ja,
+                ),
+                default=additional_def.default,
+                keybind=[],
+                type=AdditionalDataDefinitionType.FLAG,
+                choices=[],
+                metadata={},
+            )
+
+        return cls.specifiers.additional(additional_def.id).mod(mod)
 
 
 class ProjectApi:
@@ -105,30 +195,6 @@ class ProjectApi:
         created_specs, _ = client.put_annotation_specs(project_id, request.to_dict(encode_json=True))
         return AnnotationSpecsV2.from_dict(created_specs)
 
-    def _mod_project_specs_metadata(
-        self, project_id: str, mod_func: Callable[[ProjectMetadata], ProjectMetadata]
-    ) -> ProjectMetadata:
-        def mod(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
-            metadata = decode_project_meta(specs.metadata if specs.metadata is not None else {})
-            new_metadata = mod_func(metadata)
-            return replace(specs, metadata=encode_project_meta(new_metadata))
-
-        new_spec = self._mod_project_specs(project_id, mod)
-        return decode_project_meta(new_spec.metadata if new_spec.metadata is not None else {})
-
-    @staticmethod
-    def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
-        messages = annofab_label["label_name"]["messages"]
-        color = annofab_label["color"]
-        empty_message: dict = InternationalizationMessageMessages("", "").to_dict()
-        ja_name = next(filter(lambda e: e["lang"] == lang_ja, messages), empty_message)["message"]
-        en_name = next(filter(lambda e: e["lang"] == lang_en, messages), empty_message)["message"]
-        metadata = annofab_label["metadata"]
-
-        return Label(
-            annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]), metadata
-        )
-
     def put_cuboid_label(
         self, project_id: str, label_id: str, ja_name: str, en_name: str, color: Tuple[int, int, int]
     ) -> List[Label]:
@@ -157,42 +223,17 @@ class ProjectApi:
         return AnnotationSpecsV2.from_dict(specs)
 
     @staticmethod
-    def _ignore_additional(additional_def: IgnoreAdditionalDef) -> AdditionalDataDefinitionV2:
-        return AdditionalDataDefinitionV2(
-            additional_data_definition_id=additional_def.id,
-            read_only=False,
-            name=InternationalizationMessage(
-                [
-                    InternationalizationMessageMessages(lang_ja, additional_def.ja_name),
-                    InternationalizationMessageMessages(lang_en, additional_def.en_name),
-                ],
-                lang_ja,
-            ),
-            default=additional_def.default,
-            keybind=[],
-            type=AdditionalDataDefinitionType.FLAG,
-            choices=[],
-            metadata={},
+    def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
+        messages = annofab_label["label_name"]["messages"]
+        color = annofab_label["color"]
+        empty_message: dict = InternationalizationMessageMessages("", "").to_dict()
+        ja_name = next(filter(lambda e: e["lang"] == lang_ja, messages), empty_message)["message"]
+        en_name = next(filter(lambda e: e["lang"] == lang_en, messages), empty_message)["message"]
+        metadata = annofab_label["metadata"]
+
+        return Label(
+            annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]), metadata
         )
-
-    def _create_ignore_additional_if_necessary(
-        self, specs: AnnotationSpecsV2, additional_def: IgnoreAdditionalDef
-    ) -> List[AdditionalDataDefinitionV2]:
-        additionals: List[AdditionalDataDefinitionV2] = copy.copy(
-            specs.additionals if specs.additionals is not None else []
-        )
-
-        additional = more_itertools.first_true(
-            additionals, None, lambda e: e.additional_data_definition_id == additional_def.id
-        )
-
-        if additional is None:
-            additionals.append(self._ignore_additional(additional_def))
-
-        return additionals
-
-    def mod_label(self, project_id: str, label_id: str):
-        pass
 
     def put_label(
         self,
@@ -219,46 +260,13 @@ class ProjectApi:
 
         """
 
-        def update_specs(specs: AnnotationSpecsV2) -> AnnotationSpecsV2:
-            labels: List[LabelV2] = specs.labels if specs.labels is not None else list([])
-            index: Optional[int]
-            index, _ = next(filter(lambda ie: ie[1].label_id == label_id, enumerate(labels)), (None, None))
-            meta_dic: dict = metadata.to_dict(encode_json=True)
-
-            additionals = specs.additionals
-            if ignore_additional is not None:
-                additionals = self._create_ignore_additional_if_necessary(specs, ignore_additional)
-
-            new_label: LabelV2 = LabelV2(
-                label_id=label_id,
-                label_name=InternationalizationMessage(
-                    [
-                        InternationalizationMessageMessages(lang_ja, ja_name),
-                        InternationalizationMessageMessages(lang_en, en_name),
-                    ],
-                    lang_ja,
-                ),
-                keybind=[],
-                annotation_type=AnnotationType.CUSTOM,
-                bounding_box_metadata=None,
-                segmentation_metadata=None,
-                additional_data_definitions=[ignore_additional.id] if ignore_additional is not None else [],
-                color=Color(red=color[0], green=color[1], blue=color[2]),
-                annotation_editor_feature=AnnotationEditorFeature(
-                    append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
-                ),
-                allow_out_of_image_bounds=False,
-                metadata=meta_dic,
-            )
-
-            if index is not None:
-                labels[index] = new_label
-            else:
-                labels.append(new_label)
-
-            return replace(specs, labels=labels, additionals=additionals)
-
-        created_specs = self._mod_project_specs(project_id, update_specs)
+        mod_labels = ProjectModifiers.put_label(label_id, ja_name, en_name, color, metadata, ignore_additional)
+        mod_additionals = (
+            ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
+            if ignore_additional is not None
+            else DataModifier.identity(AnnotationSpecsV2)
+        )
+        created_specs = self._mod_project_specs(project_id, mod_labels.and_then(mod_additionals))
 
         if created_specs.labels is None:
             return []
@@ -266,10 +274,8 @@ class ProjectApi:
         return [self._from_annofab_label(label.to_dict(encode_json=True)) for label in created_specs.labels]
 
     def set_annotation_area(self, project_id: str, area: AnnotationArea) -> ProjectMetadata:
-        def mod(meta: ProjectMetadata) -> ProjectMetadata:
-            return replace(meta, annotation_area=area)
-
-        return self._mod_project_specs_metadata(project_id, mod)
+        new_spec = self._mod_project_specs(project_id, ProjectModifiers.set_annotation_area(area))
+        return ProjectSpecifiers.metadata.get(new_spec)
 
     def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
         client = self._client
