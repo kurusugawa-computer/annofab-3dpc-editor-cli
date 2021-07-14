@@ -27,12 +27,23 @@ class DataSpecifier(Protocol[A, B]):
     def mod(self, f: Callable[[B], B]) -> "DataModifier[A]":
         ...
 
+    def set(self, b: B) -> "DataModifier[A]":
+        ...
+
+    def get(self, a: A) -> B:
+        ...
+
     @staticmethod
     def identity(_: Type[A]) -> "DataSpecifier[A, A]":
         return IdentityDataSpecifier()
 
 
-class ZoomedDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
+class AbstractDataSpecifier(DataSpecifier[A, B]):
+    def set(self, b: B) -> "DataModifier[A]":
+        return self.mod(lambda _: b)
+
+
+class ZoomedDataSpecifier(Generic[A, B, C], AbstractDataSpecifier[A, C]):
     _underlying: DataSpecifier[A, B]
 
     # CallableのFieldを宣言すると、mypyがメソッドとして扱扱うらしく、第一引数が消えた型になる。
@@ -69,8 +80,11 @@ class ZoomedDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
 
         return self._underlying.mod(underlying_mod)
 
+    def get(self, a: A) -> C:
+        return self._zoom_in(self._underlying.get(a))
 
-class AndThenDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
+
+class AndThenDataSpecifier(Generic[A, B, C], AbstractDataSpecifier[A, C]):
     _left: DataSpecifier[A, B]
     _right: DataSpecifier[B, C]
 
@@ -93,8 +107,11 @@ class AndThenDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
 
         return self._left.mod(mod_b)
 
+    def get(self, a: A) -> C:
+        return self._right.get(self._left.get(a))
 
-class IdentityDataSpecifier(DataSpecifier[A, A]):
+
+class IdentityDataSpecifier(AbstractDataSpecifier[A, A]):
     def zoom(self, zoom_in: Callable[[A], C], zoom_out: Callable[[A, C], A]) -> "DataSpecifier[A, C]":
         return ZoomedDataSpecifier(self, zoom_in, zoom_out)
 
@@ -106,6 +123,9 @@ class IdentityDataSpecifier(DataSpecifier[A, A]):
 
     def mod(self, f: Callable[[A], A]) -> "DataModifier[A]":
         return DataModifier(f)
+
+    def get(self, a: A) -> A:
+        return a
 
 
 class DataModifier(Generic[A]):

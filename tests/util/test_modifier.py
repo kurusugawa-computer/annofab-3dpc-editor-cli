@@ -116,3 +116,52 @@ def test_bimapによる値の変換が出来ること():
     and_then_mapped = spec_pc.and_then(spec_cs).bimap(map_f, comap)
     and_then_replaced = and_then_mapped.mod(mod)(base)
     assert and_then_replaced == Parent("str1", 1, 1.5, Child("12", False))
+
+
+def test_setによる値の設定が出来ること():
+    # identity
+    id_base = "2"
+    id_spec = DataSpecifier.identity(str)
+    id_replaced = id_spec.set("hoge")(id_base)
+    assert id_replaced == "hoge"
+
+    base = Parent("str1", 1, 1.5, Child("2", False))
+
+    # zoom
+    zoom_spec = (
+        DataSpecifier.identity(Parent)
+        .zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+        .zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+    )
+    zoom_replaced = zoom_spec.set("fuga")(base)
+    assert zoom_replaced == Parent("str1", 1, 1.5, Child("fuga", False))
+
+    # and_then
+    spec_pc = DataSpecifier.identity(Parent).zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+    spec_cs = DataSpecifier.identity(Child).zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+    and_then_spec = spec_pc.and_then(spec_cs)
+    and_then_replaced = and_then_spec.set("piyo")(base)
+    assert and_then_replaced == Parent("str1", 1, 1.5, Child("piyo", False))
+
+
+def test_getによる値の取得が出来ること():
+    # identity
+    id_base = "2"
+    id_spec = DataSpecifier.identity(str)
+    assert id_spec.get(id_base) == "2"
+
+    base = Parent("str1", 1, 1.5, Child("2", False))
+
+    # zoom
+    zoom_spec = (
+        DataSpecifier.identity(Parent)
+        .zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+        .zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+    )
+    assert zoom_spec.get(base) == "2"
+
+    # and_then
+    spec_pc = DataSpecifier.identity(Parent).zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+    spec_cs = DataSpecifier.identity(Child).zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+    and_then_spec = spec_pc.and_then(spec_cs)
+    assert and_then_spec.get(base) == "2"
