@@ -80,3 +80,39 @@ def test_specifierのand_thenでspecifierの結合が出来ること():
     replaced = spec_pcs.mod(lambda s: s + "hogege")(base)
 
     assert replaced == Parent("str1", 1, 1.5, Child("str2hogege", False))
+
+
+def test_bimapによる値の変換が出来ること():
+    def map_f(s: str) -> int:
+        return int(s)
+
+    def comap(i: int) -> str:
+        return str(i)
+
+    def mod(s: int) -> int:
+        return s + 10
+
+    # identity
+    id_base = "2"
+    id_mapped = DataSpecifier.identity(str).bimap(map_f, comap)
+    id_replaced = id_mapped.mod(mod)(id_base)
+    assert id_replaced == "12"
+
+    base = Parent("str1", 1, 1.5, Child("2", False))
+
+    # zoom
+    zoom_mapped = (
+        DataSpecifier.identity(Parent)
+        .zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+        .zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+        .bimap(map_f, comap)
+    )
+    zoom_replaced = zoom_mapped.mod(mod)(base)
+    assert zoom_replaced == Parent("str1", 1, 1.5, Child("12", False))
+
+    # and_then
+    spec_pc = DataSpecifier.identity(Parent).zoom(lambda p: p.c, lambda p, c: replace(p, c=c))
+    spec_cs = DataSpecifier.identity(Child).zoom(lambda c: c.s, lambda c, s: replace(c, s=s))
+    and_then_mapped = spec_pc.and_then(spec_cs).bimap(map_f, comap)
+    and_then_replaced = and_then_mapped.mod(mod)(base)
+    assert and_then_replaced == Parent("str1", 1, 1.5, Child("12", False))

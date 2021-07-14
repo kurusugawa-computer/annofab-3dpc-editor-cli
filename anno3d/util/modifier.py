@@ -12,9 +12,13 @@ class DataSpecifier(Protocol[A, B]):
     最終的に生成するのはA型の変換関数でです。
     この型はAから辿ることの可能なB型の値を変更しようとしていることを表します。
 
+    DataSpecifierとDataModifierにより、簡易のLensライブラリを構成します
     """
 
     def zoom(self, zoom_in: Callable[[B], C], zoom_out: Callable[[B, C], B]) -> "DataSpecifier[A, C]":
+        ...
+
+    def bimap(self, map_f: Callable[[B], C], comap: Callable[[C], B]) -> "DataSpecifier[A, C]":
         ...
 
     def and_then(self, that: "DataSpecifier[B, C]") -> "DataSpecifier[A, C]":
@@ -44,6 +48,15 @@ class ZoomedDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
     def zoom(self, zoom_in: Callable[[C], D], zoom_out: Callable[[C, D], C]) -> "DataSpecifier[A, D]":
         return ZoomedDataSpecifier(self, zoom_in, zoom_out)
 
+    def bimap(self, map_f: Callable[[C], D], comap: Callable[[D], C]) -> "DataSpecifier[A, D]":
+        def zoom_in(b: B) -> D:
+            return map_f(self._zoom_in(b))
+
+        def zoom_out(b: B, d: D) -> B:
+            return self._zoom_out(b, comap(d))
+
+        return ZoomedDataSpecifier(self._underlying, zoom_in, zoom_out)
+
     def and_then(self, that: "DataSpecifier[C, D]") -> "DataSpecifier[A, D]":
         return AndThenDataSpecifier(self, that)
 
@@ -68,6 +81,9 @@ class AndThenDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
     def zoom(self, zoom_in: Callable[[C], D], zoom_out: Callable[[C, D], C]) -> "DataSpecifier[A, D]":
         return AndThenDataSpecifier(self._left, self._right.zoom(zoom_in, zoom_out))
 
+    def bimap(self, map_f: Callable[[C], D], comap: Callable[[D], C]) -> "DataSpecifier[A, D]":
+        return AndThenDataSpecifier(self._left, self._right.bimap(map_f, comap))
+
     def and_then(self, that: "DataSpecifier[C, D]") -> "DataSpecifier[A, D]":
         return AndThenDataSpecifier(self, that)
 
@@ -81,6 +97,9 @@ class AndThenDataSpecifier(Generic[A, B, C], DataSpecifier[A, C]):
 class IdentityDataSpecifier(DataSpecifier[A, A]):
     def zoom(self, zoom_in: Callable[[A], C], zoom_out: Callable[[A, C], A]) -> "DataSpecifier[A, C]":
         return ZoomedDataSpecifier(self, zoom_in, zoom_out)
+
+    def bimap(self, map_f: Callable[[A], C], comap: Callable[[C], A]) -> "DataSpecifier[A, C]":
+        return self.zoom(map_f, lambda _, c: comap(c))
 
     def and_then(self, that: "DataSpecifier[A, B]") -> "DataSpecifier[A, B]":
         return that
