@@ -216,6 +216,47 @@ NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
 ```
 
+```
+$ anno3d project put_segment_label --help | cat
+INFO: Showing help with the command 'app.py project put_segment_label -- --help'.
+
+NAME
+    app.py project put_segment_label - 対象のプロジェクトにsegmentのlabelを追加・更新します。
+
+SYNOPSIS
+    app.py project put_segment_label PROJECT_ID LABEL_ID JA_NAME EN_NAME COLOR DEFAULT_IGNORE SEGMENT_TYPE <flags>
+
+DESCRIPTION
+    対象のプロジェクトにsegmentのlabelを追加・更新します。
+
+POSITIONAL ARGUMENTS
+    PROJECT_ID
+        対象プロジェクト
+    LABEL_ID
+        追加・更新するラベルのid
+    JA_NAME
+        日本語名称
+    EN_NAME
+        英語名称
+    COLOR
+        ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
+    DEFAULT_IGNORE
+        このラベルがついた領域を、デフォルトでは他のアノテーションから除外するかどうか。 Trueであれば除外する
+    SEGMENT_TYPE
+        "SEMANTIC" or "INSTANCE" を指定する。 "SEMANTIC"の場合、このラベルのインスタンスは唯一つとなる。 "INSTANCE"の場合複数のインスタンスを作成可能となる
+
+FLAGS
+    --layer=LAYER
+        このラベルのレイヤーを指定する。 同じレイヤーのラベルは、頂点を共有することが出来ない。 また、大きな値のレイヤーが優先して表示される。 指定しない場合は 100
+    --annofab_id=ANNOFAB_ID
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+    --annofab_pass=ANNOFAB_PASS
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+```
+
 #### コマンド例
 
 ```
