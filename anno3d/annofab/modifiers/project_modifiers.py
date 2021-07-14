@@ -1,9 +1,10 @@
 from dataclasses import replace
-from typing import Callable, List, Optional, TypeVar
+from typing import Callable, Dict, List, Optional, TypeVar
 
-import more_itertools
 from annofabapi.dataclass.annotation_specs import AdditionalDataDefinitionV2, AnnotationSpecsV2, LabelV2
 
+from anno3d.annofab.modifiers.utils import GenList
+from anno3d.model.project_specs_meta import decode_project_meta, encode_project_meta
 from anno3d.util.modifier import DataSpecifier
 
 A = TypeVar("A")
@@ -12,32 +13,6 @@ AS = AnnotationSpecsV2
 
 class ProjectSpecifiers:
     annotation = DataSpecifier.identity(AnnotationSpecsV2)
-
-    class GenList:
-        @staticmethod
-        def gen_zoom_in(pred: Callable[[A], bool]) -> Callable[[List[A]], Optional[A]]:
-            return lambda l: more_itertools.first_true(l, pred=pred)
-
-        @staticmethod
-        def gen_zoom_out(pred: Callable[[A], bool]) -> Callable[[List[A], Optional[A]], List[A]]:
-            def zoom_out(a_list: List[A], a: Optional[A]) -> List[A]:
-                index, _ = more_itertools.first_true(
-                    enumerate(a_list), pred=lambda ie: pred(ie[1]), default=(None, None)
-                )
-                if index is None:
-                    if a is None:
-                        pass
-                    else:
-                        a_list.append(a)
-                else:
-                    if a is None:
-                        a_list.pop(index)
-                    else:
-                        a_list[index] = a
-
-                return a_list
-
-            return zoom_out
 
     class Labels:
         @staticmethod
@@ -53,7 +28,7 @@ class ProjectSpecifiers:
     @classmethod
     def label(cls, label_id: str) -> DataSpecifier[AS, Optional[LabelV2]]:
         predicate: Callable[[LabelV2], bool] = lambda l: l.label_id == label_id
-        return cls.labels.zoom(cls.GenList.gen_zoom_in(predicate), cls.GenList.gen_zoom_out(predicate))
+        return cls.labels.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
 
     class Additionals:
         @staticmethod
@@ -72,12 +47,16 @@ class ProjectSpecifiers:
             [AdditionalDataDefinitionV2], bool
         ] = lambda additionals: additionals.additional_data_definition_id == additional_id
 
-        return cls.additionals.zoom(cls.GenList.gen_zoom_in(predicate), cls.GenList.gen_zoom_out(predicate))
+        return cls.additionals.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
 
-    metadata_dict = annotation.zoom(
+    metadata_dict: DataSpecifier[AS, Dict[str, str]] = annotation.zoom(
         lambda specs: specs.metadata if specs.metadata is not None else {},
         lambda specs, meta: replace(specs, metadata=meta),
     )
+
+    metadata = metadata_dict.bimap(decode_project_meta, encode_project_meta)
+
+    annotation_area = metadata.zoom(lambda m: m.annotation_area, lambda m, area: replace(m, annotation_area=area))
 
 
 class ProjectModifiers:
