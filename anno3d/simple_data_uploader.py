@@ -12,7 +12,11 @@ from scipy.spatial.transform import Rotation
 
 from anno3d.annofab.uploader import Uploader
 from anno3d.calib_loader import read_kitti_calib
-from anno3d.kitti.calib import read_calibration
+from anno3d.kitti.camera_horizontal_fov_provider import (
+    CameraHorizontalFovKind,
+    CameraHorizontalFovProvider,
+    create_camera_horizontal_fov_provider,
+)
 from anno3d.model.common import Vector3
 from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
@@ -55,7 +59,7 @@ def _create_image_meta(
     input_data_id: str,
     number: int,
     settings: Optional[CameraViewSettings],
-    camera_horizontal_fov: Optional[int],
+    camera_horizontal_fov: CameraHorizontalFovProvider,
 ) -> SupplementaryData:
     """
 
@@ -64,7 +68,7 @@ def _create_image_meta(
         calib_path:
         input_data_id:
         number:
-        camera_horizontal_fov: カメラの水平方向視野角 [degree]。
+        camera_horizontal_fov: カメラの水平方向視野角の取得器。
 
     Returns:
 
@@ -73,21 +77,13 @@ def _create_image_meta(
 
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
-    horizontal_fov = math.radians(90.0)
+    fov = ImageCameraFov(camera_horizontal_fov.value(), 35.0 / 180.0 * math.pi)
     camera_position = Vector3(0, 0, 1.65 - 1.73)  # kittiにおける カメラ設置高(1.65) - velodyne設置高(1.73)
     yaw = 0.0
-    if calib_path is not None:
-        # XXX ここで read_calibration を呼ぶの微妙だなぁ…
-        calib = read_calibration(calib_path)
-        horizontal_fov = calib.camera_horizontal_fov
 
     if settings is not None:
-        horizontal_fov = settings.fov
         camera_position = Vector3(settings.position.x, settings.position.y, settings.position.z)
         yaw = settings.direction
-
-    if camera_horizontal_fov is not None:
-        horizontal_fov = math.radians(camera_horizontal_fov)
 
     rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, yaw]))
     direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
@@ -95,9 +91,7 @@ def _create_image_meta(
     meta = ImageMeta(
         read_kitti_calib(calib_path) if calib_path is not None else None,
         ImageCamera(
-            direction=Vector3(direction[0], direction[1], direction[2]),
-            fov=ImageCameraFov(horizontal_fov, 35.0 / 180.0 * math.pi),
-            camera_position=camera_position,
+            direction=Vector3(direction[0], direction[1], direction[2]), fov=fov, camera_position=camera_position,
         ),
     )
 
@@ -143,12 +137,21 @@ async def upload_async(
     uploader: Uploader,
     paths: FilePaths,
     dummy_images: List[Path],
-    camera_horizontal_fov: Optional[int],
+    camera_horizontal_fov: CameraHorizontalFovKind,
+    fallback_horizontal_fov: Optional[int],  # degree
     sensor_height: Optional[float],
 ) -> Tuple[str, List[SupplementaryData]]:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(
-        None, upload, input_data_id_prefix, uploader, paths, dummy_images, camera_horizontal_fov, sensor_height
+        None,
+        upload,
+        input_data_id_prefix,
+        uploader,
+        paths,
+        dummy_images,
+        camera_horizontal_fov,
+        fallback_horizontal_fov,
+        sensor_height,
     )
 
 
@@ -157,7 +160,8 @@ def upload(
     uploader: Uploader,
     paths: FilePaths,
     dummy_images: List[Path],
-    camera_horizontal_fov: Optional[int],
+    camera_horizontal_fov: CameraHorizontalFovKind,
+    fallback_horizontal_fov: Optional[int],  # degree
     sensor_height: Optional[float],
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
@@ -170,10 +174,13 @@ def upload(
             meta
             for i in range(0, len(paths.images))
             for image_paths in [paths.images[i]]
+            for fov_provider in [
+                create_camera_horizontal_fov_provider(camera_horizontal_fov, image_paths, fallback_horizontal_fov)
+            ]
             for meta in [
                 SupplementaryData(camera_image_id(input_data_id, i), image_paths.image),
                 _create_image_meta(
-                    tempdir, image_paths.calib, input_data_id, i, image_paths.camera_settings, camera_horizontal_fov,
+                    tempdir, image_paths.calib, input_data_id, i, image_paths.camera_settings, fov_provider,
                 ),
             ]
         ]
@@ -197,7 +204,8 @@ def upload(
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
     create_frame_meta(parent_dir, "sample_input_id", 2, None)
-    _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None, None)
+    fov_provider = create_camera_horizontal_fov_provider(CameraHorizontalFovKind.SETTINGS, paths.images[0], None)
+    _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None, fov_provider)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
 
@@ -209,7 +217,8 @@ def create_kitti_files(
     input_data_id_prefix: str,
     parent_dir: Path,
     paths: FilePaths,
-    camera_horizontal_fov: Optional[int],
+    camera_horizontal_fov: CameraHorizontalFovKind,
+    fallback_horizontal_fov: Optional[int],  # degree
     sensor_height: Optional[float],
 ) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
@@ -230,12 +239,13 @@ def create_kitti_files(
         for image in [paths.images[i]]
         for image_id in [camera_image_id(input_data_id, i)]
         for image_path in [input_data_dir / image.image.name]
+        for fov_provider in [
+            create_camera_horizontal_fov_provider(camera_horizontal_fov, image, fallback_horizontal_fov)
+        ]
         for _ in [shutil.copyfile(image.image, image_path)]
         for meta in [
             SupplementaryData(image_id, image_path),
-            _create_image_meta(
-                input_data_dir, image.calib, input_data_id, i, image.camera_settings, camera_horizontal_fov
-            ),
+            _create_image_meta(input_data_dir, image.calib, input_data_id, i, image.camera_settings, fov_provider),
         ]
     ]
 

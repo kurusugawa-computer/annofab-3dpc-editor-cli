@@ -6,7 +6,7 @@ import sys
 import tempfile
 from enum import Enum
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Literal, Optional, Tuple, Type, TypeVar
 
 import boto3
 import fire
@@ -17,6 +17,7 @@ from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
 from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
+from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
 from anno3d.model.file_paths import FilePaths, FrameKind
@@ -120,7 +121,7 @@ class Sandbox:
         with client_loader.open_api() as api:
             uploader = AnnofabStorageUploader(api, project, force=force)
             for paths in pathss:
-                upload("", uploader, paths, [hidari, migi], None, None)
+                upload("", uploader, paths, [hidari, migi], CameraHorizontalFovKind.SETTINGS, None, None)
 
     @staticmethod
     def create_meta(kitti_dir: str, output: str = "/tmp/meta"):
@@ -477,7 +478,15 @@ class ProjectCommand:
         sem_opt = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
         async def run_without_sem(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
-            return await upload_async(input_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+            return await upload_async(
+                input_id_prefix,
+                uploader,
+                paths,
+                [],
+                camera_horizontal_fov=CameraHorizontalFovKind.CALIB,
+                fallback_horizontal_fov=None,
+                sensor_height=sensor_height,
+            )
 
         async def run_with_sem(paths: FilePaths, sem: asyncio.Semaphore) -> Tuple[str, List[SupplementaryData]]:
             async with sem:
@@ -513,6 +522,7 @@ class ProjectCommand:
         scene_path: str,
         input_data_id_prefix: str = "",
         task_id_prefix: str = "",
+        camera_horizontal_fov: Optional[Literal["calib", "settings"]] = None,
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
@@ -531,6 +541,9 @@ class ProjectCommand:
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
             input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
             task_id_prefix: 生成するtaskのidにつけるprefix
+            camera_horizontal_fov: 補助画像カメラの視野角の取得方法の指定。 省略した場合"settings" //
+                                   settings => 対象の画像にcamera_view_settingが存在していればその値を利用し、無ければ"calib"と同様 //
+                                   calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90ととする
             sensor_height: velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。
                            省略した場合、kittiのセンサ高(1.73)を採用する
             frame_per_task: タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
@@ -557,6 +570,7 @@ class ProjectCommand:
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
                 frame_per_task=frame_per_task,
+                camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
                 kind=_decode_enum(UploadKind, upload_kind),
@@ -570,6 +584,7 @@ class ProjectCommand:
         s3_path: str,
         input_data_id_prefix: str = "",
         task_id_prefix: str = "",
+        camera_horizontal_fov: Optional[Literal["calib", "settings"]] = None,
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
@@ -587,6 +602,9 @@ class ProjectCommand:
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
             input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
             task_id_prefix: 生成するtaskのidにつけるprefix
+            camera_horizontal_fov: 補助画像カメラの視野角の取得方法の指定。 省略した場合"settings" //
+                                   settings => 対象の画像にcamera_view_settingが存在していればその値を利用し、無ければ"calib"と同様 //
+                                   calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90[degree]ととする
             sensor_height: velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。
                            省略した場合、kittiのセンサ高(1.73)を採用する
             frame_per_task: タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
@@ -613,6 +631,7 @@ class ProjectCommand:
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
                 frame_per_task=frame_per_task,
+                camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
                 kind=_decode_enum(UploadKind, upload_kind),
@@ -664,7 +683,14 @@ class LocalCommand:
         pathss = loader.load(None)[skip : (skip + size)]
 
         inputs = [
-            create_kitti_files(input_id_prefix, output_dir_path, paths, camera_horizontal_fov, sensor_height)
+            create_kitti_files(
+                input_id_prefix,
+                output_dir_path,
+                paths,
+                CameraHorizontalFovKind.CALIB,
+                camera_horizontal_fov,
+                sensor_height,
+            )
             for paths in pathss
         ]
 
@@ -672,7 +698,11 @@ class LocalCommand:
 
     @staticmethod
     def make_scene(
-        scene_path: str, output_dir: str, input_data_id_prefix: str = "", sensor_height: Optional[float] = None,
+        scene_path: str,
+        output_dir: str,
+        input_data_id_prefix: str = "",
+        camera_horizontal_fov: Literal["calib", "settings"] = "settings",
+        sensor_height: Optional[float] = None,
     ) -> None:
         """
         拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
@@ -681,6 +711,9 @@ class LocalCommand:
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
             output_dir: 出力先ディレクトリ。
             input_data_id_prefix: input_data_idの先頭に付与する文字列
+            camera_horizontal_fov: 補助画像カメラの視野角の取得方法の指定。 省略した場合"settings" //
+                                   settings => 対象の画像にcamera_view_settingが存在していればその値を利用し、無ければ"calib"と同様 //
+                                   calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90[degree]ととする
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
@@ -691,7 +724,12 @@ class LocalCommand:
 
         inputs = [
             create_kitti_files(
-                input_data_id_prefix, output_dir_path, paths, camera_horizontal_fov=None, sensor_height=sensor_height
+                input_data_id_prefix,
+                output_dir_path,
+                paths,
+                camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
+                fallback_horizontal_fov=None,
+                sensor_height=sensor_height,
             )
             for paths in pathss
         ]
