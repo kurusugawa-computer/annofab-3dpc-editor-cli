@@ -410,7 +410,6 @@ class ProjectCommand:
         skip: int = 0,
         size: int = 10,
         input_id_prefix: str = "",
-        camera_horizontal_fov: Optional[int] = None,
         sensor_height: Optional[float] = None,
         parallelism: Optional[int] = None,
         force: bool = False,
@@ -427,7 +426,6 @@ class ProjectCommand:
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
-            camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
             parallelism: 非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
@@ -446,7 +444,6 @@ class ProjectCommand:
                 skip,
                 size,
                 input_id_prefix,
-                camera_horizontal_fov,
                 sensor_height,
                 parallelism,
                 force,
@@ -462,7 +459,6 @@ class ProjectCommand:
         skip: int,
         size: int,
         input_id_prefix: str,
-        camera_horizontal_fov: Optional[int],
         sensor_height: Optional[float],
         parallelism: Optional[int],
         force: bool,
@@ -522,7 +518,7 @@ class ProjectCommand:
         scene_path: str,
         input_data_id_prefix: str = "",
         task_id_prefix: str = "",
-        camera_horizontal_fov: Optional[Literal["calib", "settings"]] = None,
+        camera_horizontal_fov: Literal["calib", "settings"] = "settings",
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
@@ -584,7 +580,7 @@ class ProjectCommand:
         s3_path: str,
         input_data_id_prefix: str = "",
         task_id_prefix: str = "",
-        camera_horizontal_fov: Optional[Literal["calib", "settings"]] = None,
+        camera_horizontal_fov: Literal["calib", "settings"] = "settings",
         sensor_height: Optional[float] = None,
         frame_per_task: Optional[int] = None,
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
@@ -660,7 +656,6 @@ class LocalCommand:
         skip: int = 0,
         size: int = 10,
         input_id_prefix: str = "",
-        camera_horizontal_fov: Optional[int] = None,
         sensor_height: Optional[float] = None,
     ) -> None:
         """
@@ -672,7 +667,6 @@ class LocalCommand:
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
             input_id_prefix: input_data_idの先頭に付与する文字列
-            camera_horizontal_fov: カメラのhorizontal FOVの角度[degree] 指定が無い場合kittiのカメラ仕様を採用する
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
@@ -684,12 +678,7 @@ class LocalCommand:
 
         inputs = [
             create_kitti_files(
-                input_id_prefix,
-                output_dir_path,
-                paths,
-                CameraHorizontalFovKind.CALIB,
-                camera_horizontal_fov,
-                sensor_height,
+                input_id_prefix, output_dir_path, paths, CameraHorizontalFovKind.CALIB, None, sensor_height
             )
             for paths in pathss
         ]
