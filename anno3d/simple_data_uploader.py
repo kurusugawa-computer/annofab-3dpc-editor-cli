@@ -74,7 +74,7 @@ def _create_image_meta(
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
     horizontal_fov = math.radians(90.0)
-    camera_height = 1.65
+    camera_position = Vector3(0, 0, 1.65 - 1.73)  # kittiにおける カメラ設置高(1.65) - velodyne設置高(1.73)
     yaw = 0.0
     if calib_path is not None:
         # XXX ここで read_calibration を呼ぶの微妙だなぁ…
@@ -83,7 +83,7 @@ def _create_image_meta(
 
     if settings is not None:
         horizontal_fov = settings.fov
-        camera_height = settings.position.z
+        camera_position = Vector3(settings.position.x, settings.position.y, settings.position.z)
         yaw = settings.direction
 
     if camera_horizontal_fov is not None:
@@ -97,7 +97,7 @@ def _create_image_meta(
         ImageCamera(
             direction=Vector3(direction[0], direction[1], direction[2]),
             fov=ImageCameraFov(horizontal_fov, 35.0 / 180.0 * math.pi),
-            camera_height=camera_height,
+            camera_position=camera_position,
         ),
     )
 
@@ -120,7 +120,7 @@ def _create_dummy_image_meta(parent_dir: Path, input_data_id: str, number: int) 
         ImageCamera(
             direction=Vector3(x, y, 0),
             fov=ImageCameraFov(60.0 / 180.0 * math.pi, 35.0 / 180.0 * math.pi),
-            camera_height=1.65,
+            camera_position=Vector3(0, 0, 1.65 - 1.73),
         ),
     )
 
