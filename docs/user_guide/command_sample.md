@@ -395,10 +395,10 @@ anno3d project upload_kitti_data \
 ```
 $ anno3d project upload_scene -- --help | cat
 NAME
-    anno3d project upload_scene - 拡張kitti形式のファイル群をAnnoFabにアップロードします
+    app.py project upload_scene - 拡張kitti形式のファイル群をAnnoFabにアップロードします
 
 SYNOPSIS
-    anno3d project upload_scene PROJECT_ID SCENE_PATH <flags>
+    app.py project upload_scene PROJECT_ID SCENE_PATH <flags>
 
 DESCRIPTION
     拡張kitti形式のファイル群をAnnoFabにアップロードします
@@ -414,6 +414,8 @@ FLAGS
         アップロードするデータのinput_data_idにつけるprefix
     --task_id_prefix=TASK_ID_PREFIX
         生成するtaskのidにつけるprefix
+    --camera_horizontal_fov=CAMERA_HORIZONTAL_FOV
+        補助画像カメラの視野角の取得方法の指定。 省略した場合"settings" // settings => 対象の画像にcamera_view_settingが存在していればその値を利用し、無ければ"calib"と同様 // calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90ととする
     --sensor_height=SENSOR_HEIGHT
         velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。 省略した場合、kittiのセンサ高(1.73)を採用する
     --frame_per_task=FRAME_PER_TASK
@@ -442,6 +444,7 @@ anno3d project upload_scene \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
   --frame_per_task 4 \
+  --camera_horizontal_fov "calib" \
   --input_data_id_prefix scene1-1 \
   --task_id_prefix scene1-task-1- \
   --sensor_height 0 \
@@ -463,10 +466,10 @@ anno3d project upload_scene \
 ```
 $ anno3d project upload_scene_to_s3 -- --help | cat
 NAME
-    anno3d project upload_scene_to_s3 - 拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
+    app.py project upload_scene_to_s3 - 拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
 
 SYNOPSIS
-    anno3d project upload_scene_to_s3 PROJECT_ID SCENE_PATH S3_PATH <flags>
+    app.py project upload_scene_to_s3 PROJECT_ID SCENE_PATH S3_PATH <flags>
 
 DESCRIPTION
     拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
@@ -484,6 +487,8 @@ FLAGS
         アップロードするデータのinput_data_idにつけるprefix
     --task_id_prefix=TASK_ID_PREFIX
         生成するtaskのidにつけるprefix
+    --camera_horizontal_fov=CAMERA_HORIZONTAL_FOV
+        補助画像カメラの視野角の取得方法の指定。 省略した場合"settings" // settings => 対象の画像にcamera_view_settingが存在していればその値を利用し、無ければ"calib"と同様 // calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90[degree]ととする
     --sensor_height=SENSOR_HEIGHT
         velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。 省略した場合、kittiのセンサ高(1.73)を採用する
     --frame_per_task=FRAME_PER_TASK
@@ -501,6 +506,7 @@ FLAGS
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
+
 ```
 
 
@@ -512,7 +518,8 @@ anno3d project upload_scene_to_s3 \
   --annofab_pass ${ANNO_PASS} \
   --project_id ${ANNO_PRJ} \
   --frame_per_task 4 \
-  --s3_path "my-bucket/foo/bar"
+  --camera_horizontal_fov "settings" \
+  --s3_path "my-bucket/foo/bar" \
   --input_data_id_prefix scene1-1 \
   --task_id_prefix scene1-task-1- \
   --sensor_height 0 \
@@ -522,9 +529,45 @@ anno3d project upload_scene_to_s3 \
 ```
 
 
-### 投入データのローカルファイルシステムへの生成
+### make_kitti_data
 
-プライベートストレージなどを使用する場合に、KITTI形式のデータを元に、AnnoFabに投入可能なデータ群を作る例。
+プライベートストレージなどを使用する場合に、KITTI形式のデータを元に、AnnoFabに投入可能なデータ群を作る。
+
+#### ヘルプ
+
+```
+$ anno3d local make_kitti_data -- --help | cat
+NAME
+    app.py local make_kitti_data - kitti 3d detection形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+
+SYNOPSIS
+    app.py local make_kitti_data KITTI_DIR OUTPUT_DIR <flags>
+
+DESCRIPTION
+    kitti 3d detection形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+
+POSITIONAL ARGUMENTS
+    KITTI_DIR
+        登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
+    OUTPUT_DIR
+        出力先ディレクトリ。
+
+FLAGS
+    --skip=SKIP
+        見つけたデータの先頭何件をスキップするか
+    --size=SIZE
+        最大何件のinput_dataを登録するか
+    --input_id_prefix=INPUT_ID_PREFIX
+        input_data_idの先頭に付与する文字列
+    --sensor_height=SENSOR_HEIGHT
+        点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+
+```
+
+#### コマンド例
 
 ```
 $ anno3d local make_kitti_data \
@@ -535,13 +578,50 @@ $ anno3d local make_kitti_data \
  --camera_horizontal_fov 56
 ```
 
+### make_scene
+
 拡張KITTI形式のデータを元に出力する場合は、`anno3d local make_scene`コマンドを利用してください。
+
+#### ヘルプ
+
+```
+$ anno3d local make_scene -- --help | cat
+NAME
+    app.py local make_scene - 拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+
+SYNOPSIS
+    app.py local make_scene SCENE_PATH OUTPUT_DIR <flags>
+
+DESCRIPTION
+    拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+
+POSITIONAL ARGUMENTS
+    SCENE_PATH
+        scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
+    OUTPUT_DIR
+        出力先ディレクトリ。
+
+FLAGS
+    --input_data_id_prefix=INPUT_DATA_ID_PREFIX
+        input_data_idの先頭に付与する文字列
+    --camera_horizontal_fov=CAMERA_HORIZONTAL_FOV
+        補助画像カメラの視野角の取得方法の指定。 省略した場合"settings" // settings => 対象の画像にcamera_view_settingが存在していればその値を利用し、無ければ"calib"と同様 // calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90[degree]ととする
+    --sensor_height=SENSOR_HEIGHT
+        点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
+
+NOTES
+    You can also use flags syntax for POSITIONAL ARGUMENTS
+
+```
+
+#### コマンド例
 
 ```
 $ anno3d local make_scene \
- --scene_path "/path/to/scene.meta" \
- --output_dir "./output" \
- --input_id_prefix "prefix" \
- --sensor_height 0
+  --scene_path "/path/to/scene.meta" \
+  --output_dir "./output" \
+  --input_id_prefix "prefix" \
+  --camera_horizontal_fov "settings" \
+  --sensor_height 0
 ```
 
