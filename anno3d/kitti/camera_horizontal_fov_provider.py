@@ -72,9 +72,9 @@ def create_camera_horizontal_fov_provider(
     fallback_rad = math.radians(fallback if fallback is not None else 90)
     fallback_fov = ConstValueProvider("水平視野角", fallback_rad)
     calib_fov = CalibCameraHorizontalFovProvider(paths).or_else(fallback_fov)
-    if kind == "settings":
+    if kind == CameraHorizontalFovKind.SETTINGS:
         return SettingsCameraHorizontalFovProvider(paths).or_else(calib_fov)
-    elif kind == "calib":
+    elif kind == CameraHorizontalFovKind.CALIB:
         return calib_fov
     else:
         raise RuntimeError(f"kind(={kind}) が不正な値です")
