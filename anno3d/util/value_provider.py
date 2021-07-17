@@ -29,7 +29,7 @@ class OrElseValueProvider(ValueProvider[A]):
     _right: ValueProvider[A]
 
     def __init__(self, left: ValueProvider[A], right: ValueProvider[A]):
-        super().__init__(self._left.value_name)
+        super().__init__(left.value_name)
         self._left = left
         self._right = right
 
@@ -39,6 +39,14 @@ class OrElseValueProvider(ValueProvider[A]):
             return left_value
 
         return self._right.value_opt()
+
+
+class NoneValueProvider(ValueProvider[A]):
+    def __init__(self, name: str):
+        super().__init__(name)
+
+    def value_opt(self) -> Optional[A]:
+        return None
 
 
 class ConstValueProvider(ValueProvider[A]):
