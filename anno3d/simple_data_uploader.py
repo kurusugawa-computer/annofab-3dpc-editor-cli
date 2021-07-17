@@ -82,8 +82,10 @@ def _create_image_meta(
     yaw = 0.0
 
     if settings is not None:
-        camera_position = Vector3(settings.position.x, settings.position.y, settings.position.z)
-        yaw = settings.direction
+        if settings.position is not None:
+            camera_position = Vector3(settings.position.x, settings.position.y, settings.position.z)
+        if settings.direction is not None:
+            yaw = settings.direction
 
     rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, yaw]))
     direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
