@@ -18,7 +18,7 @@ class ImageCameraFov(DataClassJsonMixin):
 class ImageCamera(DataClassJsonMixin):
     direction: Vector3
     fov: ImageCameraFov
-    camera_height: float
+    camera_position: Vector3
 
 
 @pascalcase
@@ -43,3 +43,4 @@ class ImageMeta(DataClassJsonMixin):
 
     calib: Optional[kitti3DCalib]
     camera: ImageCamera
+    version: str = "2"

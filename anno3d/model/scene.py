@@ -31,13 +31,13 @@ class CameraViewSettings(DataClassJsonMixin):
     """
     Args:
         fov: 水平方向視野角[rad]
-        direction: 回転角度。 x軸方向が0でz軸による回転 [rad]
+        direction: 回転角度。 x軸方向が0でz軸による回転（右手系） [rad]
         position: velodyne座標系におけるカメラの設置位置
     """
 
-    fov: float
-    direction: float
-    position: XYZ
+    fov: Optional[float] = None
+    direction: Optional[float] = None
+    position: Optional[XYZ] = None
 
 
 @dataclass(frozen=True)

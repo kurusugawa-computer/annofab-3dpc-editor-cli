@@ -19,6 +19,7 @@ from anno3d.annofab.project import ProjectApi
 from anno3d.annofab.task import TaskApi
 from anno3d.annofab.uploader import Uploader
 from anno3d.kitti.calib import read_calibration, transform_labels_into_lidar_coordinates
+from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.model.file_paths import FilePaths, FrameKey, ImagePaths, LabelPaths
 from anno3d.model.kitti_label import KittiLabel
 from anno3d.model.scene import Defaults, Scene
@@ -38,6 +39,7 @@ class SceneUploaderInput:
     project_id: str
     input_data_id_prefix: str
     frame_per_task: Optional[int]
+    camera_horizontal_fov: CameraHorizontalFovKind
     sensor_height: Optional[float]
     task_id_prefix: str
     kind: UploadKind
@@ -222,11 +224,19 @@ class SceneUploader:
         input_data_id_prefix: str,
         uploader: Uploader,
         paths: FilePaths,
-        camera_horizontal_fov: Optional[int],
+        camera_horizontal_fov: CameraHorizontalFovKind,
         sensor_height: Optional[float],
     ) -> Tuple[str, List[SupplementaryData]]:
         async def run() -> Tuple[str, List[SupplementaryData]]:
-            return await upload_async(input_data_id_prefix, uploader, paths, [], camera_horizontal_fov, sensor_height)
+            return await upload_async(
+                input_data_id_prefix,
+                uploader,
+                paths,
+                [],
+                camera_horizontal_fov,
+                fallback_horizontal_fov=None,
+                sensor_height=sensor_height,
+            )
 
         if self._sem is not None:
             async with self._sem:
@@ -247,7 +257,11 @@ class SceneUploader:
         logger.info("input-dataのアップロードを開始します")
         data_tasks = [
             self._upload_data_async(
-                uploader_input.input_data_id_prefix, uploader, paths, None, uploader_input.sensor_height
+                uploader_input.input_data_id_prefix,
+                uploader,
+                paths,
+                uploader_input.camera_horizontal_fov,
+                uploader_input.sensor_height,
             )
             for paths in pathss
         ]

@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from anno3d.model.scene import XYZ, Scene
+from anno3d.model.scene import XYZ, CameraViewSettings, Scene
 
 
 def test_decode_scene():
@@ -44,6 +44,11 @@ def test_decode_scene():
         "label_dir": "label_2",
         "image_dir": "image_2", // label_2に紐づくimageデータ
         "calib_dir": "calib"    // label_2に紐づくcalibデータ
+    },
+    {
+        "type": "kitti_image",
+        "image_dir": "image_3",
+        "camera_view_setting": {}
     }
   ],
   // これ以外の項目はoptionとする．有ろうが無かろうが，3DPCE側は気にしない．
@@ -55,7 +60,7 @@ def test_decode_scene():
     assert scene.id_list[0] == "006497"
     assert scene.id_list[1] == "012187"
     assert scene.velodyne.velodyne_dir == "/root/velodyne"
-    assert len(scene.images) == 2
+    assert len(scene.images) == 3
     assert len(scene.labels) == 1
 
     image1 = scene.images[0]
@@ -70,6 +75,11 @@ def test_decode_scene():
     assert image2.image_dir == "/root/image_2"
     assert image2.calib_dir == "/root/calib"
     assert image2.camera_view_setting is None
+
+    image3 = scene.images[2]
+    assert image3.image_dir == "/root/image_3"
+    assert image3.calib_dir is None
+    assert image3.camera_view_setting == CameraViewSettings(None, None, None)
 
     label = scene.labels[0]
     assert label.label_dir == "/root/label_2"

@@ -6,6 +6,7 @@ from pathlib import Path
 from anno3d.annofab.client import ClientLoader
 from anno3d.annofab.uploader import AnnofabStorageUploader
 from anno3d.file_paths_loader import FilePathsLoader
+from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.model.file_paths import FrameKind
 from anno3d.simple_data_uploader import create_meta_file, upload
 
@@ -43,7 +44,7 @@ def upload_files():
     with client_loader.open_api() as api:
         uploader = AnnofabStorageUploader(api, project)
         for paths in pathss:
-            upload("", uploader, paths, [hidari, migi], None, None)
+            upload("", uploader, paths, [hidari, migi], CameraHorizontalFovKind.SETTINGS, None, None)
 
 
 def create_meta():
