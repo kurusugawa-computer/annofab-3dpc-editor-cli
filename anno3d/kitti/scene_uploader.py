@@ -192,7 +192,6 @@ class SceneUploader:
         async def run() -> None:
             loop = asyncio.get_event_loop()
             for input_data_id, pathss in pathsss:
-                logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
                 transformed_labels = [
                     transformed_label
                     for paths in pathss
@@ -200,7 +199,15 @@ class SceneUploader:
                     for labels in [KittiLabel.decode_path(paths.label)]
                     for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
                 ]
+                cuboid_labels = self._label_to_cuboids(id_to_label, transformed_labels)
 
+                logger.info(
+                    "アノテーションの登録を行います: %s/%s, 登録数=%d 変換前アノテーション数=%d",
+                    task_id,
+                    input_data_id,
+                    len(cuboid_labels),
+                    len(transformed_labels),
+                )
                 await loop.run_in_executor(
                     None,
                     task.put_cuboid_annotations,
