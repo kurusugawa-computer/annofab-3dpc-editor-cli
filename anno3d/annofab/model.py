@@ -44,6 +44,12 @@ class Size(DataClassJsonMixin):
 
 
 @dataclass
+class CuboidDirection(DataClassJsonMixin):
+    front: XYZ
+    up: XYZ
+
+
+@dataclass
 class CuboidShape(DataClassJsonMixin):
     """
     Args:
@@ -53,12 +59,14 @@ class CuboidShape(DataClassJsonMixin):
     dimensions: Size
     location: XYZ
     rotation: XYZ
+    direction: CuboidDirection
 
 
 @dataclass
 class CuboidAnnotationDetailData(DataClassJsonMixin):
     shape: CuboidShape
     kind: str = "CUBOID"
+    version: str = "2"
 
 
 @dataclass
