@@ -10,11 +10,20 @@ from pathlib import Path
 from typing import Dict, List, NewType, Optional, Tuple
 
 import more_itertools
+import numpy as np
 from annofabapi import AnnofabApi
 from annofabapi.dataclass.annotation_specs import LabelV2
 from annofabapi.models import JobStatus
+from scipy.spatial.transform import Rotation
 
-from anno3d.annofab.model import XYZ, CuboidAnnotationDetail, CuboidAnnotationDetailData, CuboidShape, Size
+from anno3d.annofab.model import (
+    XYZ,
+    CuboidAnnotationDetail,
+    CuboidAnnotationDetailData,
+    CuboidDirection,
+    CuboidShape,
+    Size,
+)
 from anno3d.annofab.project import ProjectApi
 from anno3d.annofab.task import TaskApi
 from anno3d.annofab.uploader import Uploader
@@ -159,14 +168,16 @@ class SceneUploader:
         self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
     ) -> List[CuboidAnnotationDetail]:
         def detail_data(kitti_label: KittiLabel) -> CuboidAnnotationDetailData:
+            # directionはrotationから計算可能で、且つ3dpc-editorでの読み込みには利用していないが、エディタで編集されない場合があるので、計算しておく
+            rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, kitti_label.yaw]))
+            direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
+
             return CuboidAnnotationDetailData(
                 CuboidShape(
-                    # https://github.com/kurusugawa-computer/annofab-3dpc-editor/issues/416
-                    # TODO ここの WHD の読み替えは ↑の対応後に修正したほうが良い
-                    # 修正する場合 データのversionが2とかになってるはずなので、その点も対応する必要がある
-                    dimensions=Size(width=kitti_label.depth, height=kitti_label.width, depth=kitti_label.height),
+                    dimensions=Size(width=kitti_label.width, height=kitti_label.height, depth=kitti_label.depth),
                     location=XYZ(x=kitti_label.x, y=kitti_label.y, z=kitti_label.z + (kitti_label.height / 2)),
                     rotation=XYZ(x=0.0, y=0.0, z=kitti_label.yaw),  # このyawがそのままでいいのか不明
+                    direction=CuboidDirection(front=XYZ(direction[0], direction[1], direction[2]), up=XYZ(0, 0, 1)),
                 )
             )
 
@@ -192,7 +203,6 @@ class SceneUploader:
         async def run() -> None:
             loop = asyncio.get_event_loop()
             for input_data_id, pathss in pathsss:
-                logger.info("アノテーションの登録を行います: %s/%s", task_id, input_data_id)
                 transformed_labels = [
                     transformed_label
                     for paths in pathss
@@ -200,13 +210,17 @@ class SceneUploader:
                     for labels in [KittiLabel.decode_path(paths.label)]
                     for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
                 ]
+                cuboid_labels = self._label_to_cuboids(id_to_label, transformed_labels)
 
-                await loop.run_in_executor(
-                    None,
-                    task.put_cuboid_annotations,
+                logger.info(
+                    "アノテーションの登録を行います: %s/%s, 登録数=%d 変換前アノテーション数=%d",
                     task_id,
                     input_data_id,
-                    self._label_to_cuboids(id_to_label, transformed_labels),
+                    len(cuboid_labels),
+                    len(transformed_labels),
+                )
+                await loop.run_in_executor(
+                    None, task.put_cuboid_annotations, task_id, input_data_id, cuboid_labels,
                 )
 
         if self._sem is not None:
