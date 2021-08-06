@@ -11,7 +11,7 @@ from annofabapi.dataclass.annotation_specs import (
     InternationalizationMessageMessages,
     LabelV2,
 )
-from annofabapi.dataclass.job import JobInfo
+from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
 from annofabapi.models import AdditionalDataDefinitionType, AnnotationType
 from more_itertools import first_true
@@ -141,8 +141,8 @@ class ProjectApi:
         return self._decode_project(result)
 
     @staticmethod
-    def _decode_jobinfo(info: afm.JobInfo) -> JobInfo:
-        return JobInfo.from_dict(info)
+    def _decode_jobinfo(info: afm.ProjectJobInfo) -> ProjectJobInfo:
+        return ProjectJobInfo.from_dict(info)
 
     def create_custom_project(
         self, project_id: str, organization_name: str, plugin_id: str, title: str = "", overview: str = ""
@@ -277,13 +277,13 @@ class ProjectApi:
         new_spec = self._mod_project_specs(project_id, ProjectModifiers.set_annotation_area(area))
         return ProjectSpecifiers.metadata.get(new_spec)
 
-    def get_job(self, project_id: str, job: JobInfo) -> Optional[JobInfo]:
+    def get_job(self, project_id: str, job: ProjectJobInfo) -> Optional[ProjectJobInfo]:
         client = self._client
         if job.job_type is None:
             raise RuntimeError(f"ジョブ(={job.job_id})のjob_typeがありません")
         params = {"type": job.job_type.value, "limit": "200"}
         result, _ = client.get_project_job(project_id, params)
-        jobs: List[afm.JobInfo] = result["list"]
+        jobs: List[afm.ProjectJobInfo] = result["list"]
         jobs2 = [self._decode_jobinfo(j) for j in jobs]
 
         return first_true(jobs2, pred=lambda j: j.job_id == job.job_id)
