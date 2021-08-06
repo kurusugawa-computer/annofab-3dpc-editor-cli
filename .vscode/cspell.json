@@ -16,6 +16,7 @@
         "astimezone",
         "astype",
         "asyncio",
+        "boto",
         "dateutil",
         "dtypes",
         "getrgb",
@@ -23,11 +24,14 @@
         "groupby",
         "inplace",
         "itertools",
+        "jsonl",
+        "kitti",
         "nargs",
         "noqa",
         "popen",
         "pylint",
         "tzlocal",
-        "unsubscriptable"
+        "unsubscriptable",
+        "velodyne"
     ]
 }
