@@ -8,7 +8,7 @@ from annofabapi.dataclass.annotation_specs import (
     InspectionPhrase,
     LabelV2,
 )
-from annofabapi.dataclass.job import JobInfo
+from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
 from annofabapi.models import AnnotationSpecsMovieOption
 from dataclasses_json import DataClassJsonMixin
@@ -26,7 +26,7 @@ class Label(DataClassJsonMixin):
 @dataclass
 class TaskGenerateResponse(DataClassJsonMixin):
     project: Project
-    job: JobInfo
+    job: ProjectJobInfo
 
 
 @dataclass
