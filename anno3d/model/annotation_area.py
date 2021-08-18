@@ -3,12 +3,12 @@ from typing import Dict, Union
 
 from dataclasses_json import DataClassJsonMixin
 
-from anno3d.model.common import pascalcase
+from anno3d.model.common import camelcase
 
 annotation_area_metadata_prefix = "area_"
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class WholeAnnotationAreaV1(DataClassJsonMixin):
     area_kind: str = "whole"
@@ -17,7 +17,7 @@ class WholeAnnotationAreaV1(DataClassJsonMixin):
 WholeAnnotationArea = WholeAnnotationAreaV1
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class SphereAnnotationAreaV1(DataClassJsonMixin):
     area_radius: str
@@ -27,7 +27,7 @@ class SphereAnnotationAreaV1(DataClassJsonMixin):
 SphereAnnotationArea = SphereAnnotationAreaV1
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class RectAnnotationAreaV1(DataClassJsonMixin):
     area_max_x: str

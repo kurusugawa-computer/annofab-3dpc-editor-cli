@@ -4,16 +4,16 @@ from typing import Dict
 from dataclasses_json import DataClassJsonMixin
 
 from anno3d.model.annotation_area import AnnotationArea, WholeAnnotationArea, decode_area_from_v1
-from anno3d.model.common import pascalcase
+from anno3d.model.common import camelcase
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class ProjectMetadataVersion(DataClassJsonMixin):
     version: str = "1"
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class ProjectMetadata(DataClassJsonMixin):
     annotation_area: AnnotationArea

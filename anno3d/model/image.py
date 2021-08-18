@@ -3,17 +3,17 @@ from typing import List, Optional
 
 from dataclasses_json import DataClassJsonMixin
 
-from anno3d.model.common import Vector3, pascalcase
+from anno3d.model.common import Vector3, camelcase
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class ImageCameraFov(DataClassJsonMixin):
     horizontal: float
     vertical: float
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class ImageCamera(DataClassJsonMixin):
     direction: Vector3
@@ -21,7 +21,7 @@ class ImageCamera(DataClassJsonMixin):
     camera_position: Vector3
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class kitti3DCalib(DataClassJsonMixin):
     # 4x3行列 (P2)
@@ -36,7 +36,7 @@ class kitti3DCalib(DataClassJsonMixin):
     kind: str = "kitti3dDetection"
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class ImageMeta(DataClassJsonMixin):
     """ 画像ごとに存在するメタデータ """

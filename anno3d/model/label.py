@@ -2,16 +2,16 @@ from dataclasses import dataclass
 
 from dataclasses_json import DataClassJsonMixin
 
-from anno3d.model.common import pascalcase
+from anno3d.model.common import camelcase
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class CuboidLabelMetadata(DataClassJsonMixin):
     type: str = "CUBOID"
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class SegmentLabelMetadata(DataClassJsonMixin):
     """

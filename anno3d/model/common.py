@@ -6,14 +6,14 @@ from dataclasses_json import DataClassJsonMixin, LetterCase, config
 A = TypeVar("A", bound=DataClassJsonMixin)
 
 
-def pascalcase(cls: Type[A]) -> Type[A]:
+def camelcase(cls: Type[A]) -> Type[A]:
     cls.dataclass_json_config = config(letter_case=LetterCase.CAMEL)["dataclasses_json"]  # type: ignore
 
     # 受け取ったクラスはそのまま返す
     return cls
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class Vector3(DataClassJsonMixin):
     x: float
