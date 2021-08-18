@@ -5,7 +5,7 @@ from dataclasses_json import DataClassJsonMixin
 
 from anno3d.model.common import camelcase
 
-annotation_area_metadata_prefix = "area_"
+annotation_area_metadata_prefix = "area"
 
 
 @camelcase
@@ -54,3 +54,8 @@ def decode_area_from_v1(data: Dict[str, str]) -> AnnotationArea:
         return RectAnnotationAreaV1.from_dict(data)
     else:
         raise RuntimeError("areaKindが、ありえない値(={})でした".format(kind))
+
+
+def decode_area_from_v2(data: Dict[str, str]) -> AnnotationArea:
+    filtered = dict(filter(lambda kv: kv[0].startswith(annotation_area_metadata_prefix), data.items()))
+    return decode_area_from_v1(filtered)

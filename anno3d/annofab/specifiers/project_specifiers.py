@@ -58,6 +58,10 @@ class ProjectSpecifiers:
 
     annotation_area = metadata.zoom(lambda m: m.annotation_area, lambda m, area: replace(m, annotation_area=area))
 
+    preset_cuboid_sizes = metadata.zoom(
+        lambda m: m.preset_cuboid_sizes, lambda m, cuboids: replace(m, preset_cuboid_sizes=cuboids)
+    )
+
 
 class ProjectModifiers:
     pass

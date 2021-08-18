@@ -404,6 +404,76 @@ class ProjectCommand:
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
     @staticmethod
+    def remove_preset_cuboid_size(
+        project_id: str,
+        name: str,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
+    ) -> None:
+        """
+        対象のプロジェクトからcuboidの規定サイズを削除します。
+
+        Args:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            project_id: 対象プロジェクト
+            name: 削除する規定サイズの名前(英数字)。`presetCuboidSize{Name}`というキーのメタデータが削除される(Nameはnameの頭文字を大文字にしたもの)
+
+        Returns:
+
+        """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert name.isalnum()
+        name = str(name)
+        assert annofab_id is not None and annofab_pass is not None
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+
+        with client_loader.open_api() as api:
+            new_meta = ProjectApi(api).remove_preset_cuboid_size(project_id, name)
+            logger.info("メタデータを更新しました。")
+            logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
+
+    @staticmethod
+    def add_preset_cuboid_size(
+        project_id: str,
+        name: str,
+        width: float,
+        height: float,
+        depth: float,
+        annofab_id: Optional[str] = env_annofab_user_id,
+        annofab_pass: Optional[str] = env_annofab_password,
+    ) -> None:
+        """
+        対象のプロジェクトにcuboidの規定サイズを追加・更新します。
+
+        Args:
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            project_id: 対象プロジェクト
+            name: 追加・更新する規定サイズの名前(英数字)。`presetCuboidSize{Name}`というメタデータ・キーに対して規定サイズが設定される（Nameはnameの頭文字を大文字にしたもの）
+            width: 追加・更新する規定サイズの奥行
+            height: 追加・更新する規定サイズの幅
+            depth: 追加・更新する規定サイズの高さ
+
+        Returns:
+
+        """
+        if not validate_annofab_credential(annofab_id, annofab_pass):
+            return
+
+        assert name.isalnum()
+        name = str(name)
+        assert annofab_id is not None and annofab_pass is not None
+        client_loader = ClientLoader(annofab_id, annofab_pass)
+
+        with client_loader.open_api() as api:
+            new_meta = ProjectApi(api).add_preset_cuboid_size(project_id, name, width, height, depth)
+            logger.info("メタデータを更新しました。")
+            logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
+
+    @staticmethod
     def upload_kitti_data(
         project_id: str,
         kitti_dir: str,
