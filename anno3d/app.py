@@ -180,8 +180,8 @@ class ProjectCommand:
         新しいカスタムプロジェクトを生成します。
 
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 作成するprojectのid
             organization_name: projectを所属させる組織の名前
             plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
@@ -226,8 +226,8 @@ class ProjectCommand:
         """
         対象のプロジェクトにcuboidのlabelを追加・更新します。
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
             ja_name: 日本語名称
@@ -266,8 +266,8 @@ class ProjectCommand:
         """
         対象のプロジェクトにsegmentのlabelを追加・更新します。
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
             ja_name: 日本語名称
@@ -317,8 +317,8 @@ class ProjectCommand:
         すでにアノテーション範囲が設定されていた場合、上書きされます。
 
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
 
         Returns:
@@ -346,8 +346,8 @@ class ProjectCommand:
         すでにアノテーション範囲が設定されていた場合、上書きされます。
 
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
             radius: アノテーション範囲の半径
 
@@ -377,8 +377,8 @@ class ProjectCommand:
         すでにアノテーション範囲が設定されていた場合、上書きされます。
 
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
             x: アノテーション範囲のx座標の範囲
             y: アノテーション範囲のy座標の範囲
@@ -419,8 +419,8 @@ class ProjectCommand:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 登録先のプロジェクトid
             kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
             skip: 見つけたデータの先頭何件をスキップするか
@@ -531,8 +531,8 @@ class ProjectCommand:
         拡張kitti形式のファイル群をAnnoFabにアップロードします
 
         Args:
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 登録先のプロジェクトid
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
             input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
@@ -610,8 +610,8 @@ class ProjectCommand:
                          annotation => 上記に加えて、アノテーションの登録を行う
             parallelism: 非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
             force: 入力データと補助データを上書きしてアップロードするかどうか。
-            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
-            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+            annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
         """
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return

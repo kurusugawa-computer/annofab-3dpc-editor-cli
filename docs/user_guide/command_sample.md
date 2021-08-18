@@ -35,9 +35,9 @@ FLAGS
     --overview=OVERVIEW
         projectの概要。 省略した場合 project_id と同様
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -75,9 +75,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -105,9 +105,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -137,9 +137,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -208,9 +208,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -249,9 +249,9 @@ FLAGS
     --layer=LAYER
         このラベルのレイヤーを指定する。 同じレイヤーのラベルは、頂点を共有することが出来ない。 また、大きな値のレイヤーが優先して表示される。 指定しない場合は 100
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -359,9 +359,9 @@ FLAGS
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -427,9 +427,9 @@ FLAGS
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -500,9 +500,9 @@ FLAGS
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値をを採用する
+        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値をを採用する
+        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
