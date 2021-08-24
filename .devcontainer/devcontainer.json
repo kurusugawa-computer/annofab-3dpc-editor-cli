@@ -14,6 +14,7 @@
 	"remoteUser": "vscode",
 	"updateRemoteUserUID": true,
 	"overrideCommand": false,
+	"initializeCommand": "mkdir -p ${localWorkspaceFolder}/.devcontainer/venv",
 	"mounts": [
 		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
 		"source=${localWorkspaceFolder}/.devcontainer/.extensions,target=/home/vscode/.vscode-server/extensions,type=bind",
