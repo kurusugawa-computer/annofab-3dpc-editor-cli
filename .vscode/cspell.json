@@ -1,0 +1,37 @@
+{
+    "version": "0.1",
+    "ignorePaths": [
+        "**/.git/objects/**",
+        ".devcontainer/",
+        ".vscode/",
+        "LICENSE",
+        "tests/"
+    ],
+    "enabledLanguageIds": [
+        "python",
+        "reStructuredText"
+    ],
+    "words": [
+        "annofab",
+        "astimezone",
+        "astype",
+        "asyncio",
+        "boto",
+        "dateutil",
+        "dtypes",
+        "getrgb",
+        "giveup",
+        "groupby",
+        "inplace",
+        "itertools",
+        "jsonl",
+        "kitti",
+        "nargs",
+        "noqa",
+        "popen",
+        "pylint",
+        "tzlocal",
+        "unsubscriptable",
+        "velodyne"
+    ]
+}
