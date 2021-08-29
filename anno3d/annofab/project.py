@@ -41,19 +41,22 @@ class ProjectModifiers:
         return cls.specifiers.annotation_area.mod(lambda _: area)
 
     @classmethod
-    def remove_preset_cuboid_size(cls, name: str) -> DataModifier[AnnotationSpecsV2]:
-        prefixed = preset_cuboid_size_metadata_prefix + name.title()
+    def remove_preset_cuboid_size(cls, key_name: str) -> DataModifier[AnnotationSpecsV2]:
+        prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
         return cls.specifiers.preset_cuboid_sizes.mod(
             lambda curr: dict(filter(lambda kv: kv[0] != prefixed, curr.items()))
         )
 
     @classmethod
     def add_preset_cuboid_size(
-        cls, name: str, width: float, height: float, depth: float
+        cls, key_name: str, ja_name: str, en_name: str, width: float, height: float, depth: float
     ) -> DataModifier[AnnotationSpecsV2]:
-        prefixed = preset_cuboid_size_metadata_prefix + name.title()
+        prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
         return cls.specifiers.preset_cuboid_sizes.mod(
-            lambda curr: curr.update({prefixed: PresetCuboidSize(width=width, height=height, depth=depth)}) or curr
+            lambda curr: curr.update(
+                {prefixed: PresetCuboidSize(ja_name=ja_name, en_name=en_name, width=width, height=height, depth=depth)}
+            )
+            or curr
         )
 
     @classmethod
@@ -294,15 +297,15 @@ class ProjectApi:
         new_spec = self._mod_project_specs(project_id, ProjectModifiers.set_annotation_area(area))
         return ProjectSpecifiers.metadata.get(new_spec)
 
-    def remove_preset_cuboid_size(self, project_id: str, name: str) -> ProjectMetadata:
-        new_spec = self._mod_project_specs(project_id, ProjectModifiers.remove_preset_cuboid_size(name))
+    def remove_preset_cuboid_size(self, project_id: str, key_name: str) -> ProjectMetadata:
+        new_spec = self._mod_project_specs(project_id, ProjectModifiers.remove_preset_cuboid_size(key_name))
         return ProjectSpecifiers.metadata.get(new_spec)
 
     def add_preset_cuboid_size(
-        self, project_id: str, name: str, width: float, height: float, depth: float
+        self, project_id: str, key_name: str, ja_name: str, en_name: str, width: float, height: float, depth: float
     ) -> ProjectMetadata:
         new_spec = self._mod_project_specs(
-            project_id, ProjectModifiers.add_preset_cuboid_size(name, width, height, depth)
+            project_id, ProjectModifiers.add_preset_cuboid_size(key_name, ja_name, en_name, width, height, depth)
         )
         return ProjectSpecifiers.metadata.get(new_spec)
 

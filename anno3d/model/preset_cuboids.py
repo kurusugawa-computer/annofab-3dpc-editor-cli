@@ -11,6 +11,8 @@ preset_cuboid_size_metadata_prefix = "presetCuboidSize"
 @camelcase
 @dataclass(frozen=True)
 class PresetCuboidSizeV2(DataClassJsonMixin):
+    ja_name: str
+    en_name: str
     width: float
     height: float
     depth: float

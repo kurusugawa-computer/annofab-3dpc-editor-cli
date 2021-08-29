@@ -406,7 +406,7 @@ class ProjectCommand:
     @staticmethod
     def remove_preset_cuboid_size(
         project_id: str,
-        name: str,
+        key_name: str,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
@@ -417,7 +417,8 @@ class ProjectCommand:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
-            name: 削除する規定サイズの名前(英数字)。`presetCuboidSize{Name}`というキーのメタデータが削除される(Nameはnameの頭文字を大文字にしたもの)
+            key_name: 削除する規定サイズの名前(英数字)。
+                      `presetCuboidSize{Key_name}`というキーのメタデータが削除される(Key_nameはkey_nameの頭文字を大文字にしたもの)
 
         Returns:
 
@@ -425,20 +426,22 @@ class ProjectCommand:
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return
 
-        assert name.isalnum()
-        name = str(name)
+        assert key_name.isalnum()
+        key_name = str(key_name)
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
 
         with client_loader.open_api() as api:
-            new_meta = ProjectApi(api).remove_preset_cuboid_size(project_id, name)
+            new_meta = ProjectApi(api).remove_preset_cuboid_size(project_id, key_name)
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
     @staticmethod
     def add_preset_cuboid_size(
         project_id: str,
-        name: str,
+        key_name: str,
+        ja_name: str,
+        en_name: str,
         width: float,
         height: float,
         depth: float,
@@ -452,7 +455,10 @@ class ProjectCommand:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             project_id: 対象プロジェクト
-            name: 追加・更新する規定サイズの名前(英数字)。`presetCuboidSize{Name}`というメタデータ・キーに対して規定サイズが設定される（Nameはnameの頭文字を大文字にしたもの）
+            key_name: 追加・更新する規定サイズの名前(英数字)。
+                      `presetCuboidSize{Key_name}`というメタデータ・キーに対して規定サイズが設定される（Key_nameはkey_nameの頭文字を大文字にしたもの）
+            ja_name: 日本語名称
+            en_name: 英語名称
             width: 追加・更新する規定サイズの奥行
             height: 追加・更新する規定サイズの幅
             depth: 追加・更新する規定サイズの高さ
@@ -463,13 +469,15 @@ class ProjectCommand:
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return
 
-        assert name.isalnum()
-        name = str(name)
+        assert key_name.isalnum()
+        key_name = str(key_name)
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
 
         with client_loader.open_api() as api:
-            new_meta = ProjectApi(api).add_preset_cuboid_size(project_id, name, width, height, depth)
+            new_meta = ProjectApi(api).add_preset_cuboid_size(
+                project_id, key_name, ja_name, en_name, width, height, depth
+            )
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
