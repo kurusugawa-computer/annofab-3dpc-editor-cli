@@ -28,7 +28,7 @@ from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
-from anno3d.model.preset_cuboids import PresetCuboidSize, preset_cuboid_size_metadata_prefix
+from anno3d.model.preset_cuboids import PresetCuboidSize, PresetCuboidSizes, preset_cuboid_size_metadata_prefix
 from anno3d.model.project_specs_meta import ProjectMetadata
 from anno3d.util.modifier import DataModifier
 
@@ -52,12 +52,14 @@ class ProjectModifiers:
         cls, key_name: str, ja_name: str, en_name: str, width: float, height: float, depth: float
     ) -> DataModifier[AnnotationSpecsV2]:
         prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
-        return cls.specifiers.preset_cuboid_sizes.mod(
-            lambda curr: curr.update(
+
+        def update(sizes: PresetCuboidSizes) -> PresetCuboidSizes:
+            sizes.update(
                 {prefixed: PresetCuboidSize(ja_name=ja_name, en_name=en_name, width=width, height=height, depth=depth)}
             )
-            or curr
-        )
+            return sizes
+
+        return cls.specifiers.preset_cuboid_sizes.mod(update)
 
     @classmethod
     def put_label(

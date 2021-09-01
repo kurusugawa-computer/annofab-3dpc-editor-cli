@@ -61,7 +61,3 @@ class ProjectSpecifiers:
     preset_cuboid_sizes = metadata.zoom(
         lambda m: m.preset_cuboid_sizes, lambda m, cuboids: replace(m, preset_cuboid_sizes=cuboids)
     )
-
-
-class ProjectModifiers:
-    pass

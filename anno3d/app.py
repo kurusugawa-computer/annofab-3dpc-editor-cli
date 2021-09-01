@@ -427,7 +427,6 @@ class ProjectCommand:
             return
 
         assert key_name.isalnum()
-        key_name = str(key_name)
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
 
@@ -470,7 +469,6 @@ class ProjectCommand:
             return
 
         assert key_name.isalnum()
-        key_name = str(key_name)
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass)
 
