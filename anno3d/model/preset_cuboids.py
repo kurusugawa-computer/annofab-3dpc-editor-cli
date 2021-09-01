@@ -16,6 +16,7 @@ class PresetCuboidSizeV2(DataClassJsonMixin):
     width: float
     height: float
     depth: float
+    order: int
 
 
 PresetCuboidSize = PresetCuboidSizeV2

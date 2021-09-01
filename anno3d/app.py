@@ -444,6 +444,7 @@ class ProjectCommand:
         width: float,
         height: float,
         depth: float,
+        order: int,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
     ) -> None:
@@ -461,6 +462,7 @@ class ProjectCommand:
             width: 追加・更新する規定サイズの奥行
             height: 追加・更新する規定サイズの幅
             depth: 追加・更新する規定サイズの高さ
+            order: エディタ上での表示順を決めるのに使用される整数（降順で並べられる）
 
         Returns:
 
@@ -474,7 +476,7 @@ class ProjectCommand:
 
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).add_preset_cuboid_size(
-                project_id, key_name, ja_name, en_name, width, height, depth
+                project_id, key_name, ja_name, en_name, width, height, depth, order
             )
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
