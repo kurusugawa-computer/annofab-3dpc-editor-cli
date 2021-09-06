@@ -189,7 +189,7 @@ NAME
     anno3d project add_preset_cuboid_size - 対象のプロジェクトにcuboidの規定サイズを追加・更新します。
 
 SYNOPSIS
-    anno3d project add_preset_cuboid_size PROJECT_ID KEY_NAME JA_NAME EN_NAME WIDTH HEIGHT DEPTH <flags>
+    anno3d project add_preset_cuboid_size PROJECT_ID KEY_NAME JA_NAME EN_NAME WIDTH HEIGHT DEPTH ORDER <flags>
 
 DESCRIPTION
     対象のプロジェクトにcuboidの規定サイズを追加・更新します。
@@ -209,6 +209,8 @@ POSITIONAL ARGUMENTS
         追加・更新する規定サイズの幅
     DEPTH
         追加・更新する規定サイズの高さ
+    ORDER
+        エディタ上での表示順を決めるのに使用される整数（昇順で並べられる）
 
 FLAGS
     --annofab_id=ANNOFAB_ID
@@ -263,7 +265,8 @@ $ anno3d project add_preset_cuboid_size \
     --en_name Test1 \
     --width 10 \
     --height 11 \
-    --depth 12
+    --depth 12 \
+    --order 1
 ```
 
 ##### Cuboidの規定サイズを削除
