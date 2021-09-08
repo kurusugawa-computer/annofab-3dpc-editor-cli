@@ -459,9 +459,9 @@ class ProjectCommand:
                       `presetCuboidSize{Key_name}`というメタデータ・キーに対して規定サイズが設定される（Key_nameはkey_nameの頭文字を大文字にしたもの）
             ja_name: 日本語名称
             en_name: 英語名称
-            width: 追加・更新する規定サイズの奥行
-            height: 追加・更新する規定サイズの幅
-            depth: 追加・更新する規定サイズの高さ
+            width: 追加・更新する規定サイズの幅（Cuboidのlocal axisにおけるY軸方向の長さ）
+            height: 追加・更新する規定サイズの高さ（Cuboidのlocal axisにおけるZ軸方向の長さ）
+            depth: 追加・更新する規定サイズの奥行（Cuboidのlocal axisにおけるX軸方向の長さ）
             order: エディタ上での表示順を決めるのに使用される整数（昇順で並べられる）
 
         Returns:

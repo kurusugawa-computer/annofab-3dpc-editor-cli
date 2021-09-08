@@ -204,11 +204,11 @@ POSITIONAL ARGUMENTS
     EN_NAME
         英語名称
     WIDTH
-        追加・更新する規定サイズの奥行
+        追加・更新する規定サイズの幅（Cuboidのlocal axisにおけるY軸方向の長さ）
     HEIGHT
-        追加・更新する規定サイズの幅
+        追加・更新する規定サイズの高さ（Cuboidのlocal axisにおけるZ軸方向の長さ）
     DEPTH
-        追加・更新する規定サイズの高さ
+        追加・更新する規定サイズの奥行（Cuboidのlocal axisにおけるX軸方向の長さ）
     ORDER
         エディタ上での表示順を決めるのに使用される整数（昇順で並べられる）
 

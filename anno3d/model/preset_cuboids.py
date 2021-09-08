@@ -14,8 +14,11 @@ class PresetCuboidSizeV2(DataClassJsonMixin):
     ja_name: str
     en_name: str
     width: float
+    """y方向の幅"""
     height: float
+    """z方向の幅"""
     depth: float
+    """x方向の幅"""
     order: int
 
 
