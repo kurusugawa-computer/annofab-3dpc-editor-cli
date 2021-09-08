@@ -28,6 +28,7 @@ from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
+from anno3d.model.preset_cuboids import PresetCuboidSize, PresetCuboidSizes, preset_cuboid_size_metadata_prefix
 from anno3d.model.project_specs_meta import ProjectMetadata
 from anno3d.util.modifier import DataModifier
 
@@ -38,6 +39,31 @@ class ProjectModifiers:
     @classmethod
     def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV2]:
         return cls.specifiers.annotation_area.mod(lambda _: area)
+
+    @classmethod
+    def remove_preset_cuboid_size(cls, key_name: str) -> DataModifier[AnnotationSpecsV2]:
+        prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
+        return cls.specifiers.preset_cuboid_sizes.mod(
+            lambda curr: dict(filter(lambda kv: kv[0] != prefixed, curr.items()))
+        )
+
+    @classmethod
+    def add_preset_cuboid_size(
+        cls, key_name: str, ja_name: str, en_name: str, width: float, height: float, depth: float, order: int
+    ) -> DataModifier[AnnotationSpecsV2]:
+        prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
+
+        def update(sizes: PresetCuboidSizes) -> PresetCuboidSizes:
+            sizes.update(
+                {
+                    prefixed: PresetCuboidSize(
+                        ja_name=ja_name, en_name=en_name, width=width, height=height, depth=depth, order=order
+                    )
+                }
+            )
+            return sizes
+
+        return cls.specifiers.preset_cuboid_sizes.mod(update)
 
     @classmethod
     def put_label(
@@ -275,6 +301,26 @@ class ProjectApi:
 
     def set_annotation_area(self, project_id: str, area: AnnotationArea) -> ProjectMetadata:
         new_spec = self._mod_project_specs(project_id, ProjectModifiers.set_annotation_area(area))
+        return ProjectSpecifiers.metadata.get(new_spec)
+
+    def remove_preset_cuboid_size(self, project_id: str, key_name: str) -> ProjectMetadata:
+        new_spec = self._mod_project_specs(project_id, ProjectModifiers.remove_preset_cuboid_size(key_name))
+        return ProjectSpecifiers.metadata.get(new_spec)
+
+    def add_preset_cuboid_size(
+        self,
+        project_id: str,
+        key_name: str,
+        ja_name: str,
+        en_name: str,
+        width: float,
+        height: float,
+        depth: float,
+        order: int,
+    ) -> ProjectMetadata:
+        new_spec = self._mod_project_specs(
+            project_id, ProjectModifiers.add_preset_cuboid_size(key_name, ja_name, en_name, width, height, depth, order)
+        )
         return ProjectSpecifiers.metadata.get(new_spec)
 
     def get_job(self, project_id: str, job: ProjectJobInfo) -> Optional[ProjectJobInfo]:

@@ -13,11 +13,11 @@ class KittiLabel:
     depth: float
     """x方向の幅"""
     x: float
-    """x位置 底辺の中心"""
+    """底面の中心座標のx成分"""
     y: float
-    """x位置 底辺の中心"""
+    """底面の中心座標のy成分"""
     z: float
-    """x位置 底辺の中心？"""
+    """底面の中心座標のz成分"""
     yaw: float
     annotation_id: Optional[str]
     ignore_types: ClassVar[List[str]] = ["DontCare"]

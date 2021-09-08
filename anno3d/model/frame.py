@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 from dataclasses_json import DataClassJsonMixin
 
-from anno3d.model.common import Vector3, pascalcase
+from anno3d.model.common import Vector3, camelcase
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class PointCloudMetaData(DataClassJsonMixin):
     is_rightHand_system: bool
@@ -13,14 +13,14 @@ class PointCloudMetaData(DataClassJsonMixin):
     sensor_height: float
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class ImagesMetaData(DataClassJsonMixin):
     image_count: int
     calib_kind: str = "kitti3dDetection"
 
 
-@pascalcase
+@camelcase
 @dataclass(frozen=True)
 class FrameMetaData(DataClassJsonMixin):
     """ フレームごとに存在するメタデータ """
