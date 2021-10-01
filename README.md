@@ -13,7 +13,7 @@ $ pip install --extra-index-url https://kurusugawa.jp/nexus3/repository/KRS-pypi
 
 ```
 $ anno3d version
-annofab-3dpc-editor-cli 0.1.7
+annofab-3dpc-editor-cli 0.1.8a1
 ```
 
 
