@@ -487,7 +487,7 @@ class ProjectCommand:
         kitti_dir: str,
         skip: int = 0,
         size: int = 10,
-        input_id_prefix: str = "",
+        input_data_id_prefix: str = "",
         sensor_height: Optional[float] = None,
         parallelism: Optional[int] = None,
         force: bool = False,
@@ -503,7 +503,7 @@ class ProjectCommand:
             kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
-            input_id_prefix: input_data_idの先頭に付与する文字列
+            input_data_id_prefix: input_data_idの先頭に付与する文字列
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
             parallelism: 非同期実行の最大数。 指定しない場合上限を設定しない。実行環境におけるデフォルトのThreadPoolExecutorの最大スレッド数を超える値を与えても意味がない。
@@ -521,7 +521,7 @@ class ProjectCommand:
                 kitti_dir,
                 skip,
                 size,
-                input_id_prefix,
+                input_data_id_prefix,
                 sensor_height,
                 parallelism,
                 force,
@@ -536,7 +536,7 @@ class ProjectCommand:
         kitti_dir: str,
         skip: int,
         size: int,
-        input_id_prefix: str,
+        input_data_id_prefix: str,
         sensor_height: Optional[float],
         parallelism: Optional[int],
         force: bool,
@@ -553,7 +553,7 @@ class ProjectCommand:
 
         async def run_without_sem(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
             return await upload_async(
-                input_id_prefix,
+                input_data_id_prefix,
                 uploader,
                 paths,
                 [],
@@ -733,7 +733,7 @@ class LocalCommand:
         output_dir: str,
         skip: int = 0,
         size: int = 10,
-        input_id_prefix: str = "",
+        input_data_id_prefix: str = "",
         sensor_height: Optional[float] = None,
     ) -> None:
         """
@@ -744,7 +744,7 @@ class LocalCommand:
             output_dir: 出力先ディレクトリ。
             skip: 見つけたデータの先頭何件をスキップするか
             size: 最大何件のinput_dataを登録するか
-            input_id_prefix: input_data_idの先頭に付与する文字列
+            input_data_id_prefix: input_data_idの先頭に付与する文字列
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
@@ -756,7 +756,7 @@ class LocalCommand:
 
         inputs = [
             create_kitti_files(
-                input_id_prefix, output_dir_path, paths, CameraHorizontalFovKind.CALIB, None, sensor_height
+                input_data_id_prefix, output_dir_path, paths, CameraHorizontalFovKind.CALIB, None, sensor_height
             )
             for paths in pathss
         ]

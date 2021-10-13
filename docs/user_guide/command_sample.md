@@ -450,7 +450,7 @@ FLAGS
         見つけたデータの先頭何件をスキップするか
     --size=SIZE
         最大何件のinput_dataを登録するか
-    --input_id_prefix=INPUT_ID_PREFIX
+    --input_data_id_prefix=INPUT_DATA_ID_PREFIX
         input_data_idの先頭に付与する文字列
     --camera_horizontal_fov=CAMERA_HORIZONTAL_FOV
         カメラのhorizontal FOVの角度[degree] 指定が無い場合はcalibデータから計算する。 calibデータも無い場合はkittiのカメラ仕様を採用する。
@@ -659,7 +659,7 @@ FLAGS
         見つけたデータの先頭何件をスキップするか
     --size=SIZE
         最大何件のinput_dataを登録するか
-    --input_id_prefix=INPUT_ID_PREFIX
+    --input_data_id_prefix=INPUT_DATA_ID_PREFIX
         input_data_idの先頭に付与する文字列
     --sensor_height=SENSOR_HEIGHT
         点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]） 3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
@@ -676,7 +676,7 @@ $ anno3d local make_kitti_data \
  --kitti_dir "path/to/kitti3d/dir" \
  --output_dir "./output" \
  --size 30 \
- --input_id_prefix "prefix" \
+ --input_data_id_prefix "prefix" \
  --camera_horizontal_fov 56
 ```
 
@@ -722,7 +722,7 @@ NOTES
 $ anno3d local make_scene \
   --scene_path "/path/to/scene.meta" \
   --output_dir "./output" \
-  --input_id_prefix "prefix" \
+  --input_data_id_prefix "prefix" \
   --camera_horizontal_fov "settings" \
   --sensor_height 0
 ```
