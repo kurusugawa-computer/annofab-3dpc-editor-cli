@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "annofab-3dpc-editor-cli"
-version = "0.1.7a1"
+version = "0.1.8a1"
 description = ""
 authors = ["Your Name <you@example.com>"]
 packages = [
