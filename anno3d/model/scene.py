@@ -143,6 +143,7 @@ class Scene(DataClassJsonMixin):
 
         # 画像名から .pngを取り除いたものがid
         id_list = [file.name[0:-4] for file in image_dir.iterdir() if file.is_file()]
+        id_list.sort()
 
         return Scene(
             id_list=id_list,
