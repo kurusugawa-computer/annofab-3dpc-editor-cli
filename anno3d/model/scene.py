@@ -47,6 +47,7 @@ class KittiImageSeries(Series):
     camera_view_setting: Optional[CameraViewSettings] = None
     type: str = "kitti_image"
     type_value: ClassVar[str] = "kitti_image"
+    file_extension: str = "png"
 
 
 @dataclass(frozen=True)
