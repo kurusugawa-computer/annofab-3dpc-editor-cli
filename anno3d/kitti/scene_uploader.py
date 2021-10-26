@@ -95,7 +95,7 @@ class SceneUploader:
         def id_to_paths(frame_id: str) -> FilePaths:
             images = [
                 ImagePaths(
-                    Path(image.image_dir) / f"{frame_id}.png",
+                    Path(image.image_dir) / f"{frame_id}.{image.file_extension}",
                     Path(image.calib_dir) / f"{frame_id}.txt" if image.calib_dir is not None else None,
                     image.camera_view_setting,
                 )
@@ -104,7 +104,7 @@ class SceneUploader:
             labels = [
                 LabelPaths(
                     Path(label.label_dir) / f"{frame_id}.txt",
-                    Path(label.image_dir) / f"{frame_id}.png",
+                    Path(label.image_dir) / f"{frame_id}.{label.file_extension}",
                     Path(label.calib_dir) / f"{frame_id}.txt",
                 )
                 for label in scene.labels
