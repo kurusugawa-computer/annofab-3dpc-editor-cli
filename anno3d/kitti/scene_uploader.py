@@ -102,11 +102,7 @@ class SceneUploader:
                 for image in scene.images
             ]
             labels = [
-                LabelPaths(
-                    Path(label.label_dir) / f"{frame_id}.txt",
-                    Path(label.image_dir) / f"{frame_id}.{label.file_extension}",
-                    Path(label.calib_dir) / f"{frame_id}.txt",
-                )
+                LabelPaths(Path(label.label_dir) / f"{frame_id}.txt", Path(label.calib_dir) / f"{frame_id}.txt",)
                 for label in scene.labels
             ]
             return FilePaths(

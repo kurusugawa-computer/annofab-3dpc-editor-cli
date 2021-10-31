@@ -57,7 +57,6 @@ class KittiLabelSeries(Series):
     calib_dir: str
     type: str = "kitti_label"
     type_value: ClassVar[str] = "kitti_label"
-    file_extension: str = "png"
 
 
 @dataclass(frozen=True)
