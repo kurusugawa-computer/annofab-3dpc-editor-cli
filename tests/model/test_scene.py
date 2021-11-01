@@ -49,6 +49,11 @@ def test_decode_scene():
         "type": "kitti_image",
         "image_dir": "image_3",
         "camera_view_setting": {}
+    },
+    {
+        "type": "kitti_image",
+        "image_dir": "image_4",
+        "file_extension": "jpg"
     }
   ],
   // これ以外の項目はoptionとする．有ろうが無かろうが，3DPCE側は気にしない．
@@ -60,7 +65,7 @@ def test_decode_scene():
     assert scene.id_list[0] == "006497"
     assert scene.id_list[1] == "012187"
     assert scene.velodyne.velodyne_dir == "/root/velodyne"
-    assert len(scene.images) == 3
+    assert len(scene.images) == 4
     assert len(scene.labels) == 1
 
     image1 = scene.images[0]
@@ -70,16 +75,25 @@ def test_decode_scene():
     assert image1.camera_view_setting.fov == 1.57
     assert image1.camera_view_setting.direction == 0.92
     assert image1.camera_view_setting.position == XYZ(-2.0, -1.0, 0.8)
+    assert image1.file_extension == "png"
 
     image2 = scene.images[1]
     assert image2.image_dir == "/root/image_2"
     assert image2.calib_dir == "/root/calib"
     assert image2.camera_view_setting is None
+    assert image2.file_extension == "png"
 
     image3 = scene.images[2]
     assert image3.image_dir == "/root/image_3"
     assert image3.calib_dir is None
     assert image3.camera_view_setting == CameraViewSettings(None, None, None)
+    assert image3.file_extension == "png"
+
+    image4 = scene.images[3]
+    assert image4.image_dir == "/root/image_4"
+    assert image4.calib_dir is None
+    assert image4.camera_view_setting is None
+    assert image4.file_extension == "jpg"
 
     label = scene.labels[0]
     assert label.label_dir == "/root/label_2"

@@ -64,7 +64,7 @@ class ScenePathsLoader:
         def scene_to_paths(frame_id: str) -> FilePaths:
             images = [
                 ImagePaths(
-                    scene_dir / f"{img.image_dir}/{frame_id}.png",
+                    scene_dir / f"{img.image_dir}/{frame_id}.{img.file_extension}",
                     scene_dir / f"{img.calib_dir}/{frame_id}.txt",
                     img.camera_view_setting,
                 )

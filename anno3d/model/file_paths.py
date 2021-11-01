@@ -27,7 +27,6 @@ class ImagePaths:
 @dataclass(frozen=True)
 class LabelPaths:
     label: Path
-    image: Path
     calib: Path
 
 

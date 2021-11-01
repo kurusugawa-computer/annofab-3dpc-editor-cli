@@ -47,6 +47,7 @@ class KittiImageSeries(Series):
     camera_view_setting: Optional[CameraViewSettings] = None
     type: str = "kitti_image"
     type_value: ClassVar[str] = "kitti_image"
+    file_extension: str = "png"
 
 
 @dataclass(frozen=True)
@@ -141,8 +142,8 @@ class Scene(DataClassJsonMixin):
         calib_dir = path / Defaults.calib_dir
         label_dir = path / Defaults.label_dir
 
-        # 画像名から .pngを取り除いたものがid
-        id_list = [file.name[0:-4] for file in image_dir.iterdir() if file.is_file()]
+        # 画像名から拡張子を取り除いたものがid
+        id_list = [file.stem for file in image_dir.iterdir() if file.is_file()]
         id_list.sort()
 
         return Scene(
