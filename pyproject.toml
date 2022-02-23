@@ -9,7 +9,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-annofabapi = ">=0.46.0"
+annofabapi = "^0.46.0"
 dataclasses-json = "^0.4.2"
 fire = "^0.3.1"
 more-itertools = "^8.5.0"
