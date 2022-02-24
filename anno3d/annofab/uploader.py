@@ -8,7 +8,7 @@ import boto3
 import more_itertools
 import requests
 from annofabapi import AnnofabApi
-from annofabapi.utils import allow_404_error
+from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
 
 
@@ -35,13 +35,12 @@ class Uploader(abc.ABC):
 
     def __init__(self, client: AnnofabApi, project: str, force: bool = False):
         self._client = client
+        self._client_wrapper = AnnofabApiWrapper(client)
         self._project = project
         self._force = force
 
-    @allow_404_error
     def get_input_data(self, input_data_id: str) -> Optional[Any]:
-        result, _ = self._client.get_input_data(self._project, input_data_id)
-        return result
+        return self._client_wrapper.get_input_data_or_none(self._project, input_data_id)
 
     @abc.abstractmethod
     def upload_tempdata(self, upload_file: Path) -> str:
@@ -108,11 +107,6 @@ class S3Uploader(Uploader):
         self._s3_prefix_key = s3_path[len(self._s3_bucket + "/") :]
         self._s3_client = boto3.client("s3")
         super().__init__(client=client, project=project, force=force)
-
-    @allow_404_error
-    def get_input_data(self, input_data_id: str) -> Optional[Any]:
-        result, _ = self._client.get_input_data(self._project, input_data_id)
-        return result
 
     def s3_key_exists(self, key: str) -> bool:
         try:
