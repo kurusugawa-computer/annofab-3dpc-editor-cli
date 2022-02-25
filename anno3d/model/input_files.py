@@ -28,4 +28,4 @@ class InputDataBody(DataClassJsonMixin):
 class InputData(DataClassJsonMixin):
     id: str
     body: InputDataBody
-    spplementary_list: List[Supplementary]
+    supplementary_list: List[Supplementary]
