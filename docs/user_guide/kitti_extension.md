@@ -66,7 +66,8 @@
     {
         "type": "kitti_image",
         "image_dir": "image_2", // カメラ画像ファイルが格納されているディレクトリの名前
-        "calib_dir": "calib" // image_2に紐づくキャリブレーション情報が格納されているディレクトリの名前。
+        "calib_dir": "calib", // image_2に紐づくキャリブレーション情報が格納されているディレクトリの名前。
+        "file_extension": "png" // カメラ画像ファイルの拡張子
     },
     {
         "type": "kitti_label",
