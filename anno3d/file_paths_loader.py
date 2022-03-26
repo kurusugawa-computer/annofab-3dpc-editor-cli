@@ -19,11 +19,11 @@ class FilePathsLoader:
 
     def load(self, kind: Optional[FrameKind]) -> List[FilePaths]:
         if kind is not None:
-            pcd_dir = self.pcd_root / kind.value / "velodyne"
+            pcd_dir = self.pcd_root / kind.value / "velodyne_ignore_deleted"
             image_dir = self.image_root / kind.value / "image_2"
             calib_dir = self.calib_root / kind.value / "calib"
         else:
-            pcd_dir = self.pcd_root / "velodyne"
+            pcd_dir = self.pcd_root / "velodyne_ignore_deleted"
             image_dir = self.image_root / "image_2"
             calib_dir = self.calib_root / "calib"
 
