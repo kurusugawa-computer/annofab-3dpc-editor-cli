@@ -58,14 +58,13 @@ class ScenePathsLoader:
         if self.scene_path.is_dir():
             file = self.scene_path / Defaults.scene_meta_file
 
-        scene_dir = file.parent
         scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(self.scene_path)
 
         def scene_to_paths(frame_id: str) -> FilePaths:
             images = [
                 ImagePaths(
-                    scene_dir / f"{img.image_dir}/{frame_id}.{img.file_extension}",
-                    scene_dir / f"{img.calib_dir}/{frame_id}.txt",
+                    Path(f"{img.image_dir}/{frame_id}.{img.file_extension}"),
+                    Path(f"{img.calib_dir}/{frame_id}.txt"),
                     img.camera_view_setting,
                 )
                 for img in scene.images
@@ -73,7 +72,7 @@ class ScenePathsLoader:
 
             return FilePaths(
                 FrameKey(None, frame_id),
-                pcd=scene_dir / f"{scene.velodyne.velodyne_dir}/{frame_id}.bin",
+                pcd=Path(f"{scene.velodyne.velodyne_dir}/{frame_id}.bin"),
                 images=images,
                 labels=[],
             )
