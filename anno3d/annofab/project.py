@@ -194,7 +194,7 @@ class ProjectApi:
             "status": "active",
             "input_data_type": "custom",
             "organization_name": organization_name,
-            "configuration": {"plugin_id": plugin_id,},
+            "configuration": {"plugin_id": plugin_id},
         }
 
         project: Dict[str, Any]
