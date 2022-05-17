@@ -86,12 +86,12 @@ class AnnofabStorageUploader(Uploader):
     def upload_tempdata(self, upload_file: Path) -> str:
         client = self._client
 
-        data_path_dict, _ = client.create_temp_path(self._project, {"Content-Type": "application/octet-stream"})
+        data_path_dict, _ = client.create_temp_path(self._project)
 
         data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
         # XXX エラー処理とか例外処理とか何もないので注意
         with upload_file.open(mode="rb") as data:
-            requests.put(data_path.url, data)
+            requests.put(data_path.url, data, headers={"Content-Type": "application/octet-stream"})
 
         return data_path.path
 
