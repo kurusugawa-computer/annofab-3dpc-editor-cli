@@ -194,11 +194,7 @@ class ProjectApi:
             "status": "active",
             "input_data_type": "custom",
             "organization_name": organization_name,
-            "configuration": {
-                "task_assignment_type": "random_and_selection",
-                "input_data_set_id_list": [],
-                "plugin_id": plugin_id,
-            },
+            "configuration": {"plugin_id": plugin_id},
         }
 
         project: Dict[str, Any]
