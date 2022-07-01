@@ -61,6 +61,7 @@ migi = resources / "migi.png"
 
 env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
 env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
+env_annofab_endpoint = os.environ.get("ANNOFAB_ENDPOINT")
 
 
 def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optional[str]) -> bool:
@@ -117,7 +118,7 @@ class Sandbox:
         kitti_dir_path = Path(kitti_dir)
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(FrameKind.testing)[skip : (skip + size)]
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, None)
         with client_loader.open_api() as api:
             uploader = AnnofabStorageUploader(api, project, force=force)
             for paths in pathss:
@@ -150,7 +151,7 @@ class Sandbox:
         assert annofab_id is not None and annofab_pass is not None
         velo_files = [Path(velo_dir) / path for path in os.listdir(velo_dir)]
 
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, None)
         with client_loader.open_api() as api:
             with tempfile.TemporaryDirectory() as tempdir_str:
                 tempdir = Path(tempdir_str)
@@ -175,6 +176,7 @@ class ProjectCommand:
         overview: str = "",
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         新しいカスタムプロジェクトを生成します。
@@ -182,6 +184,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 作成するprojectのid
             organization_name: projectを所属させる組織の名前
             plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
@@ -194,7 +198,7 @@ class ProjectCommand:
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             created_project_id = ProjectApi(api).create_custom_project(
                 project_id, organization_name, plugin_id, title, overview
@@ -222,12 +226,15 @@ class ProjectCommand:
         color: Tuple[int, int, int],
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象のプロジェクトにcuboidのlabelを追加・更新します。
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
             ja_name: 日本語名称
@@ -243,7 +250,7 @@ class ProjectCommand:
         # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
         label_id = str(label_id)
         validate_annofab_credential(annofab_id, annofab_pass)
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
@@ -262,12 +269,15 @@ class ProjectCommand:
         layer: int = 100,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象のプロジェクトにsegmentのlabelを追加・更新します。
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
             ja_name: 日本語名称
@@ -297,7 +307,7 @@ class ProjectCommand:
         if layer < 0:
             raise RuntimeError(f"layerは、0以上の整数である必要がありますが、{layer} でした")
 
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_segment_label(
                 project_id, label_id, ja_name, en_name, color, default_ignore, segment_kind=segment_type, layer=layer,
@@ -311,6 +321,7 @@ class ProjectCommand:
         project_id: str,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「全体」に設定します。
@@ -319,6 +330,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
 
         Returns:
@@ -328,7 +341,7 @@ class ProjectCommand:
             return
 
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(project_id, WholeAnnotationArea())
             logger.info("メタデータを更新しました。")
@@ -340,6 +353,7 @@ class ProjectCommand:
         radius: float,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「球形」に設定します。
@@ -348,6 +362,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             radius: アノテーション範囲の半径
 
@@ -358,7 +374,7 @@ class ProjectCommand:
             return
 
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(project_id, SphereAnnotationArea(area_radius=str(radius)))
             logger.info("メタデータを更新しました。")
@@ -371,6 +387,7 @@ class ProjectCommand:
         y: Tuple[float, float],
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「矩形」に設定します。
@@ -379,6 +396,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             x: アノテーション範囲のx座標の範囲
             y: アノテーション範囲のy座標の範囲
@@ -390,7 +409,7 @@ class ProjectCommand:
             return
 
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
 
         min_x = str(min(x))
         max_x = str(max(x))
@@ -409,6 +428,7 @@ class ProjectCommand:
         key_name: str,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象のプロジェクトからcuboidの規定サイズを削除します。
@@ -416,6 +436,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             key_name: 削除する規定サイズの名前(英数字)。
                       `presetCuboidSize{Key_name}`というキーのメタデータが削除される(Key_nameはkey_nameの頭文字を大文字にしたもの)
@@ -428,7 +450,7 @@ class ProjectCommand:
 
         assert key_name.isalnum()
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
 
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).remove_preset_cuboid_size(project_id, key_name)
@@ -447,6 +469,7 @@ class ProjectCommand:
         order: int,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象のプロジェクトにcuboidの規定サイズを追加・更新します。
@@ -454,6 +477,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             key_name: 追加・更新する規定サイズの名前(英数字)。
                       `presetCuboidSize{Key_name}`というメタデータ・キーに対して規定サイズが設定される（Key_nameはkey_nameの頭文字を大文字にしたもの）
@@ -472,7 +497,7 @@ class ProjectCommand:
 
         assert key_name.isalnum()
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
 
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).add_preset_cuboid_size(
@@ -493,12 +518,15 @@ class ProjectCommand:
         force: bool = False,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         kitti 3d detection形式のファイル群を3dpc-editorに登録します。
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 登録先のプロジェクトid
             kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
             skip: 見つけたデータの先頭何件をスキップするか
@@ -519,6 +547,7 @@ class ProjectCommand:
             ProjectCommand._upload_kitti_data_async(
                 project_id,
                 kitti_dir,
+                annofab_endpoint,
                 skip,
                 size,
                 input_data_id_prefix,
@@ -534,6 +563,7 @@ class ProjectCommand:
     async def _upload_kitti_data_async(
         project_id: str,
         kitti_dir: str,
+        annofab_endpoint: Optional[str],
         skip: int,
         size: int,
         input_data_id_prefix: str,
@@ -548,7 +578,7 @@ class ProjectCommand:
         kitti_dir_path = Path(kitti_dir)
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         sem_opt = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
         async def run_without_sem(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
@@ -604,6 +634,7 @@ class ProjectCommand:
         force: bool = False,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         拡張kitti形式のファイル群をAnnoFabにアップロードします
@@ -611,6 +642,8 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 登録先のプロジェクトid
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
             input_data_id_prefix: アップロードするデータのinput_data_idにつけるprefix
@@ -635,7 +668,7 @@ class ProjectCommand:
             return
 
         assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             scene_uploader = SceneUploader(
                 api, AnnofabStorageUploader(api, project=project_id, force=force), parallelism
@@ -666,6 +699,7 @@ class ProjectCommand:
         force: bool = False,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
@@ -690,13 +724,15 @@ class ProjectCommand:
             force: 入力データと補助データを上書きしてアップロードするかどうか。
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
         """
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return
         assert annofab_id is not None and annofab_pass is not None
         if not validate_aws_credentail():
             return
-        client_loader = ClientLoader(annofab_id, annofab_pass)
+        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             uploader = SceneUploader(
                 api, S3Uploader(api, project=project_id, force=force, s3_path=s3_path), parallelism

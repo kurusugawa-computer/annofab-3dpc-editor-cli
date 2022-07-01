@@ -40,7 +40,7 @@ def upload_files():
 
     loader = FilePathsLoader(kitti_dir, kitti_dir, kitti_dir)
     pathss = loader.load(FrameKind.testing)[10:20]
-    client_loader = ClientLoader(annofab_id, password)
+    client_loader = ClientLoader(annofab_id, password, None)
     with client_loader.open_api() as api:
         uploader = AnnofabStorageUploader(api, project)
         for paths in pathss:
