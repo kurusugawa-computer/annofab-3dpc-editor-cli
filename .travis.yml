@@ -4,7 +4,7 @@ python: "3.8"
 dist: bionic
 
 install:
-  - python3 -m pip install poetry
+  - python3 -m pip install poetry setuptools==50.3.2
   - poetry install
 
 script:
