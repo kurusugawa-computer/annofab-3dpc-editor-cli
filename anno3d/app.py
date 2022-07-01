@@ -184,7 +184,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 作成するprojectのid
             organization_name: projectを所属させる組織の名前
@@ -233,7 +233,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
@@ -276,7 +276,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             label_id: 追加・更新するラベルのid
@@ -330,7 +330,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
 
@@ -362,7 +362,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             radius: アノテーション範囲の半径
@@ -396,7 +396,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             x: アノテーション範囲のx座標の範囲
@@ -436,7 +436,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             key_name: 削除する規定サイズの名前(英数字)。
@@ -477,7 +477,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             key_name: 追加・更新する規定サイズの名前(英数字)。
@@ -525,7 +525,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 登録先のプロジェクトid
             kitti_dir: 登録データの配置ディレクトリへのパス。 このディレクトリに "velodyne" / "image_2" / "calib" の3ディレクトリが存在することを期待している
@@ -642,7 +642,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 登録先のプロジェクトid
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ
@@ -724,7 +724,7 @@ class ProjectCommand:
             force: 入力データと補助データを上書きしてアップロードするかどうか。
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
-            annofab_endpoint: AnnofabのAPIアクセウ先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
         """
         if not validate_annofab_credential(annofab_id, annofab_pass):
