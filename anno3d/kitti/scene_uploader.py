@@ -1,8 +1,5 @@
 import asyncio
-import json
 import logging
-import tempfile
-import time
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -13,7 +10,6 @@ import more_itertools
 import numpy as np
 from annofabapi import AnnofabApi
 from annofabapi.dataclass.annotation_specs import LabelV2
-from annofabapi.models import JobStatus
 from scipy.spatial.transform import Rotation
 
 from anno3d.annofab.model import (
@@ -112,12 +108,20 @@ class SceneUploader:
         return [id_to_paths(frame_id) for frame_id in scene.id_list]
 
     @staticmethod
-    def _create_task_def_csv(
-        csv_path: Path,
-        id_prefix: str,
-        data_and_pathss: List[Tuple[DataId, FilePaths]],
-        chunk_size: Optional[int] = None,
+    def _get_task_to_data_dict(
+        id_prefix: str, data_and_pathss: List[Tuple[DataId, FilePaths]], chunk_size: Optional[int] = None,
     ) -> Dict[TaskId, List[Tuple[DataId, FilePaths]]]:
+        """
+        タスクと入力データの関係を示すdictを取得します。
+
+        Args:
+            id_prefix: タスクIDのプレフィックス
+            data_and_pathss: 入力データとファイルパス情報をペアにしたlist
+            chunk_size: タスクに含める入力データの個数。Noneの場合は、タスクにすべての入力データを含めます。
+
+        Returns:
+            タスクと入力データの関係を示すdict
+        """
 
         if chunk_size is None:
             chunked_by_tasks = iter([data_and_pathss])
@@ -128,38 +132,34 @@ class SceneUploader:
             task_id_template = "{id_prefix}_{task_count}"
 
         result_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]] = {}
-        with csv_path.open("w", encoding="UTF-8") as writer:
-            for task_count, data_list in enumerate(chunked_by_tasks):
-                task_id = task_id_template.format(id_prefix=id_prefix, task_count=task_count)
-                result_dict[TaskId(task_id)] = data_list
-                for data_id, paths in data_list:
-                    # XXX ここで `paths.pcd.name` は input_data_nameの指定なんだけど、ファイル名がinput_data_nameである
-                    # というのは、ただの実装詳細なので、本来はやりたくない…
-                    line = f"{task_id},{paths.pcd.name},{data_id}"
-                    writer.write(f"{line}\r\n")
+        for task_count, data_list in enumerate(chunked_by_tasks):
+            task_id = task_id_template.format(id_prefix=id_prefix, task_count=task_count)
+            result_dict[TaskId(task_id)] = data_list
 
-        with csv_path.open("r") as reader:
-            logger.info("task def csv: \n%s", reader.read())
         return result_dict
 
-    def _create_task(self, project_id: str, csv_path: Path) -> None:
-        project = self._project
-        task = TaskApi(self._client, project, project_id)
-        response = task.create_tasks_by_csv(csv_path)
-        job = response.job
+    async def _create_tasks_async(
+        self, project_id: str, task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]]
+    ):
+        """タスクを非同期で生成します。
+        """
 
-        while job.job_status == JobStatus.PROGRESS:
-            logger.info("タスクの作成完了を待っています。")
-            time.sleep(5)
-            new_info = project.get_job(project_id, job)
-            if new_info is None:
-                raise RuntimeError(f"ジョブ(={job.job_id})が取得できませんでした。")
-            job = new_info
+        async def run() -> None:
+            loop = asyncio.get_event_loop()
+            project = self._project
+            task = TaskApi(self._client, project, project_id)
 
-        if job.job_status == JobStatus.FAILED:
-            detail = json.dumps(job.job_detail, ensure_ascii=False)
-            errors = json.dumps(job.errors, ensure_ascii=False)
-            raise RuntimeError(f"タスクの作成に失敗しました: {errors}: {detail}")
+            for task_id, data_id_and_pathss in task_to_data_dict.items():
+                input_data_id_list = [input_data_id for input_data_id, _ in data_id_and_pathss]
+                await loop.run_in_executor(
+                    None, task.put_task, task_id, input_data_id_list,
+                )
+
+        if self._sem is not None:
+            async with self._sem:
+                await run()
+        else:
+            await run()
 
     def _label_to_cuboids(
         self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
@@ -282,14 +282,13 @@ class SceneUploader:
         if uploader_input.kind == UploadKind.DATA_ONLY:
             return
 
-        with tempfile.TemporaryDirectory() as tempdir_str:
-            csv_path = Path(tempdir_str) / "task_create.csv"
-            task_to_data_dict = self._create_task_def_csv(
-                csv_path, uploader_input.task_id_prefix, data_and_pathss, uploader_input.frame_per_task
-            )
-            self._create_task(uploader_input.project_id, csv_path)
+        task_to_data_dict = self._get_task_to_data_dict(
+            uploader_input.task_id_prefix, data_and_pathss, uploader_input.frame_per_task
+        )
 
-        logger.info("タスクの作成が完了しました")
+        logger.info("タスクの作成を開始します")
+        await asyncio.gather(self._create_tasks_async(uploader_input.project_id, task_to_data_dict))
+        logger.info("%d件のタスクを作成しました", len(task_to_data_dict))
         if uploader_input.kind == UploadKind.CREATE_TASK:
             return
 
