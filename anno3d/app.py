@@ -1,9 +1,7 @@
 import asyncio
 import logging
 import os
-import shutil
 import sys
-import tempfile
 from enum import Enum
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Type, TypeVar
@@ -20,16 +18,9 @@ from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
 from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
-from anno3d.model.file_paths import FilePaths, FrameKind
+from anno3d.model.file_paths import FilePaths
 from anno3d.model.input_files import InputData
-from anno3d.simple_data_uploader import (
-    SupplementaryData,
-    create_frame_meta,
-    create_kitti_files,
-    create_meta_file,
-    upload,
-    upload_async,
-)
+from anno3d.simple_data_uploader import SupplementaryData, create_kitti_files, upload_async
 
 E = TypeVar("E", bound=Enum)
 
@@ -96,72 +87,6 @@ def validate_aws_credentail() -> bool:
             file=sys.stderr,
         )
     return result
-
-
-class Sandbox:
-    """ sandboxの再現 """
-
-    @staticmethod
-    def upload(
-        kitti_dir: str,
-        skip: int = 0,
-        size: int = 10,
-        force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-    ) -> None:
-        if not validate_annofab_credential(annofab_id, annofab_pass):
-            return
-        assert annofab_id is not None and annofab_pass is not None
-        project = "66241367-9175-40e3-8f2f-391d6891590b"
-
-        kitti_dir_path = Path(kitti_dir)
-        loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
-        pathss = loader.load(FrameKind.testing)[skip : (skip + size)]
-        client_loader = ClientLoader(annofab_id, annofab_pass, None)
-        with client_loader.open_api() as api:
-            uploader = AnnofabStorageUploader(api, project, force=force)
-            for paths in pathss:
-                upload("", uploader, paths, [hidari, migi], CameraHorizontalFovKind.SETTINGS, None, None)
-
-    @staticmethod
-    def create_meta(kitti_dir: str, output: str = "/tmp/meta"):
-        parent = Path(output)
-        if parent.exists():
-            shutil.rmtree(parent)
-
-        kitti_dir_path = Path(kitti_dir)
-        loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
-        pathss = loader.load(FrameKind.testing)[0:10]
-        parent.mkdir(parents=True)
-        create_meta_file(parent, pathss[0])
-
-    @staticmethod
-    def upload_velodyne(
-        project_id: str,
-        velo_dir: str,
-        data_id_prefix: str = "",
-        sensor_height: Optional[float] = None,
-        force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-    ) -> None:
-        if not validate_annofab_credential(annofab_id, annofab_pass):
-            return
-        assert annofab_id is not None and annofab_pass is not None
-        velo_files = [Path(velo_dir) / path for path in os.listdir(velo_dir)]
-
-        client_loader = ClientLoader(annofab_id, annofab_pass, None)
-        with client_loader.open_api() as api:
-            with tempfile.TemporaryDirectory() as tempdir_str:
-                tempdir = Path(tempdir_str)
-                uploader = AnnofabStorageUploader(api, project_id, force=force)
-                for velo_file in velo_files:
-                    data_id = data_id_prefix + velo_file.name
-                    uploader.upload_input_data(data_id, velo_file)
-                    supp_data = create_frame_meta(tempdir, data_id, 0, sensor_height)
-                    uploader.upload_supplementary(data_id, supp_data.data_id, supp_data.path)
-                    logger.info("uploaded: %s", velo_file)
 
 
 class ProjectCommand:
@@ -844,7 +769,6 @@ class Command:
     """ root command """
 
     def __init__(self):
-        self.sandbox = Sandbox()
         self.project = ProjectCommand()
         self.local = LocalCommand()
 
