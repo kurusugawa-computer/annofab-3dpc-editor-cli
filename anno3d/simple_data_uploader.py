@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class SupplementaryData:
     data_id: str
     path: Path
-    data_type: Literal["custom", "image", "text"] = "custom"
+    data_type: Literal["custom", "image", "text"]
 
 
 def create_frame_meta(

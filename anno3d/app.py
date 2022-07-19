@@ -160,7 +160,7 @@ class Sandbox:
                     data_id = data_id_prefix + velo_file.name
                     uploader.upload_input_data(data_id, velo_file)
                     supp_data = create_frame_meta(tempdir, data_id, 0, sensor_height)
-                    uploader.upload_supplementary(data_id, supp_data.data_id, supp_data.path)
+                    uploader.upload_supplementary(data_id, supp_data.data_id, supp_data.path, supp_data.data_type)
                     logger.info("uploaded: %s", velo_file)
 
 
