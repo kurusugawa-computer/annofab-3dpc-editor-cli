@@ -2,7 +2,7 @@ import abc
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import boto3
 import more_itertools
@@ -61,12 +61,18 @@ class Uploader(abc.ABC):
         logger.debug("uploaded input data: %s", input_data)
         return data_id
 
-    def upload_supplementary(self, input_data_id: str, supplementary_id: str, file: Path) -> str:
+    def upload_supplementary(
+        self,
+        input_data_id: str,
+        supplementary_id: str,
+        file: Path,
+        supplementary_data_type: Literal["custom", "image", "text"] = "custom"
+    ) -> str:
         path = self.upload_tempdata(file)
         body = {
             "supplementary_data_name": supplementary_id,
             "supplementary_data_path": path,
-            "supplementary_data_type": "custom",
+            "supplementary_data_type": supplementary_data_type,
             "supplementary_data_number": 0,
         }
         if self._force:
