@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import Collection, List, Optional
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
@@ -37,7 +37,7 @@ class TaskApi:
 
         return self._decode_task(result)
 
-    def put_task(self, task_id: str, input_data_ids: List[str]) -> Task:
+    def put_task(self, task_id: str, input_data_ids: Collection[str]) -> Task:
         client = self._client
         project_id = self._project_id
         result, _ = client.put_task(project_id, task_id, request_body={"input_data_id_list": input_data_ids})

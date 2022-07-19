@@ -138,28 +138,18 @@ class SceneUploader:
 
         return result_dict
 
-    async def _create_tasks_async(
-        self, project_id: str, task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]]
-    ):
-        """タスクを非同期で生成します。
+    def _create_tasks(self, project_id: str, task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]]):
+        """タスクを作成します。
+
+        Notes:
+            タスクは数件しか作成しないことを想定しているので、同期的に`putTask`APIを実行しています。
         """
+        project = self._project
+        task = TaskApi(self._client, project, project_id)
 
-        async def run() -> None:
-            loop = asyncio.get_event_loop()
-            project = self._project
-            task = TaskApi(self._client, project, project_id)
-
-            for task_id, data_id_and_pathss in task_to_data_dict.items():
-                input_data_id_list = [input_data_id for input_data_id, _ in data_id_and_pathss]
-                await loop.run_in_executor(
-                    None, task.put_task, task_id, input_data_id_list,
-                )
-
-        if self._sem is not None:
-            async with self._sem:
-                await run()
-        else:
-            await run()
+        for task_id, data_id_and_pathss in task_to_data_dict.items():
+            input_data_id_list = [input_data_id for input_data_id, _ in data_id_and_pathss]
+            task.put_task(task_id, input_data_id_list)
 
     def _label_to_cuboids(
         self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
@@ -286,8 +276,8 @@ class SceneUploader:
             uploader_input.task_id_prefix, data_and_pathss, uploader_input.frame_per_task
         )
 
-        logger.info("タスクの作成を開始します")
-        await asyncio.gather(self._create_tasks_async(uploader_input.project_id, task_to_data_dict))
+        logger.info("タスクを%d件作成します。", len(task_to_data_dict))
+        self._create_tasks(uploader_input.project_id, task_to_data_dict)
         logger.info("%d件のタスクを作成しました", len(task_to_data_dict))
         if uploader_input.kind == UploadKind.CREATE_TASK:
             return
