@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Literal, Optional, Tuple
 
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 class SupplementaryData:
     data_id: str
     path: Path
+    data_type: Literal["custom", "image", "text"] = "custom"
 
 
 def create_frame_meta(
@@ -50,7 +51,7 @@ def create_frame_meta(
     with file.open("w", encoding="UTF-8") as writer:
         writer.write(meta.to_json(ensure_ascii=False, indent=3))
 
-    return SupplementaryData(data_id, file)
+    return SupplementaryData(data_id, file, "text")
 
 
 def _create_image_meta(
@@ -101,7 +102,7 @@ def _create_image_meta(
     with file.open("w", encoding="UTF-8") as writer:
         writer.write(meta.to_json(ensure_ascii=False, indent=3))
 
-    return SupplementaryData(data_id, file)
+    return SupplementaryData(data_id, file, "text")
 
 
 def _create_dummy_image_meta(parent_dir: Path, input_data_id: str, number: int) -> SupplementaryData:
@@ -124,7 +125,7 @@ def _create_dummy_image_meta(parent_dir: Path, input_data_id: str, number: int) 
     with file.open("w", encoding="UTF-8") as writer:
         writer.write(meta.to_json(ensure_ascii=False, indent=3))
 
-    return SupplementaryData(data_id, file)
+    return SupplementaryData(data_id, file, "text")
 
 
 def _upload_supplementaries(
@@ -180,7 +181,7 @@ def upload(
                 create_camera_horizontal_fov_provider(camera_horizontal_fov, image_paths, fallback_horizontal_fov)
             ]
             for meta in [
-                SupplementaryData(camera_image_id(input_data_id, i), image_paths.image),
+                SupplementaryData(camera_image_id(input_data_id, i), image_paths.image, "image"),
                 _create_image_meta(
                     tempdir, image_paths.calib, input_data_id, i, image_paths.camera_settings, fov_provider,
                 ),
@@ -193,7 +194,7 @@ def upload(
             for i in range(0, len(dummy_images))
             for meta in [
                 _create_dummy_image_meta(tempdir, input_data_id, i + image_count),
-                SupplementaryData(camera_image_id(input_data_id, i + image_count), dummy_images[i]),
+                SupplementaryData(camera_image_id(input_data_id, i + image_count), dummy_images[i], "image"),
             ]
         ]
 
@@ -246,7 +247,7 @@ def create_kitti_files(
         ]
         for _ in [shutil.copyfile(image.image, image_path)]
         for meta in [
-            SupplementaryData(image_id, image_path),
+            SupplementaryData(image_id, image_path, "image"),
             _create_image_meta(input_data_dir, image.calib, input_data_id, i, image.camera_settings, fov_provider),
         ]
     ]
