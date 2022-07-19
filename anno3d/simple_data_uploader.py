@@ -132,9 +132,7 @@ def _upload_supplementaries(
     uploader: Uploader, input_data_id: str, supplementary_list: List[SupplementaryData]
 ) -> None:
     for supp in supplementary_list:
-        uploader.upload_supplementary(
-            input_data_id, supp.data_id, supp.path, supp.data_type
-        )
+        uploader.upload_supplementary(input_data_id, supp.data_id, supp.path, supp.data_type)
 
 
 async def upload_async(

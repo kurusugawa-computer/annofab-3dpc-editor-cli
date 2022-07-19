@@ -66,7 +66,7 @@ class Uploader(abc.ABC):
         input_data_id: str,
         supplementary_id: str,
         file: Path,
-        supplementary_data_type: Literal["custom", "image", "text"] = "custom"
+        supplementary_data_type: Literal["custom", "image", "text"] = "custom",
     ) -> str:
         path = self.upload_tempdata(file)
         body = {
