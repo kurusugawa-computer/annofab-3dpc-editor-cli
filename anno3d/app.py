@@ -89,6 +89,16 @@ def validate_aws_credentail() -> bool:
     return result
 
 
+def validate_task_id_prefix(task_id_prefix: str, upload_kind: UploadKind) -> bool:
+    if upload_kind in [UploadKind.CREATE_TASK, UploadKind.CREATE_ANNOTATION]:
+        if task_id_prefix == "":
+            print(
+                "'--upload_kind'の値が`task`または'annotation'の場合は、'--task_id_prefix'を指定してください。", file=sys.stderr,
+            )
+            return False
+    return True
+
+
 class ProjectCommand:
     """ AnnoFabプロジェクトの操作を行うためのサブコマンドです """
 
@@ -592,6 +602,10 @@ class ProjectCommand:
         if not validate_annofab_credential(annofab_id, annofab_pass):
             return
 
+        enum_upload_kind = _decode_enum(UploadKind, upload_kind)
+        if not validate_task_id_prefix(task_id_prefix, enum_upload_kind):
+            return
+
         assert annofab_id is not None and annofab_pass is not None
         client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
@@ -605,7 +619,7 @@ class ProjectCommand:
                 camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
-                kind=_decode_enum(UploadKind, upload_kind),
+                kind=enum_upload_kind,
             )
             scene_uploader.upload_from_path(Path(scene_path), uploader_input)
 
@@ -657,6 +671,11 @@ class ProjectCommand:
         assert annofab_id is not None and annofab_pass is not None
         if not validate_aws_credentail():
             return
+
+        enum_upload_kind = _decode_enum(UploadKind, upload_kind)
+        if not validate_task_id_prefix(task_id_prefix, enum_upload_kind):
+            return
+
         client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             uploader = SceneUploader(
@@ -669,7 +688,7 @@ class ProjectCommand:
                 camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
-                kind=_decode_enum(UploadKind, upload_kind),
+                kind=enum_upload_kind,
             )
             uploader.upload_from_path(Path(scene_path), uploader_input)
 
