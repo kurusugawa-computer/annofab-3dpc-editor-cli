@@ -27,7 +27,7 @@ class Calib:
 
 # calibデータの読み込み部
 def read_calibration(file_path: Path) -> Calib:
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         lines = list(f.readlines())
         # P0
         line_p0 = next(filter(lambda x: "P2" in x, lines))
