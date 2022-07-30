@@ -30,13 +30,13 @@ def read_calibration(file_path: Path) -> Calib:
     with open(file_path, "r") as f:
         lines = list(f.readlines())
         # P0
-        line_p0 = filter(lambda x: "P2" in x, lines).__next__()
+        line_p0 = next(filter(lambda x: "P2" in x, lines))
         p0 = np.array(line_p0.split(": ")[1].split(" "), dtype=np.float32).reshape((3, 4))
         # R0_rect
-        line_r0_rect = filter(lambda x: "R0_rect" in x, lines).__next__()
+        line_r0_rect = next(filter(lambda x: "R0_rect" in x, lines))
         r0_rect = np.array(line_r0_rect.split(": ")[1].split(" "), dtype=np.float32).reshape((3, 3))
         # Tr_velo_to_cam
-        line_v2c = filter(lambda x: "Tr_velo_to_cam" in x, lines).__next__()
+        line_v2c = next(filter(lambda x: "Tr_velo_to_cam" in x, lines))
         tr_velo_to_cam = np.array(line_v2c.split(": ")[1].split(" "), dtype=np.float32).reshape((3, 4))
     return Calib(P0=p0, R0_rect=r0_rect, V2C=tr_velo_to_cam)
 
