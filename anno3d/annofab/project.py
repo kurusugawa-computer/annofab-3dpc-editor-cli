@@ -200,7 +200,7 @@ class ProjectApi:
         project: Dict[str, Any]
         project, response = client.put_project(project_id, request_body=body)
         if response.status_code != 200:
-            raise RuntimeError("Project新規作成時のhttp status codeは200ですが、{}が返されました。".format(response.status_code))
+            raise RuntimeError(f"Project新規作成時のhttp status codeは200ですが、{response.status_code}が返されました。")
 
         created_id: str = project["project_id"]
         return created_id

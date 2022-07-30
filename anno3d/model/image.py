@@ -39,7 +39,7 @@ class kitti3DCalib(DataClassJsonMixin):
 @camelcase
 @dataclass(frozen=True)
 class ImageMeta(DataClassJsonMixin):
-    """ 画像ごとに存在するメタデータ """
+    """画像ごとに存在するメタデータ"""
 
     calib: Optional[kitti3DCalib]
     camera: ImageCamera

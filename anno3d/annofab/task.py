@@ -60,7 +60,7 @@ class TaskApi:
         client.put_annotation(project_id, task_id, input_data_id, body)
 
     def start_annotate(self, task_id: str) -> Optional[Task]:
-        """ 対象タスクの担当者を自分自身ににして、 annotate状態にする"""
+        """対象タスクの担当者を自分自身ににして、 annotate状態にする"""
         client = self._client
         project_id = self._project_id
 
@@ -77,7 +77,7 @@ class TaskApi:
         return self._decode_task(result)
 
     def finish_annotate(self, task_id: str):
-        """ 対象タスクの担当者を空にして、not_started状態にする """
+        """対象タスクの担当者を空にして、not_started状態にする"""
         client = self._client
         project_id = self._project_id
 

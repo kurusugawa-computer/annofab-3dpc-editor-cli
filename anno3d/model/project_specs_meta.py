@@ -45,7 +45,7 @@ def decode_project_meta(data: Dict[str, str]) -> ProjectMetadata:
     elif version == "2":
         return decode_project_meta_from_v2(data)
     else:
-        raise RuntimeError("アノテーション仕様のメタデータバージョンが、ありえない値(={})でした".format(version))
+        raise RuntimeError(f"アノテーション仕様のメタデータバージョンが、ありえない値(={version})でした")
 
 
 def encode_project_meta(meta: ProjectMetadata) -> Dict[str, str]:
