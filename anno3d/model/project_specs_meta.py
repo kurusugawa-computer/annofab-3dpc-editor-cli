@@ -23,11 +23,11 @@ class ProjectMetadata(DataClassJsonMixin):
 
 
 def decode_project_meta_from_v0(data: Dict[str, str]) -> ProjectMetadata:  # pylint: disable=unused-argument
-    return ProjectMetadata(annotation_area=WholeAnnotationArea(), preset_cuboid_sizes=dict())
+    return ProjectMetadata(annotation_area=WholeAnnotationArea(), preset_cuboid_sizes={})
 
 
 def decode_project_meta_from_v1(data: Dict[str, str]) -> ProjectMetadata:
-    return ProjectMetadata(annotation_area=decode_area_from_v1(data), preset_cuboid_sizes=dict())
+    return ProjectMetadata(annotation_area=decode_area_from_v1(data), preset_cuboid_sizes={})
 
 
 def decode_project_meta_from_v2(data: Dict[str, str]) -> ProjectMetadata:
