@@ -13,7 +13,7 @@ from annofabapi.dataclass.annotation_specs import (
 )
 from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
-from annofabapi.models import AdditionalDataDefinitionType, AnnotationType
+from annofabapi.models import AdditionalDataDefinitionType, DefaultAnnotationType
 from more_itertools import first_true
 
 from anno3d.annofab.constant import (
@@ -86,7 +86,7 @@ class ProjectModifiers:
                     lang_ja,
                 ),
                 keybind=[],
-                annotation_type=AnnotationType.CUSTOM,
+                annotation_type=DefaultAnnotationType.CUSTOM.value,
                 bounding_box_metadata=None,
                 segmentation_metadata=None,
                 additional_data_definitions=[],
