@@ -46,10 +46,6 @@ add_stdout_handler(root_logger, logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-resources = Path(__file__).parent / "resources"
-hidari = resources / "hidari.png"
-migi = resources / "migi.png"
-
 env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
 env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
 env_annofab_endpoint = os.environ.get("ANNOFAB_ENDPOINT")
@@ -139,18 +135,6 @@ class ProjectCommand:
                 project_id, organization_name, plugin_id, title, overview
             )
             logger.info("プロジェクト(=%s)を作成しました。", created_project_id)
-
-    @staticmethod
-    def put_label(
-        project_id: str,
-        label_id: str,
-        ja_name: str,
-        en_name: str,
-        color: Tuple[int, int, int],
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-    ) -> None:
-        raise RuntimeError("この関数は廃止されました put_cuboid_label を利用してください")
 
     @staticmethod
     def put_cuboid_label(
