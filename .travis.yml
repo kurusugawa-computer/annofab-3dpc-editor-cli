@@ -1,10 +1,14 @@
 language: python
+dist: focal
 
-python: "3.8"
-dist: bionic
+python: 
+ - "3.8"
+ - "3.9"
+ - "3.10"
 
 install:
-  - python3 -m pip install poetry setuptools==50.3.2
+  - pip install pip --upgrade
+  - pip install poetry setuptools==50.3.2
   - poetry install
 
 script:

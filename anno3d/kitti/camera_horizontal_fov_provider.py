@@ -46,8 +46,8 @@ class SettingsCameraHorizontalFovProvider(AbstractCameraHorizontalFovProvider):
 
 class CameraHorizontalFovKind(Enum):
     """
-          SETTINGS => camera_view_settingが存在していればその値を利用し、無ければ"calib"と同様
-          CALIB => キャリブレーションデータが存在すればそこから計算し、なければ fallback_fov とする
+    SETTINGS => camera_view_settingが存在していればその値を利用し、無ければ"calib"と同様
+    CALIB => キャリブレーションデータが存在すればそこから計算し、なければ fallback_fov とする
     """
 
     SETTINGS = "settings"

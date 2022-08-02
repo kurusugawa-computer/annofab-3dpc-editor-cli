@@ -8,25 +8,25 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-annofabapi = ">=0.60.3"
-dataclasses-json = "^0.4.2"
+python = "3.8 || 3.9 || 3.10"
+annofabapi = ">=0.62.0"
+dataclasses-json = "^0.5.7"
 fire = "^0.3.1"
 more-itertools = "^8.5.0"
-numpy = "^1.19.2"
-scipy = "^1.5.2"
+numpy = "^1.23.0"
+scipy = "^1.9.0"
 boto3 = "^1.17.20"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
-mypy = "^0.910"
-flake8 = "^3.8.1"
-black = "^19.10b0"
-isort = {extras = ["pyproject"], version = "^4.3.21"}
+pytest = "^7.1.2"
+mypy = "^0.971"
+flake8 = "^4.0.1"
+black = "^22.6.0"
+isort = "^5.10.1"
 pylint = "^2.9.3"
 # document
-sphinx = "^3.5.2"
-pydata-sphinx-theme = "^0.4.3"
+sphinx = "^5.1.1"
+pydata-sphinx-theme = "^0.9.0"
 recommonmark = "^0.7.1"
 types-requests = "^2.25.0"
 

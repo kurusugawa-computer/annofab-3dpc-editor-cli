@@ -1,7 +1,6 @@
 [pylint]
 disable=
     # ===== 修正しなくてよい項目 =====
-    bad-continuation, # blackの整形と競合する
     fixme, # TODO remains
     line-too-long, # [flake8]
     too-few-public-methods,

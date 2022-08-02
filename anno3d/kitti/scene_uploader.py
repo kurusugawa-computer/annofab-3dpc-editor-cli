@@ -98,7 +98,10 @@ class SceneUploader:
                 for image in scene.images
             ]
             labels = [
-                LabelPaths(Path(label.label_dir) / f"{frame_id}.txt", Path(label.calib_dir) / f"{frame_id}.txt",)
+                LabelPaths(
+                    Path(label.label_dir) / f"{frame_id}.txt",
+                    Path(label.calib_dir) / f"{frame_id}.txt",
+                )
                 for label in scene.labels
             ]
             return FilePaths(
@@ -109,7 +112,9 @@ class SceneUploader:
 
     @staticmethod
     def _get_task_to_data_dict(
-        id_prefix: str, data_and_pathss: List[Tuple[DataId, FilePaths]], chunk_size: Optional[int] = None,
+        id_prefix: str,
+        data_and_pathss: List[Tuple[DataId, FilePaths]],
+        chunk_size: Optional[int] = None,
     ) -> Dict[TaskId, List[Tuple[DataId, FilePaths]]]:
         """
         タスクと入力データの関係を示すdictを取得します。
@@ -207,7 +212,11 @@ class SceneUploader:
                     len(transformed_labels),
                 )
                 await loop.run_in_executor(
-                    None, task.put_cuboid_annotations, task_id, input_data_id, cuboid_labels,
+                    None,
+                    task.put_cuboid_annotations,
+                    task_id,
+                    input_data_id,
+                    cuboid_labels,
                 )
 
         if self._sem is not None:

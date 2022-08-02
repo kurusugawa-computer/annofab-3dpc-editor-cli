@@ -94,7 +94,9 @@ def _create_image_meta(
     meta = ImageMeta(
         read_kitti_calib(calib_path) if calib_path is not None else None,
         ImageCamera(
-            direction=Vector3(direction[0], direction[1], direction[2]), fov=fov, camera_position=camera_position,
+            direction=Vector3(direction[0], direction[1], direction[2]),
+            fov=fov,
+            camera_position=camera_position,
         ),
     )
 
@@ -168,7 +170,7 @@ def upload(
     sensor_height: Optional[float],
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
-    input_data_id = uploader.upload_input_data("{}{}".format(input_data_id_prefix, paths.key.id), paths.pcd)
+    input_data_id = uploader.upload_input_data(f"{input_data_id_prefix}{paths.key.id}", paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
@@ -183,7 +185,12 @@ def upload(
             for meta in [
                 SupplementaryData(camera_image_id(input_data_id, i), image_paths.image, "image"),
                 _create_image_meta(
-                    tempdir, image_paths.calib, input_data_id, i, image_paths.camera_settings, fov_provider,
+                    tempdir,
+                    image_paths.calib,
+                    input_data_id,
+                    i,
+                    image_paths.camera_settings,
+                    fov_provider,
                 ),
             ]
         ]
@@ -225,10 +232,10 @@ def create_kitti_files(
     sensor_height: Optional[float],
 ) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
-    input_data_id = "{}{}".format(input_data_id_prefix, paths.key.id)
+    input_data_id = f"{input_data_id_prefix}{paths.key.id}".format(input_data_id_prefix, paths.key.id)
     input_data_dir = parent_dir / paths.key.id
     if input_data_dir.exists():
-        raise RuntimeError("データ生成先ディレクトリがすでに存在します: {}".format(input_data_dir.absolute()))
+        raise RuntimeError(f"データ生成先ディレクトリがすでに存在します: {input_data_dir.absolute()}")
 
     input_data_dir.mkdir(parents=True)
     input_data_path = input_data_dir / paths.pcd.name
