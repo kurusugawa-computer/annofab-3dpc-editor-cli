@@ -106,20 +106,17 @@ RUN set -x \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         python3.8 \
-        python3-distutils \
+        python3.8-dev \
+        python3-pip \
     && apt-get clean && rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/* \
     && ln -s $(which python3.8) /usr/local/bin/python
-
-# pip
-RUN set -x \
-    && curl -sSL https://bootstrap.pypa.io/get-pip.py | sudo -u vscode -i python - 
 ENV PIP_DEFAULT_TIMEOUT=100
 
 # poetry
 RUN set -x \
-    && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | sudo -u vscode -i python - \
-    && sudo -u vscode -i /home/vscode/.local/bin/poetry config virtualenvs.in-project true
-ENV PATH=$PATH:/home/vscode/.local/bin
+    && python -m pip install -U pip setuptools \
+    && pip install poetry \
+    && sudo -u vscode -i poetry config virtualenvs.in-project true
 
 # fix poetry issue (see: https://github.com/python-poetry/poetry/issues/221)
 RUN set -x \
