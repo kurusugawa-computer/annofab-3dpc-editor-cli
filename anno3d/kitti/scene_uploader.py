@@ -138,7 +138,7 @@ class SceneUploader:
 
         return result_dict
 
-    def _create_tasks(self, project_id: str, task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]]):
+    def _create_tasks(self, project_id: str, task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]]) -> None:
         """タスクを作成します。
 
         Notes:
