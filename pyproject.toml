@@ -8,13 +8,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "3.8 || 3.9 || 3.10"
 annofabapi = ">=0.62.0"
 dataclasses-json = "^0.5.7"
 fire = "^0.3.1"
 more-itertools = "^8.5.0"
-numpy = "^1.19.2"
-scipy = "^1.5.2"
+numpy = "^1.23.0"
+scipy = "^1.9.0"
 boto3 = "^1.17.20"
 
 [tool.poetry.dev-dependencies]
