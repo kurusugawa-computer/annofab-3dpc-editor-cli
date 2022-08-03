@@ -180,10 +180,10 @@ class ProjectCommand:
 
     @staticmethod
     def create(
-        project_id: str,
+        title: str,
         organization_name: str,
         plugin_id: str,
-        title: str = "",
+        project_id: str = "",
         overview: str = "",
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
@@ -197,10 +197,10 @@ class ProjectCommand:
             annofab_pass: AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
-            project_id: 作成するprojectのid
+            title: projectのタイトル
             organization_name: projectを所属させる組織の名前
             plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
-            title: projectのタイトル。　省略した場合 project_id と同様
+            project_id: 作成するprojectのid。省略した場合自動的にuuidが設定されます。
             overview:  projectの概要。 省略した場合 project_id と同様
 
         Returns:
@@ -212,7 +212,7 @@ class ProjectCommand:
         client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             created_project_id = ProjectApi(api).create_custom_project(
-                project_id, organization_name, plugin_id, title, overview
+                title, organization_name, plugin_id, project_id, overview
             )
             logger.info("プロジェクト(=%s)を作成しました。", created_project_id)
 

@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
@@ -171,16 +172,17 @@ class ProjectApi:
         return ProjectJobInfo.from_dict(info)
 
     def create_custom_project(
-        self, project_id: str, organization_name: str, plugin_id: str, title: str = "", overview: str = ""
+        self, title: str, organization_name: str, plugin_id: str, project_id: str = "", overview: str = ""
     ) -> str:
         """
         カスタムプロジェクトを作成し、作成したprojectのidを返します
 
         Args:
-            project_id:
+
+            title:
             organization_name:
             plugin_id:
-            title:
+            project_id:
             overview:
 
         Returns:
@@ -189,7 +191,7 @@ class ProjectApi:
         client = self._client
 
         body = {
-            "title": title if len(title) != 0 else project_id,
+            "title": title,
             "overview": overview if len(overview) != 0 else project_id,
             "status": "active",
             "input_data_type": "custom",
@@ -198,6 +200,9 @@ class ProjectApi:
         }
 
         project: Dict[str, Any]
+        if len(project_id) == 0:
+            project_id = str(uuid.uuid4())
+
         project, response = client.put_project(project_id, request_body=body)
         if response.status_code != 200:
             raise RuntimeError(f"Project新規作成時のhttp status codeは200ですが、{response.status_code}が返されました。")
