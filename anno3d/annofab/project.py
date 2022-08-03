@@ -192,7 +192,7 @@ class ProjectApi:
 
         body = {
             "title": title,
-            "overview": overview if len(overview) != 0 else project_id,
+            "overview": overview if len(overview) != 0 else None,
             "status": "active",
             "input_data_type": "custom",
             "organization_name": organization_name,
