@@ -201,7 +201,7 @@ class ProjectCommand:
             organization_name: projectを所属させる組織の名前
             plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
             project_id: 作成するprojectのid。省略した場合自動的にuuidが設定されます。
-            overview:  projectの概要。 省略した場合 project_id と同様
+            overview:  projectの概要
 
         Returns:
 
