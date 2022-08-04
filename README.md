@@ -1,12 +1,11 @@
 # annofab-3dpc-editor-cli
 
-## 社内PyPIからインストール
+## Install
 
 ```
-$ pip install --extra-index-url https://kurusugawa.jp/nexus3/repository/KRS-pypi/simple  annofab-3dpc-editor-cli
+$ pip install annofab-3dpc-editor-cli
 
 ```
-※ ConfluenceのユーザIDとパスワードを入力してください。
 
 
 ### バージョンの確認方法
@@ -122,20 +121,4 @@ fish:
 ```
 pipx install poetry
 poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
-```
-
-
-----
-## 社内PyPIにアップロードする手順
-
-1. 事前に以下のコマンドを実行しておき、社内PyPIのURLを設定する。
-
-```   
-$ poetry config repositories.kci-upload https://kurusugawa.jp/nexus3/repository/KRS-pypi/
-```
-
-2. 以下のコマンドを実行する。user_idとpasswordの入力が求められるので、Confluenceのuser_idとpasswordを入力する。
-
-```
-$ poetry publish --repository kci-upload --build
 ```
