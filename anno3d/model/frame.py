@@ -23,7 +23,7 @@ class ImagesMetaData(DataClassJsonMixin):
 @camelcase
 @dataclass(frozen=True)
 class FrameMetaData(DataClassJsonMixin):
-    """ フレームごとに存在するメタデータ """
+    """フレームごとに存在するメタデータ"""
 
     points: PointCloudMetaData
     images: ImagesMetaData

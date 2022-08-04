@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
 
 from annofabapi.dataclass.annotation_specs import (
@@ -11,7 +11,8 @@ from annofabapi.dataclass.annotation_specs import (
 from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
 from annofabapi.models import AnnotationSpecsMovieOption
-from dataclasses_json import DataClassJsonMixin
+from dataclasses_json import DataClassJsonMixin, config
+from marshmallow import fields
 
 
 @dataclass
@@ -19,7 +20,10 @@ class Label(DataClassJsonMixin):
     label_id: str
     ja_name: str
     en_name: str
-    color: Tuple[int, int, int]
+    color: Tuple[int, int, int] = field(
+        # `Label.schema()`を実行するとエラーが発生するため、mm_fieldをした。https://github.com/lidatong/dataclasses-json/issues/318
+        metadata=config(mm_field=fields.Tuple((fields.Integer(), fields.Integer(), fields.Integer())))
+    )
     metadata: Dict[str, str]
 
 

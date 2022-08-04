@@ -9,7 +9,7 @@ lint:
 	poetry run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
 
 format:
-	poetry run isort --recursive anno3d tests
+	poetry run isort anno3d tests
 	poetry run black .
 
 test:

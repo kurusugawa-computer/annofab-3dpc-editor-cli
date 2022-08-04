@@ -43,9 +43,9 @@ class ProjectSpecifiers:
 
     @classmethod
     def additional(cls, additional_id: str) -> DataSpecifier[AS, Optional[AdditionalDataDefinitionV2]]:
-        predicate: Callable[
-            [AdditionalDataDefinitionV2], bool
-        ] = lambda additionals: additionals.additional_data_definition_id == additional_id
+        predicate: Callable[[AdditionalDataDefinitionV2], bool] = (
+            lambda additionals: additionals.additional_data_definition_id == additional_id
+        )
 
         return cls.additionals.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
 

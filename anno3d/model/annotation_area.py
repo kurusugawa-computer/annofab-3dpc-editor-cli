@@ -53,7 +53,7 @@ def decode_area_from_v1(data: Dict[str, str]) -> AnnotationArea:
     elif kind == "rect":
         return RectAnnotationAreaV1.from_dict(data)
     else:
-        raise RuntimeError("areaKindが、ありえない値(={})でした".format(kind))
+        raise RuntimeError(f"areaKindが、ありえない値(={kind})でした")
 
 
 def decode_area_from_v2(data: Dict[str, str]) -> AnnotationArea:

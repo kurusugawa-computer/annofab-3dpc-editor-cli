@@ -30,7 +30,7 @@ def _decode_enum(enum: Type[E], value: Any) -> E:
         if e.value == value:
             return e
 
-    raise ValueError("{}は有効な、{}型の値ではありません".format(value, enum.__name__))
+    raise ValueError(f"{value}は有効な、{enum.__name__}型の値ではありません")
 
 
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
@@ -89,14 +89,15 @@ def validate_task_id_prefix(task_id_prefix: str, upload_kind: UploadKind) -> boo
     if upload_kind in [UploadKind.CREATE_TASK, UploadKind.CREATE_ANNOTATION]:
         if task_id_prefix == "":
             print(
-                "'--upload_kind'の値が`task`または'annotation'の場合は、'--task_id_prefix'を指定してください。", file=sys.stderr,
+                "'--upload_kind'の値が`task`または'annotation'の場合は、'--task_id_prefix'を指定してください。",
+                file=sys.stderr,
             )
             return False
     return True
 
 
 class ProjectCommand:
-    """ AnnoFabプロジェクトの操作を行うためのサブコマンドです """
+    """AnnoFabプロジェクトの操作を行うためのサブコマンドです"""
 
     @staticmethod
     def create(
@@ -229,7 +230,14 @@ class ProjectCommand:
         client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_segment_label(
-                project_id, label_id, ja_name, en_name, color, default_ignore, segment_kind=segment_type, layer=layer,
+                project_id,
+                label_id,
+                ja_name,
+                en_name,
+                color,
+                default_ignore,
+                segment_kind=segment_type,
+                layer=layer,
             )
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
@@ -678,7 +686,7 @@ class ProjectCommand:
 
 
 class LocalCommand:
-    """ ローカルファイルシステムに対する処理を行います """
+    """ローカルファイルシステムに対する処理を行います"""
 
     @staticmethod
     def _write_all_files_json(inputs: List[InputData], output_dir_path: Path):
@@ -769,7 +777,7 @@ class LocalCommand:
 
 
 class Command:
-    """ root command """
+    """root command"""
 
     def __init__(self):
         self.project = ProjectCommand()
