@@ -140,10 +140,10 @@ class ProjectCommand:
     @staticmethod
     def put_cuboid_label(
         project_id: str,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
@@ -156,10 +156,10 @@ class ProjectCommand:
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
-            label_id: 追加・更新するラベルのid
-            ja_name: 日本語名称
             en_name: 　英語名称
-            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
+            label_id: 追加・更新するラベルのid。指定しない場合はuuidが設定される。
+            ja_name: 日本語名称指定しない場合はen_nameと同じ名称
+            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する。指定しない場合はランダムに設定される。
 
         Returns:
 
@@ -180,13 +180,13 @@ class ProjectCommand:
     @staticmethod
     def put_segment_label(
         project_id: str,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         default_ignore: bool,
         segment_type: str,
         layer: int = 100,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
@@ -199,10 +199,7 @@ class ProjectCommand:
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
-            label_id: 追加・更新するラベルのid
-            ja_name: 日本語名称
             en_name: 　英語名称
-            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する
             default_ignore: このラベルがついた領域を、デフォルトでは他のアノテーションから除外するかどうか。 Trueであれば除外する
             segment_type: "SEMANTIC" or "INSTANCE" を指定する。
                           "SEMANTIC"の場合、このラベルのインスタンスは唯一つとなる。
@@ -210,6 +207,9 @@ class ProjectCommand:
             layer: このラベルのレイヤーを指定する。 同じレイヤーのラベルは、頂点を共有することが出来ない。
                    また、大きな値のレイヤーが優先して表示される。
                    指定しない場合は 100
+            label_id: 追加・更新するラベルのid。指定しない場合はuuidが設定される。
+            ja_name: 日本語名称指定しない場合はen_nameと同じ名称
+            color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する。指定しない場合はランダムに設定される。
 
         Returns:
 
@@ -231,13 +231,13 @@ class ProjectCommand:
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_segment_label(
                 project_id,
-                label_id,
-                ja_name,
                 en_name,
-                color,
                 default_ignore,
                 segment_kind=segment_type,
                 layer=layer,
+                label_id=label_id,
+                ja_name=ja_name,
+                color=color,
             )
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
