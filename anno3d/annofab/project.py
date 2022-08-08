@@ -1,3 +1,4 @@
+import random
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -112,7 +113,28 @@ class ProjectModifiers:
             if ignore_additional is not None:
                 label = LabelSpecifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
 
-            label = LabelSpecifiers.color.set(Color(red=33, green=33, blue=11))(label)
+            if color is not None:
+                label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+            else:  # 明度彩度をMAXで固定しランダムに色を選ぶ
+                random_color = random.randint(0, 255)
+                color_list = [
+                    (255, 0, random_color),
+                    (255, random_color, 0),
+                    (0, 255, random_color),
+                    (0, random_color, 255),
+                    (random_color, 255, 0),
+                    (random_color, 0, 255),
+                ]
+                index = random.randint(0, 5)
+
+                label = LabelSpecifiers.color.set(
+                    Color(
+                        red=color_list[index][0],
+                        green=color_list[index][1],
+                        blue=color_list[index][2],
+                    )
+                )(label)
+
             meta_dic: dict = metadata.to_dict(encode_json=True)
             label.metadata = meta_dic
 
