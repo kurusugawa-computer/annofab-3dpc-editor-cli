@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from annofabapi import AnnofabApi
@@ -77,7 +78,7 @@ class ProjectModifiers:
     ) -> DataModifier[AnnotationSpecsV2]:
         def init_label() -> LabelV2:
             return LabelV2(
-                label_id=label_id,
+                label_id=label_id if label_id != "" else str(uuid.uuid4()),
                 label_name=InternationalizationMessage(
                     [
                         InternationalizationMessageMessages(lang_ja, label_id),
