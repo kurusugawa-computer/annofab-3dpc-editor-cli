@@ -102,7 +102,7 @@ class ProjectModifiers:
             label = label_opt if label_opt is not None else init_label()
             label.label_name = InternationalizationMessage(
                 [
-                    InternationalizationMessageMessages(lang_ja, ja_name),
+                    InternationalizationMessageMessages(lang_ja, ja_name if ja_name != "" else en_name),
                     InternationalizationMessageMessages(lang_en, en_name),
                 ],
                 lang_ja,
@@ -111,7 +111,7 @@ class ProjectModifiers:
             if ignore_additional is not None:
                 label = LabelSpecifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
 
-            label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+            label = LabelSpecifiers.color.set(Color(red=33, green=33, blue=11))(label)
             meta_dic: dict = metadata.to_dict(encode_json=True)
             label.metadata = meta_dic
 

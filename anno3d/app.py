@@ -172,7 +172,7 @@ class ProjectCommand:
         validate_annofab_credential(annofab_id, annofab_pass)
         client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
-            labels = ProjectApi(api).put_cuboid_label(project_id, label_id, ja_name, en_name, color)
+            labels = ProjectApi(api).put_cuboid_label(project_id, en_name, label_id, ja_name, color)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
