@@ -68,12 +68,12 @@ class ProjectModifiers:
     @classmethod
     def put_label(
         cls,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
         ignore_additional: Optional[IgnoreAdditionalDef],
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> DataModifier[AnnotationSpecsV2]:
         def init_label() -> LabelV2:
             return LabelV2(
@@ -218,25 +218,30 @@ class ProjectApi:
         return AnnotationSpecsV2.from_dict(created_specs)
 
     def put_cuboid_label(
-        self, project_id: str, label_id: str, ja_name: str, en_name: str, color: Tuple[int, int, int]
+        self,
+        project_id: str,
+        en_name: str,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        return self.put_label(project_id, label_id, ja_name, en_name, color, CuboidLabelMetadata(), None)
+        return self.put_label(project_id, en_name, CuboidLabelMetadata(), None, label_id, ja_name, color)
 
     def put_segment_label(
         self,
         project_id: str,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         default_ignore: bool,
         segment_kind: str,
         layer: int,
+        ja_name: str = "",
+        label_id: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
         additional_def = default_ignore_additional if default_ignore else default_non_ignore_additional
         metadata = SegmentLabelMetadata(ignore=additional_def.id, layer=str(layer), segment_kind=segment_kind)
 
-        return self.put_label(project_id, label_id, ja_name, en_name, color, metadata, additional_def)
+        return self.put_label(project_id, en_name, metadata, additional_def, label_id, ja_name, color)
 
     def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV2:
         client = self._client
@@ -260,12 +265,12 @@ class ProjectApi:
     def put_label(
         self,
         project_id: str,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
         ignore_additional: Optional[IgnoreAdditionalDef],
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
         """
 
@@ -282,7 +287,14 @@ class ProjectApi:
 
         """
 
-        mod_labels = ProjectModifiers.put_label(label_id, ja_name, en_name, color, metadata, ignore_additional)
+        mod_labels = ProjectModifiers.put_label(
+            en_name,
+            metadata,
+            ignore_additional,
+            label_id,
+            ja_name,
+            color,
+        )
         mod_additionals = (
             ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
             if ignore_additional is not None
