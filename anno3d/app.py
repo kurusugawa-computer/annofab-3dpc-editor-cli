@@ -158,7 +158,7 @@ class ProjectCommand:
             project_id: 対象プロジェクト
             en_name: 　英語名称
             label_id: 追加・更新するラベルのid。指定しない場合はuuidが設定される。
-            ja_name: 日本語名称指定しない場合はen_nameと同じ名称
+            ja_name: 日本語名称。指定しない場合はen_nameと同じ名称
             color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する。指定しない場合はランダムに設定される。
 
         Returns:
@@ -208,7 +208,7 @@ class ProjectCommand:
                    また、大きな値のレイヤーが優先して表示される。
                    指定しない場合は 100
             label_id: 追加・更新するラベルのid。指定しない場合はuuidが設定される。
-            ja_name: 日本語名称指定しない場合はen_nameと同じ名称
+            ja_name: 日本語名称。指定しない場合はen_nameと同じ名称
             color: ラベルの表示色。 "(R,G,B)"形式の文字列 R/G/Bは、それぞれ0〜255の整数値で指定する。指定しない場合はランダムに設定される。
 
         Returns:
