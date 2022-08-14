@@ -1,3 +1,4 @@
+import colorsys
 import random
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -116,22 +117,13 @@ class ProjectModifiers:
             if color is not None:
                 label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
             else:  # 明度彩度をMAXで固定しランダムに色を選ぶ
-                random_color = random.randint(0, 255)
-                color_list = [
-                    (255, 0, random_color),
-                    (255, random_color, 0),
-                    (0, 255, random_color),
-                    (0, random_color, 255),
-                    (random_color, 255, 0),
-                    (random_color, 0, 255),
-                ]
-                index = random.randint(0, 5)
+                random_color = colorsys.hsv_to_rgb(random.random(), 1, 1)
 
                 label = LabelSpecifiers.color.set(
                     Color(
-                        red=color_list[index][0],
-                        green=color_list[index][1],
-                        blue=color_list[index][2],
+                        red=round(255 * random_color[0]),
+                        green=round(255 * random_color[1]),
+                        blue=round(255 * random_color[2]),
                     )
                 )(label)
 
