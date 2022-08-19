@@ -1,3 +1,5 @@
+import colorsys
+import random
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -69,16 +71,16 @@ class ProjectModifiers:
     @classmethod
     def put_label(
         cls,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
         ignore_additional: Optional[IgnoreAdditionalDef],
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> DataModifier[AnnotationSpecsV2]:
         def init_label() -> LabelV2:
             return LabelV2(
-                label_id=label_id,
+                label_id=label_id if label_id != "" else str(uuid.uuid4()),
                 label_name=InternationalizationMessage(
                     [
                         InternationalizationMessageMessages(lang_ja, label_id),
@@ -103,7 +105,7 @@ class ProjectModifiers:
             label = label_opt if label_opt is not None else init_label()
             label.label_name = InternationalizationMessage(
                 [
-                    InternationalizationMessageMessages(lang_ja, ja_name),
+                    InternationalizationMessageMessages(lang_ja, ja_name if ja_name != "" else en_name),
                     InternationalizationMessageMessages(lang_en, en_name),
                 ],
                 lang_ja,
@@ -112,7 +114,19 @@ class ProjectModifiers:
             if ignore_additional is not None:
                 label = LabelSpecifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
 
-            label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+            if color is not None:
+                label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+            else:  # 明度彩度をMAXで固定しランダムに色を選ぶ
+                random_color = colorsys.hsv_to_rgb(random.random(), 1, 1)
+
+                label = LabelSpecifiers.color.set(
+                    Color(
+                        red=round(255 * random_color[0]),
+                        green=round(255 * random_color[1]),
+                        blue=round(255 * random_color[2]),
+                    )
+                )(label)
+
             meta_dic: dict = metadata.to_dict(encode_json=True)
             label.metadata = meta_dic
 
@@ -223,25 +237,30 @@ class ProjectApi:
         return AnnotationSpecsV2.from_dict(created_specs)
 
     def put_cuboid_label(
-        self, project_id: str, label_id: str, ja_name: str, en_name: str, color: Tuple[int, int, int]
+        self,
+        project_id: str,
+        en_name: str,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        return self.put_label(project_id, label_id, ja_name, en_name, color, CuboidLabelMetadata(), None)
+        return self.put_label(project_id, en_name, CuboidLabelMetadata(), None, label_id, ja_name, color)
 
     def put_segment_label(
         self,
         project_id: str,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         default_ignore: bool,
         segment_kind: str,
         layer: int,
+        ja_name: str = "",
+        label_id: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
         additional_def = default_ignore_additional if default_ignore else default_non_ignore_additional
         metadata = SegmentLabelMetadata(ignore=additional_def.id, layer=str(layer), segment_kind=segment_kind)
 
-        return self.put_label(project_id, label_id, ja_name, en_name, color, metadata, additional_def)
+        return self.put_label(project_id, en_name, metadata, additional_def, label_id, ja_name, color)
 
     def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV2:
         client = self._client
@@ -265,12 +284,12 @@ class ProjectApi:
     def put_label(
         self,
         project_id: str,
-        label_id: str,
-        ja_name: str,
         en_name: str,
-        color: Tuple[int, int, int],
         metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
         ignore_additional: Optional[IgnoreAdditionalDef],
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
         """
 
@@ -287,7 +306,14 @@ class ProjectApi:
 
         """
 
-        mod_labels = ProjectModifiers.put_label(label_id, ja_name, en_name, color, metadata, ignore_additional)
+        mod_labels = ProjectModifiers.put_label(
+            en_name,
+            metadata,
+            ignore_additional,
+            label_id,
+            ja_name,
+            color,
+        )
         mod_additionals = (
             ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
             if ignore_additional is not None
