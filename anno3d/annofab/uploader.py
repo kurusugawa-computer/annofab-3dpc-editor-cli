@@ -97,9 +97,7 @@ class AnnofabStorageUploader(Uploader):
         data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
         # XXX エラー処理とか例外処理とか何もないので注意
         with upload_file.open(mode="rb") as data:
-            requests.put(  # pylint: disable=missing-timeout
-                data_path.url, data, headers={"Content-Type": "application/octet-stream"}
-            )
+            requests.put(data_path.url, data, headers={"Content-Type": "application/octet-stream"}, timeout=30)
 
         return data_path.path
 
