@@ -8,7 +8,7 @@ python:
 
 install:
   - pip install pip --upgrade
-  - pip install poetry setuptools==50.3.2
+  - pip install poetry==1.1.15 setuptools==50.3.2
   - poetry install
 
 script:
