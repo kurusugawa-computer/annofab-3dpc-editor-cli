@@ -566,7 +566,7 @@ class ProjectCommand:
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
-        拡張kitti形式のファイル群をAnnoFabにアップロードします
+        Annofab点群形式のファイル群をAnnoFabにアップロードします
 
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
@@ -635,7 +635,7 @@ class ProjectCommand:
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
-        拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
+        Annofab点群形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
 
         Args:
             s3_path: 登録先のS3パス（ex: "{bucket}/{key}"）
@@ -746,7 +746,7 @@ class LocalCommand:
         sensor_height: Optional[float] = None,
     ) -> None:
         """
-        拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
+        Annofab点群形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。
         annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
         Args:
             scene_path: scene.metaファイルのファイルパス or scene.metaファイルの存在するディレクトリパス or kitti形式ディレクトリ

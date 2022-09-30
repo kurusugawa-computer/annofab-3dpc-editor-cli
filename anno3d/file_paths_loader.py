@@ -45,7 +45,7 @@ class ScenePathsLoader:
 
     def load(self) -> List[FilePaths]:
         """
-        拡張KITTI形式のファイルを読み込む.
+        Annofab点群形式のファイルを読み込む.
 
         Args:
             scene_path: 読み込み対象パス。　以下の何れかとなる
