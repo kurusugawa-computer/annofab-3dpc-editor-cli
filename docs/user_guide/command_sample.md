@@ -493,7 +493,7 @@ anno3d project upload_kitti_data \
 
 ### データの投入（Annofab点群形式）
 
-`project upload_scene` により、[Annofab点群形式](kitti_extension.md)のファイル群をAnnoFabへ登録できます。
+`project upload_scene` により、[Annofab点群形式](annofab_point_cloud_format.md)のファイル群をAnnoFabへ登録できます。
 あわせて `--upload_kind` を指定することで、タスク作成やアノテーション登録も同時に行うことができます。
 
 
@@ -562,8 +562,7 @@ anno3d project upload_scene \
 
 ### データの投入（S3プライベートストレージ）
 
-`project upload_scene_to_s3` により、[Annofab点群形式](kitti_extension.md)の形式をもつ
-ファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
+`project upload_scene_to_s3` により、[Annofab点群形式](annofab_point_cloud_format.md)のファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
 
 事前にAWSの認証情報を設定しておく必要があります。[boto3 : Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) を参考にしてください。
 
