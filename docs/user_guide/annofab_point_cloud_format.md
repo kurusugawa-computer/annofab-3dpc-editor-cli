@@ -1,5 +1,5 @@
 
-# 拡張KITTI形式
+# Annofab点群形式（KITTIベース）
 
 ## 概要
 [KITTI形式(KITTI 3D object detetection)](kitti_3d_object_detection.md) に以下の拡張性を持たせた、KCI独自のフォーマットです。以下の項目に該当する要件がある場合には本形式の走行データを入力としてください。それ以外の場合は、標準の[KITTI形式](kitti_3d_object_detection.md)をお使いいただくことを推奨します。

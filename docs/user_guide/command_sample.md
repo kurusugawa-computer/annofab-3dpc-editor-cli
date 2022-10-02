@@ -491,10 +491,9 @@ anno3d project upload_kitti_data \
   --force
 ```
 
-### データの投入（拡張KITTI形式）
+### データの投入（Annofab点群形式（KITTIベース））
 
-`project upload_scene` により、[拡張KITTI形式](kitti_extension.md)の形式をもつ
-ファイル群をAnnoFabへ登録できます。
+`project upload_scene` により、[Annofab点群形式（KITTIベース）](annofab_point_cloud_format.md)のファイル群をAnnoFabへ登録できます。
 あわせて `--upload_kind` を指定することで、タスク作成やアノテーション登録も同時に行うことができます。
 
 
@@ -503,13 +502,13 @@ anno3d project upload_kitti_data \
 ```
 $ anno3d project upload_scene -- --help | cat
 NAME
-    app.py project upload_scene - 拡張kitti形式のファイル群をAnnoFabにアップロードします
+    app.py project upload_scene - Annofab点群形式（KITTIベース）のファイル群をAnnoFabにアップロードします
 
 SYNOPSIS
     app.py project upload_scene PROJECT_ID SCENE_PATH <flags>
 
 DESCRIPTION
-    拡張kitti形式のファイル群をAnnoFabにアップロードします
+    Annofab点群形式（KITTIベース）のファイル群をAnnoFabにアップロードします
 
 POSITIONAL ARGUMENTS
     PROJECT_ID
@@ -563,8 +562,7 @@ anno3d project upload_scene \
 
 ### データの投入（S3プライベートストレージ）
 
-`project upload_scene_to_s3` により、[拡張KITTI形式](kitti_extension.md)の形式をもつ
-ファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
+`project upload_scene_to_s3` により、[Annofab点群形式（KITTIベース）](annofab_point_cloud_format.md)のファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
 
 事前にAWSの認証情報を設定しておく必要があります。[boto3 : Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) を参考にしてください。
 
@@ -574,13 +572,13 @@ anno3d project upload_scene \
 ```
 $ anno3d project upload_scene_to_s3 -- --help | cat
 NAME
-    app.py project upload_scene_to_s3 - 拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
+    app.py project upload_scene_to_s3 - Annofab点群形式（KITTIベース）のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
 
 SYNOPSIS
     app.py project upload_scene_to_s3 PROJECT_ID SCENE_PATH S3_PATH <flags>
 
 DESCRIPTION
-    拡張kitti形式のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
+    Annofab点群形式（KITTIベース）のファイル群をAWS S3にアップロードした上で、3dpc-editorに登録します。
 
 POSITIONAL ARGUMENTS
     PROJECT_ID
@@ -688,20 +686,20 @@ $ anno3d local make_kitti_data \
 
 ### make_scene
 
-拡張KITTI形式のデータを元に出力する場合は、`anno3d local make_scene`コマンドを利用してください。
+Annofab点群形式（KITTIベース）のデータを元に出力する場合は、`anno3d local make_scene`コマンドを利用してください。
 
 #### ヘルプ
 
 ```
 $ anno3d local make_scene -- --help | cat
 NAME
-    app.py local make_scene - 拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+    app.py local make_scene - Annofab点群形式（KITTIベース）のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
 
 SYNOPSIS
     app.py local make_scene SCENE_PATH OUTPUT_DIR <flags>
 
 DESCRIPTION
-    拡張kitti形式のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
+    Annofab点群形式（KITTIベース）のファイル群を3dpc-editorに登録可能なファイル群に変換します。 annofabのプライベートストレージを利用する場合にこのコマンドを利用します。
 
 POSITIONAL ARGUMENTS
     SCENE_PATH
