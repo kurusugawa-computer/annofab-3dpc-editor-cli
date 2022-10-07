@@ -1,6 +1,6 @@
 ### データの投入（Annofab点群形式（KITTIベース））
 
-`project upload_scene` により、[Annofab点群形式（KITTIベース）](annofab_point_cloud_format.md)のファイル群をAnnoFabへ登録できます。
+`project upload_scene` により、[Annofab点群形式（KITTIベース）](../annofab_point_cloud_format.md)のファイル群をAnnoFabへ登録できます。
 あわせて `--upload_kind` を指定することで、タスク作成やアノテーション登録も同時に行うことができます。
 
 
