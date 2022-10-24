@@ -1,6 +1,6 @@
-### アノテーション範囲の設定
+# アノテーション範囲の設定
 
-#### ヘルプ
+## ヘルプ
 
 ```
 $ anno3d project set_whole_annotation_area --help | cat
@@ -92,9 +92,9 @@ NOTES
 ```
 
 
-#### コマンド例
+## コマンド例
 
-##### アノテーション範囲を「全体」に設定
+### アノテーション範囲を「全体」に設定
 
 ```
 anno3d project set_whole_annotation_area \
@@ -103,7 +103,7 @@ anno3d project set_whole_annotation_area \
   --project_id ${ANNO_PRJ}
 ```
 
-##### アノテーション範囲を「半径10」に設定
+### アノテーション範囲を「半径10」に設定
 
 ```
 anno3d project set_sphere_annotation_area \
@@ -113,7 +113,7 @@ anno3d project set_sphere_annotation_area \
   --radius 10.0
 ```
 
-##### アノテーション範囲を「-10 < x < 20, -5 < y < 10の矩形」に設定
+### アノテーション範囲を「-10 < x < 20, -5 < y < 10の矩形」に設定
 
 ```
 anno3d project set_rect_annotation_area \

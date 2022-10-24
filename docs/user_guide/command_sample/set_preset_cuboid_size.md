@@ -1,6 +1,6 @@
-### Cuboidの規定サイズの設定
+# Cuboidの規定サイズの設定
 
-#### ヘルプ
+## ヘルプ
 
 ```
 $ anno3d project add_preset_cuboid_size --help | cat
@@ -72,9 +72,9 @@ NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
 ```
 
-#### コマンド例
+## コマンド例
 
-##### Cuboidの規定サイズを追加・更新
+### Cuboidの規定サイズを追加・更新
 
 ```
 $ anno3d project add_preset_cuboid_size \
@@ -90,7 +90,7 @@ $ anno3d project add_preset_cuboid_size \
     --order 1
 ```
 
-##### Cuboidの規定サイズを削除
+### Cuboidの規定サイズを削除
 
 ```
 $ anno3d project remove_preset_cuboid_size \

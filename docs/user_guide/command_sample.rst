@@ -12,7 +12,7 @@ projectサブコマンド
    command_sample/create_project.md
    command_sample/set_label.md
    command_sample/set_preset_cuboid_size.md
-   command_sample/set_label.md
+   command_sample/set_annotation_area.md
    command_sample/upload_kitti_data.md
    command_sample/upload_scene.md
    command_sample/upload_scene_to_s3.md

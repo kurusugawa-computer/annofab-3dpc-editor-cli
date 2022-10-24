@@ -1,10 +1,10 @@
-### データの投入（KITTI 3D object detection形式）
+# データの投入（KITTI 3D object detection形式）
 
 `project upload_kitti_data`により、
 [KITTI形式(KITTI 3D object detetection)](../kitti_3d_object_detection.md)
 の形式を持つファイル群をAnnoFabへ登録できます。
 
-#### ヘルプ
+## ヘルプ
 
 ```
 $ anno3d project upload_kitti_data --help | cat
@@ -49,7 +49,7 @@ NOTES
 ```
 
 
-#### コマンド例
+## コマンド例
 
 ```
 anno3d project upload_kitti_data \

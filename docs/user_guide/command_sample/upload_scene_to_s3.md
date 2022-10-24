@@ -1,11 +1,11 @@
-### データの投入（S3プライベートストレージ）
+# データの投入（S3プライベートストレージ）
 
 `project upload_scene_to_s3` により、[Annofab点群形式（KITTIベース）](../annofab_point_cloud_format.md)のファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
 
 事前にAWSの認証情報を設定しておく必要があります。[boto3 : Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) を参考にしてください。
 
 
-#### ヘルプ
+## ヘルプ
 
 ```
 $ anno3d project upload_scene_to_s3 -- --help | cat
@@ -54,7 +54,7 @@ NOTES
 ```
 
 
-#### コマンド例
+## コマンド例
 
 ```
 anno3d project upload_scene_to_s3 \

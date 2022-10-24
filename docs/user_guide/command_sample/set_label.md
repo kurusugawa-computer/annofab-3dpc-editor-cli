@@ -1,6 +1,6 @@
-### ラベルの設定 
+# ラベルの設定 
 
-#### ヘルプ
+## ヘルプ
 
 ```
 $ anno3d project put_cuboid_label --help | cat
@@ -82,7 +82,7 @@ NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
 ```
 
-#### コマンド例
+## コマンド例
 
 ```
 # バウンディングボックスのラベルを追加
