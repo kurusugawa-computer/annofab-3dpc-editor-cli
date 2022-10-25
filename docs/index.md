@@ -1,6 +1,0 @@
-# annofab-3dpc-editor-cli
-
-* [コマンドサンプル](user_guide/command_sample.md)
-* [KITTI形式](user_guide/kitti_3d_object_detection.md)
-* [Annofab点群形式（KITTIベース）](user_guide/annofab_point_cloud_format.md)
-
