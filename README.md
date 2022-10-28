@@ -12,7 +12,7 @@ $ pip install annofab-3dpc-editor-cli
 
 ```
 $ anno3d version
-annofab-3dpc-editor-cli 0.1.9
+annofab-3dpc-editor-cli 0.1.10a1
 ```
 
 
