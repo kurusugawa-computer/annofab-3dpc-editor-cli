@@ -5,6 +5,7 @@ description = "Annofabの3次元プロジェクトを操作するためのCLIで
 authors = ["Kurusugawa Computer Inc."]
 repository="https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli"
 readme="README.md"
+license = "MIT"
 classifiers = [
         "Intended Audience :: Developers",
         "Environment :: Console",
