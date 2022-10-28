@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "annofab-3dpc-editor-cli"
-version = "0.1.9a1"
+version = "0.1.9"
 description = ""
 authors = ["Kurusugawa Computer Inc."]
 packages = [
