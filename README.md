@@ -1,11 +1,21 @@
 # annofab-3dpc-editor-cli
+Annofabの3次元プロジェクトを操作するためのCLIです。
+
+[![Build Status](https://app.travis-ci.com/kurusugawa-computer/annofab-3dpc-editor-cli.svg?branch=master)](https://app.travis-ci.com/kurusugawa-computer/annofab-3dpc-editor-cli)
+[![PyPI version](https://badge.fury.io/py/annofab-3dpc-editor-cli.svg)](https://badge.fury.io/py/annofab-3dpc-editor-cli)
+[![Python Versions](https://img.shields.io/pypi/pyversions/annofab-3dpc-editor-cli.svg)](https://pypi.org/project/annofab-3dpc-editor-cli)
+[![Documentation Status](https://readthedocs.org/projects/annofab-3dpc-editor-cli/badge/?version=latest)](https://annofab-3dpc-editor-cli.readthedocs.io/ja/latest/?badge=latest)
+
+
 
 ## Install
 
 ```
 $ pip install annofab-3dpc-editor-cli
-
 ```
+
+## コマンドサンプル
+https://annofab-3dpc-editor-cli.readthedocs.io/ja/latest/user_guide/command_sample.html 参照
 
 
 ### バージョンの確認方法
@@ -15,7 +25,7 @@ $ anno3d version
 annofab-3dpc-editor-cli 0.1.10a1
 ```
 
-
+--------------
 ## 開発環境
 
  * poetry
@@ -31,12 +41,6 @@ poetryのインストール手順は、このファイル下部の`poetryのイ�
 poetry install
 ```
 
-----
-
-## コマンドサンプル
-https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli/tree/master/docs/user_guide/command_sample.md 参照
-
-----
 
 
 ## poetryのインストール手順
@@ -122,3 +126,11 @@ fish:
 pipx install poetry
 poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
 ```
+
+## PyPIへの公開
+
+```
+$ make publish
+```
+
+

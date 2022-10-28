@@ -1,4 +1,4 @@
-.PHONY: lint test docs
+.PHONY: lint test docs publish
 
 ONLY=""
 
@@ -22,3 +22,5 @@ endif
 docs:
 	cd docs && poetry run make html
 
+publish:
+	poetry publish --build
