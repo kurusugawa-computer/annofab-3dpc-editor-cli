@@ -2,7 +2,7 @@
 
 `project upload_kitti_data`により、
 [KITTI形式(KITTI 3D object detetection)](../kitti_3d_object_detection.md)
-の形式を持つファイル群をAnnoFabへ登録できます。
+の形式を持つファイル群をAnnofabへ登録できます。
 
 ## ヘルプ
 
@@ -40,9 +40,9 @@ FLAGS
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+        AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+        Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
