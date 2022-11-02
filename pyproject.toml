@@ -1,8 +1,23 @@
 [tool.poetry]
 name = "annofab-3dpc-editor-cli"
 version = "0.1.10a1"
-description = ""
+description = "Annofabの3次元プロジェクトを操作するためのCLIです。"
 authors = ["Kurusugawa Computer Inc."]
+repository="https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli"
+readme="README.md"
+license = "MIT"
+classifiers = [
+        "Intended Audience :: Developers",
+        "Environment :: Console",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",        
+        "Topic :: Utilities",
+        "Operating System :: OS Independent",
+]
+
 packages = [
     { include = "anno3d" }
 ]
