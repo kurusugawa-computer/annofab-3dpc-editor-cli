@@ -1,3 +1,4 @@
+import typing
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -73,22 +74,83 @@ class CuboidAnnotationDetailData(DataClassJsonMixin):
     version: str = "2"
 
 
+class UnknownDataField(fields.Field):
+    """
+    FullAnnotationDataUnknownのdataのserialize / deserialize定義
+    FullAnnotationDataUnknownのdataは文字列型で、3d-editorのCuboidの場合、json形式文字列を埋めないといけないが、str型だと不便。
+    なので、deup / load時に文字列との相互変換をするような定義をしておく
+    """
+
+    _type: typing.Any
+
+    def __init__(self, cls: typing.Type, **additional_metadata) -> None:
+        """
+
+        Args:
+            cls: 実際の型
+            **additional_metadata:
+        """
+
+        super().__init__(**additional_metadata)
+        self._type = cls
+
+    def _serialize(self, value: typing.Any, attr: Union[str, None], obj: typing.Any, **kwargs) -> str:
+        return typing.cast(str, value.to_json(ensure_ascii=False))
+
+    def _deserialize(
+        self, value: str, attr: Union[str, None], data: Union[typing.Mapping[str, typing.Any], None], **kwargs
+    ) -> typing.Any:
+        return self._type.from_json(str)
+
+
 @dataclass
-class CuboidAnnotationDetail(DataClassJsonMixin):
+class CuboidFullAnnotationData(DataClassJsonMixin):
+    data: CuboidAnnotationDetailData = field(metadata=config(mm_field=UnknownDataField(CuboidAnnotationDetailData)))
+    _type: str = "Unknown"
+
+
+@dataclass
+class CuboidAnnotationDetailBody(DataClassJsonMixin):
+    """Cuboid用 AnnotationDetailContentInputInner"""
+
+    data: CuboidFullAnnotationData
+    _type: str = "Inner"
+
+    @classmethod
+    def from_detail_data(cls, data: CuboidAnnotationDetailData) -> "CuboidAnnotationDetailBody":
+        return CuboidAnnotationDetailBody(data=CuboidFullAnnotationData(data=data))
+
+    @classmethod
+    def from_shape(cls, shape: CuboidShape) -> "CuboidAnnotationDetailBody":
+        return cls.from_detail_data(CuboidAnnotationDetailData(shape))
+
+
+@dataclass
+class AnnotationPropsForEditor:
+    can_delete: bool
+
+
+@dataclass
+class CuboidAnnotationDetailCreate(DataClassJsonMixin):
+    """Cuboid用AnnotationDetailV2Createに対応する型"""
+
     annotation_id: str
-    account_id: str
     label_id: str
-    is_protected: bool
-    data: CuboidAnnotationDetailData
-    data_holding_type: str = "inner"
+    body: CuboidAnnotationDetailBody
+    editor_props: AnnotationPropsForEditor
+    _type: str = "Create"
 
 
 @dataclass
 class CuboidAnnotations(DataClassJsonMixin):
+    """CLIからCuboidAnnotationを生成する場合に利用する AnnotationV2Input"""
+
     project_id: str
     task_id: str
     input_data_id: str
-    details: List[CuboidAnnotationDetail]
+    details: List[CuboidAnnotationDetailCreate]
+    additional_data_list: list = field(default_factory=list)  # 型を定義してないので空を前提としておく
+    format_version: str = "2.0.0"
 
 
 @dataclass

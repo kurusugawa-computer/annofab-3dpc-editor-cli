@@ -14,8 +14,9 @@ from scipy.spatial.transform import Rotation
 
 from anno3d.annofab.model import (
     XYZ,
-    CuboidAnnotationDetail,
-    CuboidAnnotationDetailData,
+    AnnotationPropsForEditor,
+    CuboidAnnotationDetailBody,
+    CuboidAnnotationDetailCreate,
     CuboidDirection,
     CuboidShape,
     Size,
@@ -158,13 +159,13 @@ class SceneUploader:
 
     def _label_to_cuboids(
         self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
-    ) -> List[CuboidAnnotationDetail]:
-        def detail_data(kitti_label: KittiLabel) -> CuboidAnnotationDetailData:
+    ) -> List[CuboidAnnotationDetailCreate]:
+        def detail_data(kitti_label: KittiLabel) -> CuboidAnnotationDetailBody:
             # directionはrotationから計算可能で、且つ3dpc-editorでの読み込みには利用していないが、エディタで編集されない場合があるので、計算しておく
             rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, kitti_label.yaw]))
             direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
 
-            return CuboidAnnotationDetailData(
+            return CuboidAnnotationDetailBody.from_shape(
                 CuboidShape(
                     dimensions=Size(width=kitti_label.width, height=kitti_label.height, depth=kitti_label.depth),
                     location=XYZ(x=kitti_label.x, y=kitti_label.y, z=kitti_label.z + (kitti_label.height / 2)),
@@ -174,12 +175,11 @@ class SceneUploader:
             )
 
         return [
-            CuboidAnnotationDetail(
-                label.annotation_id if label.annotation_id is not None else str(uuid.uuid4()),
-                self._client.account_id,
-                label.type,
-                False,
-                detail_data(label),
+            CuboidAnnotationDetailCreate(
+                annotation_id=label.annotation_id if label.annotation_id is not None else str(uuid.uuid4()),
+                label_id=label.type,
+                body=detail_data(label),
+                editor_props=AnnotationPropsForEditor(can_delete=True),
             )
             for label in labels
             if label.type in id_to_label
