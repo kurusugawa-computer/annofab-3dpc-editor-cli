@@ -300,7 +300,7 @@ class ProjectApi:
             en_name:
             color: ラベルの表示色。 "(R,G,B)"形式 R/G/Bは、それぞれ0〜255の整数値で指定する
             metadata:
-            ignore_additional:
+            ignore_additional: Segmentの『無視』を属性にマッピングする場合はその無視属性のDef。 そうでなければNone
 
         Returns:
 
