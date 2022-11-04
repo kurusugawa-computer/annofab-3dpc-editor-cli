@@ -46,5 +46,7 @@ class KittiLabel:
 
     @classmethod
     def decode_path(cls, csv_path: Path) -> List["KittiLabel"]:
+        if not csv_path.exists():
+            return []
         with csv_path.open("r") as reader:
             return cls.decode_many(reader.read())
