@@ -7,12 +7,11 @@ from annofabapi import AnnofabApi
 from annofabapi import models as afm
 from annofabapi.dataclass.annotation_specs import (
     AdditionalDataDefinitionV2,
-    AnnotationEditorFeature,
-    AnnotationSpecsV2,
+    AnnotationSpecsV3,
     Color,
     InternationalizationMessage,
     InternationalizationMessageMessages,
-    LabelV2,
+    LabelV3,
 )
 from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
@@ -26,7 +25,7 @@ from anno3d.annofab.constant import (
     lang_en,
     lang_ja,
 )
-from anno3d.annofab.model import AnnotationSpecsRequestV2, Label
+from anno3d.annofab.model import AnnotationSpecsRequestV3, Label
 from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
@@ -40,11 +39,11 @@ class ProjectModifiers:
     specifiers = ProjectSpecifiers
 
     @classmethod
-    def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV2]:
+    def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV3]:
         return cls.specifiers.annotation_area.mod(lambda _: area)
 
     @classmethod
-    def remove_preset_cuboid_size(cls, key_name: str) -> DataModifier[AnnotationSpecsV2]:
+    def remove_preset_cuboid_size(cls, key_name: str) -> DataModifier[AnnotationSpecsV3]:
         prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
         return cls.specifiers.preset_cuboid_sizes.mod(
             lambda curr: dict(filter(lambda kv: kv[0] != prefixed, curr.items()))
@@ -53,7 +52,7 @@ class ProjectModifiers:
     @classmethod
     def add_preset_cuboid_size(
         cls, key_name: str, ja_name: str, en_name: str, width: float, height: float, depth: float, order: int
-    ) -> DataModifier[AnnotationSpecsV2]:
+    ) -> DataModifier[AnnotationSpecsV3]:
         prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
 
         def update(sizes: PresetCuboidSizes) -> PresetCuboidSizes:
@@ -77,9 +76,9 @@ class ProjectModifiers:
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
-    ) -> DataModifier[AnnotationSpecsV2]:
-        def init_label() -> LabelV2:
-            return LabelV2(
+    ) -> DataModifier[AnnotationSpecsV3]:
+        def init_label() -> LabelV3:
+            return LabelV3(
                 label_id=label_id if label_id != "" else str(uuid.uuid4()),
                 label_name=InternationalizationMessage(
                     [
@@ -90,18 +89,13 @@ class ProjectModifiers:
                 ),
                 keybind=[],
                 annotation_type=DefaultAnnotationType.CUSTOM.value,
-                bounding_box_metadata=None,
-                segmentation_metadata=None,
+                field_values={},
                 additional_data_definitions=[],
                 color=Color(red=0, green=0, blue=0),
-                annotation_editor_feature=AnnotationEditorFeature(
-                    append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
-                ),
-                allow_out_of_image_bounds=False,
                 metadata={},
             )
 
-        def mod(label_opt: Optional[LabelV2]) -> Optional[LabelV2]:
+        def mod(label_opt: Optional[LabelV3]) -> Optional[LabelV3]:
             label = label_opt if label_opt is not None else init_label()
             label.label_name = InternationalizationMessage(
                 [
@@ -138,7 +132,7 @@ class ProjectModifiers:
     @classmethod
     def create_ignore_additional_if_necessary(
         cls, additional_def: IgnoreAdditionalDef
-    ) -> DataModifier[AnnotationSpecsV2]:
+    ) -> DataModifier[AnnotationSpecsV3]:
         def mod(current: Optional[AdditionalDataDefinitionV2]) -> Optional[AdditionalDataDefinitionV2]:
             if current is not None:
                 return current
@@ -225,16 +219,17 @@ class ProjectApi:
         return created_id
 
     def _mod_project_specs(
-        self, project_id: str, mod_func: Callable[[AnnotationSpecsV2], AnnotationSpecsV2]
-    ) -> AnnotationSpecsV2:
+        self, project_id: str, mod_func: Callable[[AnnotationSpecsV3], AnnotationSpecsV3]
+    ) -> AnnotationSpecsV3:
         client = self._client
 
         specs = self.get_annotation_specs(project_id)
         new_specs = mod_func(specs)
-        request = AnnotationSpecsRequestV2.from_specs(new_specs)
+        request = AnnotationSpecsRequestV3.from_specs(new_specs)
 
-        created_specs, _ = client.put_annotation_specs(project_id, request.to_dict(encode_json=True))
-        return AnnotationSpecsV2.from_dict(created_specs)
+        print(request.to_json(ensure_ascii=False, indent=2))
+        created_specs, _ = client.put_annotation_specs(project_id, {"v": "3"}, request.to_dict(encode_json=True))
+        return AnnotationSpecsV3.from_dict(created_specs)
 
     def put_cuboid_label(
         self,
@@ -262,14 +257,14 @@ class ProjectApi:
 
         return self.put_label(project_id, en_name, metadata, additional_def, label_id, ja_name, color)
 
-    def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV2:
+    def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV3:
         client = self._client
-        specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
+        specs, _ = client.get_annotation_specs(project_id, {"v": "3"})
 
-        return AnnotationSpecsV2.from_dict(specs)
+        return AnnotationSpecsV3.from_dict(specs)
 
     @staticmethod
-    def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
+    def _from_annofab_label(annofab_label: afm.LabelV3) -> Label:
         messages = annofab_label["label_name"]["messages"]
         color = annofab_label["color"]
         empty_message: dict = InternationalizationMessageMessages("", "").to_dict()
@@ -317,7 +312,7 @@ class ProjectApi:
         mod_additionals = (
             ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
             if ignore_additional is not None
-            else DataModifier.identity(AnnotationSpecsV2)
+            else DataModifier.identity(AnnotationSpecsV3)
         )
         created_specs = self._mod_project_specs(project_id, mod_labels.and_then(mod_additionals))
 

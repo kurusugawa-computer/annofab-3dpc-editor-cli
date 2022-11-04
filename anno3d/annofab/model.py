@@ -5,9 +5,9 @@ from typing import Dict, List, Optional, Tuple, Union
 from annofabapi.dataclass.annotation_specs import (
     AdditionalDataDefinitionV2,
     AdditionalDataRestriction,
-    AnnotationSpecsV2,
+    AnnotationSpecsV3,
     InspectionPhrase,
-    LabelV2,
+    LabelV3,
 )
 from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
@@ -154,8 +154,8 @@ class CuboidAnnotations(DataClassJsonMixin):
 
 
 @dataclass
-class AnnotationSpecsRequestV2(DataClassJsonMixin):
-    labels: List[LabelV2]
+class AnnotationSpecsRequestV3(DataClassJsonMixin):
+    labels: List[LabelV3]
     additionals: List[AdditionalDataDefinitionV2]
     restrictions: List[AdditionalDataRestriction]
     inspection_phrases: List[InspectionPhrase]
@@ -167,15 +167,15 @@ class AnnotationSpecsRequestV2(DataClassJsonMixin):
     metadata: Optional[Dict[str, str]]
 
     @staticmethod
-    def from_specs(specs: AnnotationSpecsV2) -> "AnnotationSpecsRequestV2":
-        return AnnotationSpecsRequestV2(
+    def from_specs(specs: AnnotationSpecsV3) -> "AnnotationSpecsRequestV3":
+        return AnnotationSpecsRequestV3(
             labels=specs.labels if specs.labels is not None else [],
             additionals=specs.additionals if specs.additionals is not None else [],
             restrictions=specs.restrictions if specs.restrictions is not None else [],
             inspection_phrases=specs.inspection_phrases if specs.inspection_phrases is not None else [],
             comment="",
             auto_marking=False,
-            format_version=specs.format_version if specs.format_version is not None else "2.1.0",
+            format_version=specs.format_version if specs.format_version is not None else "3.0.0",
             last_updated_datetime=specs.updated_datetime,
             option=specs.option,
             metadata=specs.metadata,
