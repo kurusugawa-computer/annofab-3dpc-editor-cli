@@ -4,7 +4,7 @@ import os
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Literal, Optional, Tuple, Type, TypeVar, cast
 
 import boto3
 import fire
@@ -226,6 +226,7 @@ class ProjectCommand:
             raise RuntimeError(
                 f"segment_typeの値は、{segment_type_semantic} もしくは {segment_type_instance} でなければなりませんが、 {segment_type} でした"
             )
+        safe_segment_type = cast(Literal["SEMANTIC", "INSTANCE"], segment_type)
         if layer < 0:
             raise RuntimeError(f"layerは、0以上の整数である必要がありますが、{layer} でした")
 
@@ -235,7 +236,7 @@ class ProjectCommand:
                 project_id,
                 en_name,
                 default_ignore,
-                segment_kind=segment_type,
+                segment_kind=safe_segment_type,
                 layer=layer,
                 label_id=label_id,
                 ja_name=ja_name,

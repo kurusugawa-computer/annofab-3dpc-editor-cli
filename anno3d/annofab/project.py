@@ -1,7 +1,7 @@
 import colorsys
 import random
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
@@ -29,7 +29,6 @@ from anno3d.annofab.model import AnnotationSpecsRequestV3, Label
 from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
-from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
 from anno3d.model.preset_cuboids import PresetCuboidSize, PresetCuboidSizes, preset_cuboid_size_metadata_prefix
 from anno3d.model.project_specs_meta import ProjectMetadata
 from anno3d.util.modifier import DataModifier
@@ -68,10 +67,95 @@ class ProjectModifiers:
         return cls.specifiers.preset_cuboid_sizes.mod(update)
 
     @classmethod
+    def put_cuboid_label(
+        cls,
+        en_name: str,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
+    ) -> DataModifier[AnnotationSpecsV3]:
+        set_anno_type = LabelSpecifiers.annotation_type.set("user_bounding_box")
+
+        return cls.put_label(
+            en_name=en_name,
+            mod_label_info=set_anno_type,
+            ignore_additional=None,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+
+    @classmethod
+    def put_instance_segment_label(
+        cls,
+        en_name: str,
+        layer: int,
+        default_ignore: Optional[bool] = None,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
+    ) -> DataModifier[AnnotationSpecsV3]:
+        set_anno_type = LabelSpecifiers.annotation_type.set("user_instance_segment")
+        set_layer = LabelSpecifiers.layer.set(layer)
+
+        ignore_additional: Optional[IgnoreAdditionalDef]
+        ignore_id: Optional[str]
+        if default_ignore is None:
+            ignore_additional = None
+            ignore_id = None
+        else:
+            ignore_additional = default_ignore_additional if default_ignore else default_non_ignore_additional
+            ignore_id = ignore_additional.id
+
+        set_ignore = LabelSpecifiers.ignore.set(ignore_id)
+
+        return cls.put_label(
+            en_name=en_name,
+            mod_label_info=set_anno_type.and_then(set_layer).and_then(set_ignore),
+            ignore_additional=ignore_additional,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+
+    @classmethod
+    def put_semantic_segment_label(
+        cls,
+        en_name: str,
+        layer: int,
+        default_ignore: Optional[bool] = None,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
+    ) -> DataModifier[AnnotationSpecsV3]:
+        set_anno_type = LabelSpecifiers.annotation_type.set("user_semantic_segment")
+        set_layer = LabelSpecifiers.layer.set(layer)
+
+        ignore_additional: Optional[IgnoreAdditionalDef]
+        ignore_id: Optional[str]
+        if default_ignore is None:
+            ignore_additional = None
+            ignore_id = None
+        else:
+            ignore_additional = default_ignore_additional if default_ignore else default_non_ignore_additional
+            ignore_id = ignore_additional.id
+
+        set_ignore = LabelSpecifiers.ignore.set(ignore_id)
+
+        return cls.put_label(
+            en_name=en_name,
+            mod_label_info=set_anno_type.and_then(set_layer).and_then(set_ignore),
+            ignore_additional=ignore_additional,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+
+    @classmethod
     def put_label(
         cls,
         en_name: str,
-        metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
+        mod_label_info: DataModifier[LabelV3],
         ignore_additional: Optional[IgnoreAdditionalDef],
         label_id: str = "",
         ja_name: str = "",
@@ -88,6 +172,7 @@ class ProjectModifiers:
                     lang_ja,
                 ),
                 keybind=[],
+                # 仕様拡張プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま
                 annotation_type=DefaultAnnotationType.CUSTOM.value,
                 field_values={},
                 additional_data_definitions=[],
@@ -121,13 +206,16 @@ class ProjectModifiers:
                     )
                 )(label)
 
-            meta_dic: dict = metadata.to_dict(encode_json=True)
-            label.metadata = meta_dic
+            return mod_label_info(label)
 
-            return label
+        mod_additionals = (
+            ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
+            if ignore_additional is not None
+            else DataModifier.identity(AnnotationSpecsV3)
+        )
 
         label_specifier = cls.specifiers.label(label_id)
-        return label_specifier.mod(mod)
+        return label_specifier.mod(mod).and_then(mod_additionals)
 
     @classmethod
     def create_ignore_additional_if_necessary(
@@ -239,23 +327,49 @@ class ProjectApi:
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        return self.put_label(project_id, en_name, CuboidLabelMetadata(), None, label_id, ja_name, color)
+        mod_specs = ProjectModifiers.put_cuboid_label(en_name=en_name, label_id=label_id, ja_name=ja_name, color=color)
+        return self.put_label(project_id, mod_specs)
 
     def put_segment_label(
         self,
         project_id: str,
         en_name: str,
-        default_ignore: bool,
-        segment_kind: str,
+        default_ignore: Optional[bool],
+        segment_kind: Literal["SEMANTIC", "INSTANCE"],
         layer: int,
         ja_name: str = "",
         label_id: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        additional_def = default_ignore_additional if default_ignore else default_non_ignore_additional
-        metadata = SegmentLabelMetadata(ignore=additional_def.id, layer=str(layer), segment_kind=segment_kind)
+        """
 
-        return self.put_label(project_id, en_name, metadata, additional_def, label_id, ja_name, color)
+        Args:
+            project_id:
+            en_name:
+            default_ignore: デフォルトで無視属性をOnにするかどうか。　基本的にNone。 仕様拡張プラグインを利用しない古い仕様との互換性のために残っている
+            segment_kind:
+            layer:
+            ja_name:
+            label_id:
+            color: ラベルの表示色。 "(R,G,B)"形式 R/G/Bは、それぞれ0〜255の整数値で指定する
+
+        Returns:
+
+        """
+        if segment_kind == "SEMANTIC":
+            mod_specs_f = ProjectModifiers.put_semantic_segment_label
+        else:
+            mod_specs_f = ProjectModifiers.put_instance_segment_label
+
+        mod_specs = mod_specs_f(
+            en_name=en_name,
+            layer=layer,
+            default_ignore=default_ignore,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+        return self.put_label(project_id, mod_specs)
 
     def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV3:
         client = self._client
@@ -276,45 +390,18 @@ class ProjectApi:
             annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]), metadata
         )
 
-    def put_label(
-        self,
-        project_id: str,
-        en_name: str,
-        metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
-        ignore_additional: Optional[IgnoreAdditionalDef],
-        label_id: str = "",
-        ja_name: str = "",
-        color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[Label]:
+    def put_label(self, project_id: str, mod_specs: DataModifier[AnnotationSpecsV3]) -> List[Label]:
         """
 
         Args:
             project_id:
-            label_id:
-            ja_name:
-            en_name:
-            color: ラベルの表示色。 "(R,G,B)"形式 R/G/Bは、それぞれ0〜255の整数値で指定する
-            metadata:
-            ignore_additional: Segmentの『無視』を属性にマッピングする場合はその無視属性のDef。 そうでなければNone
+            mod_specs: ラベル更新を行うアノテーション仕様の変更関数
 
-        Returns:
+        Returns: 変更後のラベル一覧
 
         """
 
-        mod_labels = ProjectModifiers.put_label(
-            en_name,
-            metadata,
-            ignore_additional,
-            label_id,
-            ja_name,
-            color,
-        )
-        mod_additionals = (
-            ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
-            if ignore_additional is not None
-            else DataModifier.identity(AnnotationSpecsV3)
-        )
-        created_specs = self._mod_project_specs(project_id, mod_labels.and_then(mod_additionals))
+        created_specs = self._mod_project_specs(project_id, mod_specs)
 
         if created_specs.labels is None:
             return []
