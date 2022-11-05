@@ -154,6 +154,30 @@ class CuboidAnnotations(DataClassJsonMixin):
 
 
 @dataclass
+class OneIntegerFieldValue(DataClassJsonMixin):
+    """
+    LabelV3.field_valuesに格納される値の種別の一つ
+    整数値を一つだけ保持するValue
+    """
+
+    value: int
+    _type: str = "OneIntegerFieldValue"
+
+
+@dataclass
+class CuboidFieldValues(DataClassJsonMixin):
+    """Cuboid用LabelV3のfield_values値 常に空"""
+
+
+@dataclass
+class SegmentFieldValues(DataClassJsonMixin):
+    """Segment用LabelV3のfield_values値"""
+
+    layer: OneIntegerFieldValue
+    """セグメントがどのレイヤーに所属するかを表す値。 0以上の整数値"""
+
+
+@dataclass
 class AnnotationSpecsRequestV3(DataClassJsonMixin):
     labels: List[LabelV3]
     additionals: List[AdditionalDataDefinitionV2]
