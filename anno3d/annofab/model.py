@@ -94,18 +94,29 @@ class UnknownDataField(fields.Field):
         super().__init__(**additional_metadata)
         self._type = cls
 
-    def _serialize(self, value: typing.Any, attr: Union[str, None], obj: typing.Any, **kwargs) -> str:
+    def encode(self, value: typing.Any) -> str:
         return typing.cast(str, value.to_json(ensure_ascii=False))
+
+    def _serialize(self, value: typing.Any, attr: Union[str, None], obj: typing.Any, **kwargs) -> str:
+        return self.encode(value)
+
+    def decode(self, value: str) -> typing.Any:
+        return self._type.from_json(value)
 
     def _deserialize(
         self, value: str, attr: Union[str, None], data: Union[typing.Mapping[str, typing.Any], None], **kwargs
     ) -> typing.Any:
-        return self._type.from_json(str)
+        return self.decode(value)
+
+
+cuboid_data_field = UnknownDataField(CuboidAnnotationDetailData)
 
 
 @dataclass
 class CuboidFullAnnotationData(DataClassJsonMixin):
-    data: CuboidAnnotationDetailData = field(metadata=config(mm_field=UnknownDataField(CuboidAnnotationDetailData)))
+    data: CuboidAnnotationDetailData = field(
+        metadata=config(mm_field=cuboid_data_field, encoder=cuboid_data_field.encode, decoder=cuboid_data_field.decode)
+    )
     _type: str = "Unknown"
 
 
@@ -138,6 +149,7 @@ class CuboidAnnotationDetailCreate(DataClassJsonMixin):
     label_id: str
     body: CuboidAnnotationDetailBody
     editor_props: AnnotationPropsForEditor
+    additional_data_list: list = field(default_factory=list)  # 型を定義してないので空を前提としておく
     _type: str = "Create"
 
 
@@ -149,7 +161,6 @@ class CuboidAnnotations(DataClassJsonMixin):
     task_id: str
     input_data_id: str
     details: List[CuboidAnnotationDetailCreate]
-    additional_data_list: list = field(default_factory=list)  # 型を定義してないので空を前提としておく
     format_version: str = "2.0.0"
 
 
