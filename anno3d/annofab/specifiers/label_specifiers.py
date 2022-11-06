@@ -90,7 +90,10 @@ class LabelSpecifiers:
 
     @staticmethod
     def zoom_in_segment_info(meta: Dict[str, str]) -> SegmentLabelInfo:
-        return SegmentLabelInfo(ignore=meta["ignore"], layer=int(meta["layer"]))
+        default = SegmentLabelInfo()
+        ignore = meta.get("ignore", default.ignore)
+        layer = int(meta.get("layer", str(default.layer)))
+        return SegmentLabelInfo(ignore=ignore, layer=layer)
 
     @staticmethod
     def zoom_out_segment_info(meta: Dict[str, str], info: SegmentLabelInfo) -> Dict[str, str]:
