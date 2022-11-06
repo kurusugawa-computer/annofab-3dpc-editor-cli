@@ -35,6 +35,9 @@ from anno3d.util.modifier import DataModifier
 
 
 class ProjectModifiers:
+    def __init__(self, label_specifiers: LabelSpecifiers):
+        self._label_specifiers = label_specifiers
+
     specifiers = ProjectSpecifiers
 
     @classmethod
@@ -66,17 +69,16 @@ class ProjectModifiers:
 
         return cls.specifiers.preset_cuboid_sizes.mod(update)
 
-    @classmethod
     def put_cuboid_label(
-        cls,
+        self,
         en_name: str,
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> DataModifier[AnnotationSpecsV3]:
-        set_anno_type = LabelSpecifiers.annotation_type.set("user_bounding_box")
+        set_anno_type = self._label_specifiers.annotation_type.set("user_bounding_box")
 
-        return cls.put_label(
+        return self.put_label(
             en_name=en_name,
             mod_label_info=set_anno_type,
             ignore_additional=None,
@@ -85,9 +87,8 @@ class ProjectModifiers:
             color=color,
         )
 
-    @classmethod
     def put_instance_segment_label(
-        cls,
+        self,
         en_name: str,
         layer: int,
         default_ignore: Optional[bool] = None,
@@ -95,8 +96,8 @@ class ProjectModifiers:
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> DataModifier[AnnotationSpecsV3]:
-        set_anno_type = LabelSpecifiers.annotation_type.set("user_instance_segment")
-        set_layer = LabelSpecifiers.layer.set(layer)
+        set_anno_type = self._label_specifiers.annotation_type.set("user_instance_segment")
+        set_layer = self._label_specifiers.layer.set(layer)
 
         ignore_additional: Optional[IgnoreAdditionalDef]
         ignore_id: Optional[str]
@@ -107,9 +108,9 @@ class ProjectModifiers:
             ignore_additional = default_ignore_additional if default_ignore else default_non_ignore_additional
             ignore_id = ignore_additional.id
 
-        set_ignore = LabelSpecifiers.ignore.set(ignore_id)
+        set_ignore = self._label_specifiers.ignore.set(ignore_id)
 
-        return cls.put_label(
+        return self.put_label(
             en_name=en_name,
             mod_label_info=set_anno_type.and_then(set_layer).and_then(set_ignore),
             ignore_additional=ignore_additional,
@@ -118,9 +119,8 @@ class ProjectModifiers:
             color=color,
         )
 
-    @classmethod
     def put_semantic_segment_label(
-        cls,
+        self,
         en_name: str,
         layer: int,
         default_ignore: Optional[bool] = None,
@@ -128,8 +128,8 @@ class ProjectModifiers:
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> DataModifier[AnnotationSpecsV3]:
-        set_anno_type = LabelSpecifiers.annotation_type.set("user_semantic_segment")
-        set_layer = LabelSpecifiers.layer.set(layer)
+        set_anno_type = self._label_specifiers.annotation_type.set("user_semantic_segment")
+        set_layer = self._label_specifiers.layer.set(layer)
 
         ignore_additional: Optional[IgnoreAdditionalDef]
         ignore_id: Optional[str]
@@ -140,9 +140,9 @@ class ProjectModifiers:
             ignore_additional = default_ignore_additional if default_ignore else default_non_ignore_additional
             ignore_id = ignore_additional.id
 
-        set_ignore = LabelSpecifiers.ignore.set(ignore_id)
+        set_ignore = self._label_specifiers.ignore.set(ignore_id)
 
-        return cls.put_label(
+        return self.put_label(
             en_name=en_name,
             mod_label_info=set_anno_type.and_then(set_layer).and_then(set_ignore),
             ignore_additional=ignore_additional,
@@ -151,9 +151,8 @@ class ProjectModifiers:
             color=color,
         )
 
-    @classmethod
     def put_label(
-        cls,
+        self,
         en_name: str,
         mod_label_info: DataModifier[LabelV3],
         ignore_additional: Optional[IgnoreAdditionalDef],
@@ -191,14 +190,14 @@ class ProjectModifiers:
             )
 
             if ignore_additional is not None:
-                label = LabelSpecifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
+                label = self._label_specifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
 
             if color is not None:
-                label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+                label = self._label_specifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
             else:  # 明度彩度をMAXで固定しランダムに色を選ぶ
                 random_color = colorsys.hsv_to_rgb(random.random(), 1, 1)
 
-                label = LabelSpecifiers.color.set(
+                label = self._label_specifiers.color.set(
                     Color(
                         red=round(255 * random_color[0]),
                         green=round(255 * random_color[1]),
@@ -209,12 +208,12 @@ class ProjectModifiers:
             return mod_label_info(label)
 
         mod_additionals = (
-            ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
+            self.create_ignore_additional_if_necessary(ignore_additional)
             if ignore_additional is not None
             else DataModifier.identity(AnnotationSpecsV3)
         )
 
-        label_specifier = cls.specifiers.label(label_id)
+        label_specifier = self.specifiers.label(label_id)
         return label_specifier.mod(mod).and_then(mod_additionals)
 
     @classmethod
@@ -250,6 +249,19 @@ class ProjectApi:
 
     def __init__(self, client: AnnofabApi):
         self._client = client
+
+        # project_id -> ProjectModifiersの辞書
+        self._modifiers_dic: Dict[str, ProjectModifiers] = {}
+
+    def _project_modifiers(self, project_id: str) -> ProjectModifiers:
+        current = self._modifiers_dic.get(project_id, None)
+        if current is not None:
+            return current
+
+        # TODO ここでspec取って、LabelSpecifiersを切り替えるようにする
+        new = ProjectModifiers(LabelSpecifiers())
+        self._modifiers_dic[project_id] = new
+        return new
 
     @staticmethod
     def _decode_project(project: afm.Project) -> Project:
@@ -327,7 +339,9 @@ class ProjectApi:
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        mod_specs = ProjectModifiers.put_cuboid_label(en_name=en_name, label_id=label_id, ja_name=ja_name, color=color)
+        mod_specs = self._project_modifiers(project_id).put_cuboid_label(
+            en_name=en_name, label_id=label_id, ja_name=ja_name, color=color
+        )
         return self.put_label(project_id, mod_specs)
 
     def put_segment_label(
@@ -356,10 +370,11 @@ class ProjectApi:
         Returns:
 
         """
+        modifiers = self._project_modifiers(project_id)
         if segment_kind == "SEMANTIC":
-            mod_specs_f = ProjectModifiers.put_semantic_segment_label
+            mod_specs_f = modifiers.put_semantic_segment_label
         else:
-            mod_specs_f = ProjectModifiers.put_instance_segment_label
+            mod_specs_f = modifiers.put_instance_segment_label
 
         mod_specs = mod_specs_f(
             en_name=en_name,

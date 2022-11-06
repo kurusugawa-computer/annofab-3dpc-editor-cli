@@ -1,6 +1,6 @@
 import copy
 from dataclasses import replace
-from typing import Callable, Dict, Literal, Optional, cast
+from typing import Callable, Dict, List, Literal, Optional, TypeVar, cast
 
 from annofabapi.dataclass.annotation_specs import Color, LabelV3
 
@@ -12,21 +12,48 @@ zero_color = Color(0, 0, 0)
 
 
 AnnotationType = Literal["user_bounding_box", "user_semantic_segment", "user_instance_segment"]
+SegmentKind = Literal["SEMANTIC", "INSTANCE"]
+T = TypeVar("T")
+LabelSpecifier = DataSpecifier[LabelV3, T]
 
 
 class LabelSpecifiers:
-    label = DataSpecifier.identity(LabelV3)
-    color = label.zoom(
-        lambda label: label.color if label.color is not None else zero_color,
-        lambda label, color: replace(label, color=color),
-    )
+    def __init__(self):
+        self._label = DataSpecifier.identity(LabelV3)
+        self._color = self.label.zoom(
+            lambda label: label.color if label.color is not None else zero_color,
+            lambda label, color: replace(label, color=color),
+        )
+        self._additionals = self._label.zoom(
+            lambda label: label.additional_data_definitions if label.additional_data_definitions is not None else [],
+            lambda label, additionals: replace(label, additional_data_definitions=additionals),
+        )
+        self._metadata = self.label.zoom(
+            lambda label: label.metadata if label.metadata is not None else {},
+            lambda label, metadata: replace(label, metadata=metadata),
+        )
 
-    metadata: DataSpecifier[LabelV3, Dict[str, str]] = label.zoom(
-        lambda label: label.metadata if label.metadata is not None else {},
-        lambda label, metadata: replace(label, metadata=metadata),
-    )
+        c = LabelSpecifiers
+        self._annotation_type = self.metadata.zoom(c.zoom_in_annotation_type, c.zoom_out_annotation_type)
+        self._segment_kind = self.metadata.zoom(c.zoom_in_segment_kind, c.zoom_out_segment_kind)
+        self._ignore = self._metadata.zoom(c.zoom_in_ignore, c.zoom_out_ignore)
+        self._segment_info = self.metadata.zoom(c.zoom_in_segment_info, c.zoom_out_segment_info)
 
-    """
+        self._layer = self._segment_info.zoom(lambda meta: meta.layer, lambda meta, layer: replace(meta, layer=layer))
+
+    @property
+    def label(self) -> LabelSpecifier[LabelV3]:
+        return self._label
+
+    @property
+    def color(self) -> LabelSpecifier[Color]:
+        return self._color
+
+    @property
+    def metadata(self) -> LabelSpecifier[Dict[str, str]]:
+        return self._metadata
+
+    __comment = """
     仕様拡張プラグイン前との互換性のため、以下の表現のメタデータを生成する定義群
     @camelcase
     @dataclass(frozen=True)
@@ -78,11 +105,11 @@ class LabelSpecifiers:
         return result
 
     @staticmethod
-    def zoom_in_segment_kind(meta: Dict[str, str]) -> Literal["SEMANTIC", "INSTANCE"]:
-        return cast(Literal["SEMANTIC", "INSTANCE"], meta["segmentKind"])
+    def zoom_in_segment_kind(meta: Dict[str, str]) -> SegmentKind:
+        return cast(SegmentKind, meta["segmentKind"])
 
     @staticmethod
-    def zoom_out_segment_kind(meta: Dict[str, str], kind: Literal["SEMANTIC", "INSTANCE"]) -> Dict[str, str]:
+    def zoom_out_segment_kind(meta: Dict[str, str], kind: SegmentKind) -> Dict[str, str]:
         result = copy.deepcopy(meta)
         result["segmentKind"] = kind
         return result
@@ -137,19 +164,30 @@ class LabelSpecifiers:
 
         return result
 
-    annotation_type = metadata.zoom(zoom_in_annotation_type, zoom_out_annotation_type)
-    segment_kind = metadata.zoom(zoom_in_segment_kind, zoom_out_segment_kind)
-    ignore = metadata.zoom(zoom_in_ignore, zoom_out_ignore)
-    segment_info: DataSpecifier[LabelV3, SegmentLabelInfo] = metadata.zoom(zoom_in_segment_info, zoom_out_segment_info)
+    @property
+    def annotation_type(self) -> LabelSpecifier[AnnotationType]:
+        return self._annotation_type
 
-    layer = segment_info.zoom(lambda meta: meta.layer, lambda meta, layer: replace(meta, layer=layer))
+    @property
+    def segment_kind(self) -> LabelSpecifier[SegmentKind]:
+        return self._segment_kind
 
-    additionals = label.zoom(
-        lambda label: label.additional_data_definitions if label.additional_data_definitions is not None else [],
-        lambda label, additionals: replace(label, additional_data_definitions=additionals),
-    )
+    @property
+    def ignore(self) -> LabelSpecifier[Optional[str]]:
+        return self._ignore
 
-    @classmethod
-    def additional(cls, additional_id: str) -> DataSpecifier[LabelV3, Optional[str]]:
+    @property
+    def segment_info(self) -> LabelSpecifier[SegmentLabelInfo]:
+        return self._segment_info
+
+    @property
+    def layer(self) -> LabelSpecifier[int]:
+        return self._layer
+
+    @property
+    def additionals(self) -> LabelSpecifier[List[str]]:
+        return self._additionals
+
+    def additional(self, additional_id: str) -> DataSpecifier[LabelV3, Optional[str]]:
         predicate: Callable[[str], bool] = lambda additional: additional == additional_id
-        return cls.additionals.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
+        return self.additionals.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
