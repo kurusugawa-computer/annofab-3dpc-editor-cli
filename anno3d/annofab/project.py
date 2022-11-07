@@ -1,6 +1,7 @@
 import colorsys
 import random
 import uuid
+from dataclasses import replace
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from annofabapi import AnnofabApi
@@ -20,12 +21,15 @@ from more_itertools import first_true
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
+    builtin_3d_editor_plugin_id,
+    builtin_3d_extend_specs_plugin_id,
     default_ignore_additional,
     default_non_ignore_additional,
     lang_en,
     lang_ja,
 )
 from anno3d.annofab.model import AnnotationSpecsRequestV3, Label
+from anno3d.annofab.specifiers.extended_specs_label_specifiers_v1 import ExtendedSpecsLabelSpecifiersV1
 from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
 from anno3d.annofab.specifiers.metadata_label_specifiers import MetadataLabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
@@ -40,6 +44,10 @@ class ProjectModifiers:
         self._label_specifiers = label_specifiers
 
     specifiers = ProjectSpecifiers
+
+    @property
+    def extended_specs_plugin_version(self) -> Optional[str]:
+        return self._label_specifiers.extended_specs_plugin_version()
 
     @classmethod
     def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV3]:
@@ -259,8 +267,18 @@ class ProjectApi:
         if current is not None:
             return current
 
-        # TODO ここでspec取って、LabelSpecifiersを切り替えるようにする
-        new = ProjectModifiers(MetadataLabelSpecifiers())
+        project: Dict[str, Any]
+        project, _ = self._client.get_project(project_id)
+        conf: Dict[str, Any] = project["configuration"]
+        specs_plugin = conf.get("extended_specs_plugin_id", None)
+
+        # 仕様拡張プラグインが利用されているかどうかでLabelSpecifiersの実装を入れ替える
+        if specs_plugin is None:
+            new = ProjectModifiers(MetadataLabelSpecifiers())
+        else:
+            # TODO Pluginに埋まってるバージョンを読んで選択出来るようにしたい
+            # 現状は、1.0.1しか無い＆pluginのdataclassが存在しないのでやってない
+            new = ProjectModifiers(ExtendedSpecsLabelSpecifiersV1())
         self._modifiers_dic[project_id] = new
         return new
 
@@ -281,7 +299,13 @@ class ProjectApi:
         return ProjectJobInfo.from_dict(info)
 
     def create_custom_project(
-        self, title: str, organization_name: str, plugin_id: str, project_id: str = "", overview: str = ""
+        self,
+        title: str,
+        organization_name: str,
+        editor_plugin_id: str,
+        specs_plugin_id: str,
+        project_id: str = "",
+        overview: str = "",
     ) -> str:
         """
         カスタムプロジェクトを作成し、作成したprojectのidを返します
@@ -290,7 +314,8 @@ class ProjectApi:
 
             title:
             organization_name:
-            plugin_id:
+            editor_plugin_id:
+            specs_plugin_id:
             project_id:
             overview:
 
@@ -299,13 +324,18 @@ class ProjectApi:
         """
         client = self._client
 
+        if editor_plugin_id == "":
+            editor_plugin_id = builtin_3d_editor_plugin_id
+        if specs_plugin_id == "":
+            specs_plugin_id = builtin_3d_extend_specs_plugin_id
+
         body = {
             "title": title,
             "overview": overview if len(overview) != 0 else None,
             "status": "active",
             "input_data_type": "custom",
             "organization_name": organization_name,
-            "configuration": {"plugin_id": plugin_id},
+            "configuration": {"plugin_id": editor_plugin_id, "extended_specs_plugin_id": specs_plugin_id},
         }
 
         project: Dict[str, Any]
@@ -325,7 +355,8 @@ class ProjectApi:
         client = self._client
 
         specs = self.get_annotation_specs(project_id)
-        new_specs = mod_func(specs)
+        annotation_type_version = self._project_modifiers(project_id).extended_specs_plugin_version
+        new_specs = replace(mod_func(specs), annotation_type_version=annotation_type_version)
         request = AnnotationSpecsRequestV3.from_specs(new_specs)
 
         created_specs, _ = client.put_annotation_specs(project_id, {"v": "3"}, request.to_dict(encode_json=True))

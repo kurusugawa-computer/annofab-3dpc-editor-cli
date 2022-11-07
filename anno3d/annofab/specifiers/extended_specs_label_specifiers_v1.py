@@ -8,7 +8,7 @@ from anno3d.annofab.specifiers.label_specifiers import AnnotationType, LabelSpec
 from anno3d.model.label import SegmentLabelInfo
 
 
-class ExtendSpecsLabelSpecifiers(LabelSpecifiers):
+class ExtendedSpecsLabelSpecifiersV1(LabelSpecifiers):
     def __init__(self):
         super().__init__()
 
@@ -50,6 +50,10 @@ class ExtendSpecsLabelSpecifiers(LabelSpecifiers):
             zoom_in_cuboid_field_values,
             zoom_out_cuboid_field_values,
         )
+
+    @staticmethod
+    def extended_specs_plugin_version() -> Optional[str]:
+        return "1.0.1"
 
     def _zoom_in_segment_info(self, label: LabelV3) -> SegmentLabelInfo:
         field_values = self._segment_field_values.get(label)

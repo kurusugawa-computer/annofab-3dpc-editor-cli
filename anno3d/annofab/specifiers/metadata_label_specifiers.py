@@ -49,6 +49,10 @@ class MetadataLabelSpecifiers(LabelSpecifiers):
     def __init__(self):
         super().__init__()
 
+    @staticmethod
+    def extended_specs_plugin_version() -> Optional[str]:
+        return None
+
     def _get_metadata(self, label: LabelV3) -> Dict[str, str]:
         return self.metadata.get(label)
 

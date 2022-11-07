@@ -200,6 +200,7 @@ class AnnotationSpecsRequestV3(DataClassJsonMixin):
     inspection_phrases: List[InspectionPhrase]
     comment: str
     auto_marking: bool
+    annotation_type_version: Optional[str]
     format_version: str
     last_updated_datetime: Optional[str]
     option: Union[AnnotationSpecsMovieOption, None]
@@ -214,6 +215,7 @@ class AnnotationSpecsRequestV3(DataClassJsonMixin):
             inspection_phrases=specs.inspection_phrases if specs.inspection_phrases is not None else [],
             comment="",
             auto_marking=False,
+            annotation_type_version=specs.annotation_type_version,
             format_version=specs.format_version if specs.format_version is not None else "3.0.0",
             last_updated_datetime=specs.updated_datetime,
             option=specs.option,

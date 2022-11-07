@@ -43,6 +43,14 @@ class LabelSpecifiers(ABC):
     # abstract method群　ここから
     # ==============================
 
+    @staticmethod
+    @abstractmethod
+    def extended_specs_plugin_version() -> Optional[str]:
+        """
+        このLabelSpecifiersが対応している仕様拡張プラグインバージョン
+        仕様拡張プラグイン前の仕様に対応している場合None
+        """
+
     @abstractmethod
     def _zoom_in_segment_info(self, label: LabelV3) -> SegmentLabelInfo:
         pass

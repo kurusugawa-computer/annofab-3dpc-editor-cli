@@ -103,15 +103,16 @@ class ProjectCommand:
     def create(
         title: str,
         organization_name: str,
-        plugin_id: str,
         project_id: str = "",
+        plugin_id: str = "",
+        specs_plugin_id: str = "",
         overview: str = "",
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
-        新しいカスタムプロジェクトを生成します。
+        新しい三次元エディタプロジェクトを生成します。
 
         Args:
             annofab_id: AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
@@ -120,7 +121,8 @@ class ProjectCommand:
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             title: projectのタイトル
             organization_name: projectを所属させる組織の名前
-            plugin_id: このプロジェクトで使用する、組織に登録されているプラグインのid。
+            plugin_id: このプロジェクトで使用する、組織に登録されている三次元エディタプラグインのid。 省略時は標準プラグインを利用します
+            specs_plugin_id: このプロジェクトで使用する、組織に登録されている仕様拡張プラグインのid。 省略時は標準プラグインを利用します
             project_id: 作成するprojectのid。省略した場合自動的にuuidが設定されます。
             overview:  projectの概要
 
@@ -133,7 +135,12 @@ class ProjectCommand:
         client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
         with client_loader.open_api() as api:
             created_project_id = ProjectApi(api).create_custom_project(
-                title, organization_name, plugin_id, project_id, overview
+                title=title,
+                organization_name=organization_name,
+                editor_plugin_id=plugin_id,
+                specs_plugin_id=specs_plugin_id,
+                project_id=project_id,
+                overview=overview,
             )
             logger.info("プロジェクト(=%s)を作成しました。", created_project_id)
 
@@ -182,8 +189,8 @@ class ProjectCommand:
     def put_segment_label(
         project_id: str,
         en_name: str,
-        default_ignore: bool,
         segment_type: str,
+        default_ignore: bool = False,
         layer: int = 100,
         label_id: str = "",
         ja_name: str = "",
@@ -201,7 +208,8 @@ class ProjectCommand:
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
             en_name: 　英語名称
-            default_ignore: このラベルがついた領域を、デフォルトでは他のアノテーションから除外するかどうか。 Trueであれば除外する
+            default_ignore: deprecated。Annofabの標準プラグインを利用したプロジェクトでは指定しても無視されます。 \
+                            このラベルがついた領域を、デフォルトでは他のアノテーションから除外するかどうか。 Trueであれば除外します。
             segment_type: "SEMANTIC" or "INSTANCE" を指定する。
                           "SEMANTIC"の場合、このラベルのインスタンスは唯一つとなる。
                           "INSTANCE"の場合複数のインスタンスを作成可能となる
