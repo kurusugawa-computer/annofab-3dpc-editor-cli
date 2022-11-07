@@ -27,6 +27,7 @@ from anno3d.annofab.constant import (
 )
 from anno3d.annofab.model import AnnotationSpecsRequestV3, Label
 from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
+from anno3d.annofab.specifiers.metadata_label_specifiers import MetadataLabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.preset_cuboids import PresetCuboidSize, PresetCuboidSizes, preset_cuboid_size_metadata_prefix
@@ -259,7 +260,7 @@ class ProjectApi:
             return current
 
         # TODO ここでspec取って、LabelSpecifiersを切り替えるようにする
-        new = ProjectModifiers(LabelSpecifiers())
+        new = ProjectModifiers(MetadataLabelSpecifiers())
         self._modifiers_dic[project_id] = new
         return new
 
