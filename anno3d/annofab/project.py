@@ -327,7 +327,6 @@ class ProjectApi:
         new_specs = mod_func(specs)
         request = AnnotationSpecsRequestV3.from_specs(new_specs)
 
-        print(request.to_json(ensure_ascii=False, indent=2))
         created_specs, _ = client.put_annotation_specs(project_id, {"v": "3"}, request.to_dict(encode_json=True))
         return AnnotationSpecsV3.from_dict(created_specs)
 
