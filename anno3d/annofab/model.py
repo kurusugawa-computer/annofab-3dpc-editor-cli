@@ -187,6 +187,10 @@ class SegmentFieldValues(DataClassJsonMixin):
     layer: OneIntegerFieldValue
     """セグメントがどのレイヤーに所属するかを表す値。 0以上の整数値"""
 
+    @staticmethod
+    def from_values(layer: int) -> "SegmentFieldValues":
+        return SegmentFieldValues(OneIntegerFieldValue(layer))
+
 
 @dataclass
 class AnnotationSpecsRequestV3(DataClassJsonMixin):
