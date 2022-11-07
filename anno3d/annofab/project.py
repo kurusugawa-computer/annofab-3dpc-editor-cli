@@ -438,7 +438,13 @@ class ProjectApi:
         metadata = annofab_label["metadata"]
 
         return Label(
-            annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]), metadata
+            label_id=annofab_label["label_id"],
+            annotation_type=annofab_label["annotation_type"],
+            ja_name=ja_name,
+            en_name=en_name,
+            color=(color["red"], color["green"], color["blue"]),
+            field_values=annofab_label["field_values"],
+            metadata=metadata,
         )
 
     def put_label(self, project_id: str, mod_specs: DataModifier[AnnotationSpecsV3]) -> List[Label]:

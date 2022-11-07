@@ -19,12 +19,14 @@ from marshmallow import fields
 @dataclass
 class Label(DataClassJsonMixin):
     label_id: str
+    annotation_type: str
     ja_name: str
     en_name: str
     color: Tuple[int, int, int] = field(
         # `Label.schema()`を実行するとエラーが発生するため、mm_fieldをした。https://github.com/lidatong/dataclasses-json/issues/318
         metadata=config(mm_field=fields.Tuple((fields.Integer(), fields.Integer(), fields.Integer())))
     )
+    field_values: Dict[str, typing.Any]
     metadata: Dict[str, str]
 
 
