@@ -110,7 +110,10 @@ class ProjectModifiers:
 
         ignore_additional: Optional[IgnoreAdditionalDef]
         ignore_id: Optional[str]
-        if default_ignore is None:
+
+        # 無視属性の追加は仕様拡張プラグインを使ってる場合は行わない
+        # ここでifするの微妙だが、ProjectModifiersまで抽象化するのは手間なので、こうしておく
+        if default_ignore is None or self._label_specifiers.extended_specs_plugin_version() is not None:
             ignore_additional = None
             ignore_id = None
         else:
@@ -142,7 +145,10 @@ class ProjectModifiers:
 
         ignore_additional: Optional[IgnoreAdditionalDef]
         ignore_id: Optional[str]
-        if default_ignore is None:
+
+        # 無視属性の追加は仕様拡張プラグインを使ってる場合は行わない
+        # ここでifするの微妙だが、ProjectModifiersまで抽象化するのは手間なので、こうしておく
+        if default_ignore is None or self._label_specifiers.extended_specs_plugin_version() is not None:
             ignore_additional = None
             ignore_id = None
         else:
@@ -225,9 +231,8 @@ class ProjectModifiers:
         label_specifier = self.specifiers.label(label_id)
         return label_specifier.mod(mod).and_then(mod_additionals)
 
-    @classmethod
     def create_ignore_additional_if_necessary(
-        cls, additional_def: IgnoreAdditionalDef
+        self, additional_def: IgnoreAdditionalDef
     ) -> DataModifier[AnnotationSpecsV3]:
         def mod(current: Optional[AdditionalDataDefinitionV2]) -> Optional[AdditionalDataDefinitionV2]:
             if current is not None:
@@ -250,7 +255,7 @@ class ProjectModifiers:
                 metadata={},
             )
 
-        return cls.specifiers.additional(additional_def.id).mod(mod)
+        return self.specifiers.additional(additional_def.id).mod(mod)
 
 
 class ProjectApi:
