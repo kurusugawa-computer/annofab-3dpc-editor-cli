@@ -35,7 +35,6 @@ class LabelSpecifiers(ABC):
         )
 
         self._annotation_type = self._label.zoom(self._zoom_in_annotation_type, self._zoom_out_annotation_type)
-        self._segment_kind = self._label.zoom(self._zoom_in_segment_kind, self._zoom_out_segment_kind)
         self._ignore = self._label.zoom(self._zoom_in_ignore, self._zoom_out_ignore)
         self._segment_info = self._label.zoom(self._zoom_in_segment_info, self._zoom_out_segment_info)
         self._layer = self._segment_info.zoom(lambda meta: meta.layer, lambda meta, layer: replace(meta, layer=layer))
@@ -50,14 +49,6 @@ class LabelSpecifiers(ABC):
 
     @abstractmethod
     def _zoom_out_segment_info(self, label: LabelV3, info: SegmentLabelInfo) -> LabelV3:
-        pass
-
-    @abstractmethod
-    def _zoom_in_segment_kind(self, label: LabelV3) -> SegmentKind:
-        pass
-
-    @abstractmethod
-    def _zoom_out_segment_kind(self, label: LabelV3, kind: SegmentKind) -> LabelV3:
         pass
 
     @abstractmethod
@@ -103,10 +94,6 @@ class LabelSpecifiers(ABC):
     @property
     def annotation_type(self) -> LabelSpecifier[AnnotationType]:
         return self._annotation_type
-
-    @property
-    def segment_kind(self) -> LabelSpecifier[SegmentKind]:
-        return self._segment_kind
 
     @property
     def ignore(self) -> LabelSpecifier[Optional[str]]:

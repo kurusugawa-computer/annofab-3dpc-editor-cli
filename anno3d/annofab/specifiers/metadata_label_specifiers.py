@@ -1,10 +1,10 @@
 import copy
 from dataclasses import replace
-from typing import Dict, Optional, cast
+from typing import Dict, Optional
 
 from annofabapi.dataclass.annotation_specs import LabelV3
 
-from anno3d.annofab.specifiers.label_specifiers import AnnotationType, LabelSpecifiers, SegmentKind
+from anno3d.annofab.specifiers.label_specifiers import AnnotationType, LabelSpecifiers
 from anno3d.model.label import SegmentLabelInfo
 
 
@@ -69,16 +69,6 @@ class MetadataLabelSpecifiers(LabelSpecifiers):
             result["ignore"] = info.ignore
 
         result["layer"] = str(info.layer)
-        return replace(label, metadata=result)
-
-    def _zoom_in_segment_kind(self, label: LabelV3) -> SegmentKind:
-        meta = self._get_metadata(label)
-        return cast(SegmentKind, meta["segmentKind"])
-
-    def _zoom_out_segment_kind(self, label: LabelV3, kind: SegmentKind) -> LabelV3:
-        meta = self._get_metadata(label)
-        result = copy.deepcopy(meta)
-        result["segmentKind"] = kind
         return replace(label, metadata=result)
 
     def _zoom_in_annotation_type(self, label: LabelV3) -> AnnotationType:
