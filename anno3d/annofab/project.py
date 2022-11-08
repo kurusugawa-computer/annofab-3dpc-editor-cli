@@ -23,7 +23,7 @@ from more_itertools import first_true
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
     builtin_3d_editor_plugin_id,
-    builtin_3d_extend_specs_plugin_id,
+    builtin_3d_extended_specs_plugin_id,
     default_ignore_additional,
     default_non_ignore_additional,
     lang_en,
@@ -335,7 +335,7 @@ class ProjectApi:
         if editor_plugin_id == "":
             editor_plugin_id = builtin_3d_editor_plugin_id
         if specs_plugin_id == "":
-            specs_plugin_id = builtin_3d_extend_specs_plugin_id
+            specs_plugin_id = builtin_3d_extended_specs_plugin_id
 
         body = {
             "title": title,
