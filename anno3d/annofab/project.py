@@ -1,4 +1,5 @@
 import colorsys
+import logging
 import random
 import uuid
 from dataclasses import replace
@@ -37,6 +38,8 @@ from anno3d.model.annotation_area import AnnotationArea
 from anno3d.model.preset_cuboids import PresetCuboidSize, PresetCuboidSizes, preset_cuboid_size_metadata_prefix
 from anno3d.model.project_specs_meta import ProjectMetadata
 from anno3d.util.modifier import DataModifier
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class ProjectModifiers:
@@ -411,6 +414,9 @@ class ProjectApi:
             mod_specs_f = modifiers.put_semantic_segment_label
         else:
             mod_specs_f = modifiers.put_instance_segment_label
+
+        if default_ignore is not None and modifiers.extended_specs_plugin_version is not None:
+            logger.warning("default_ignore(=%s)が指定されていますが、仕様拡張プラグインを利用したプロジェクトが対象であるため、無視します。", default_ignore)
 
         mod_specs = mod_specs_f(
             en_name=en_name,

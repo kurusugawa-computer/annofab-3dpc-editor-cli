@@ -190,7 +190,7 @@ class ProjectCommand:
         project_id: str,
         en_name: str,
         segment_type: str,
-        default_ignore: bool = False,
+        default_ignore: Optional[bool] = None,
         layer: int = 100,
         label_id: str = "",
         ja_name: str = "",
