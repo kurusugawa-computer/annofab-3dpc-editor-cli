@@ -80,7 +80,7 @@ class UnknownDataField(fields.Field):
     """
     FullAnnotationDataUnknownのdataのserialize / deserialize定義
     FullAnnotationDataUnknownのdataは文字列型で、3d-editorのCuboidの場合、json形式文字列を埋めないといけないが、str型だと不便。
-    なので、deup / load時に文字列との相互変換をするような定義をしておく
+    なので、dump / load時に文字列との相互変換をするような定義をしておく
     """
 
     _type: typing.Any
