@@ -47,8 +47,8 @@ class LabelSpecifiers(ABC):
     @abstractmethod
     def extended_specs_plugin_version() -> Optional[str]:
         """
-        このLabelSpecifiersが対応している仕様拡張プラグインバージョン
-        仕様拡張プラグイン前の仕様に対応している場合None
+        このLabelSpecifiersが対応している拡張仕様プラグインバージョン
+        拡張仕様プラグイン前の仕様に対応している場合None
         """
 
     @abstractmethod

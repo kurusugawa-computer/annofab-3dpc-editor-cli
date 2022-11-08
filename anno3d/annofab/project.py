@@ -114,7 +114,7 @@ class ProjectModifiers:
         ignore_additional: Optional[IgnoreAdditionalDef]
         ignore_id: Optional[str]
 
-        # 無視属性の追加は仕様拡張プラグインを使ってる場合は行わない
+        # 無視属性の追加は拡張仕様プラグインを使ってる場合は行わない
         # ここでifするの微妙だが、ProjectModifiersまで抽象化するのは手間なので、こうしておく
         if default_ignore is None or self._label_specifiers.extended_specs_plugin_version() is not None:
             ignore_additional = None
@@ -149,7 +149,7 @@ class ProjectModifiers:
         ignore_additional: Optional[IgnoreAdditionalDef]
         ignore_id: Optional[str]
 
-        # 無視属性の追加は仕様拡張プラグインを使ってる場合は行わない
+        # 無視属性の追加は拡張仕様プラグインを使ってる場合は行わない
         # ここでifするの微妙だが、ProjectModifiersまで抽象化するのは手間なので、こうしておく
         if default_ignore is None or self._label_specifiers.extended_specs_plugin_version() is not None:
             ignore_additional = None
@@ -189,7 +189,7 @@ class ProjectModifiers:
                     lang_ja,
                 ),
                 keybind=[],
-                # 仕様拡張プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま
+                # 拡張仕様プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま
                 annotation_type=DefaultAnnotationType.CUSTOM.value,
                 field_values={},
                 additional_data_definitions=[],
@@ -280,7 +280,7 @@ class ProjectApi:
         conf: Dict[str, Any] = project["configuration"]
         specs_plugin = conf.get("extended_specs_plugin_id", None)
 
-        # 仕様拡張プラグインが利用されているかどうかでLabelSpecifiersの実装を入れ替える
+        # 拡張仕様プラグインが利用されているかどうかでLabelSpecifiersの実装を入れ替える
         if specs_plugin is None:
             new = ProjectModifiers(MetadataLabelSpecifiers())
         else:
@@ -399,7 +399,7 @@ class ProjectApi:
         Args:
             project_id:
             en_name:
-            default_ignore: デフォルトで無視属性をOnにするかどうか。　基本的にNone。 仕様拡張プラグインを利用しない古い仕様との互換性のために残っている
+            default_ignore: デフォルトで無視属性をOnにするかどうか。　基本的にNone。 拡張仕様プラグインを利用しない古い仕様との互換性のために残っている
             segment_kind:
             layer:
             ja_name:
@@ -416,7 +416,7 @@ class ProjectApi:
             mod_specs_f = modifiers.put_instance_segment_label
 
         if default_ignore is not None and modifiers.extended_specs_plugin_version is not None:
-            logger.warning("default_ignore(=%s)が指定されていますが、仕様拡張プラグインを利用したプロジェクトが対象であるため、無視します。", default_ignore)
+            logger.warning("default_ignore(=%s)が指定されていますが、拡張仕様プラグインを利用したプロジェクトが対象であるため、無視します。", default_ignore)
 
         mod_specs = mod_specs_f(
             en_name=en_name,

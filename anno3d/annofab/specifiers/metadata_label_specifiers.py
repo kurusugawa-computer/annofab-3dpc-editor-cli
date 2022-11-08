@@ -10,7 +10,7 @@ from anno3d.model.label import SegmentLabelInfo
 
 class MetadataLabelSpecifiers(LabelSpecifiers):
     """
-    仕様拡張プラグイン適用前の、Metadataにラベルの情報を埋め込んでいる仕様のための LabelSpecifiers実装
+    拡張仕様プラグイン適用前の、Metadataにラベルの情報を埋め込んでいる仕様のための LabelSpecifiers実装
     以下のコードで表現されるメタデータを編集する機能をLabelSpecifiersに注入する
 
     @camelcase

@@ -9,7 +9,7 @@ from anno3d.model.label import SegmentLabelInfo
 
 
 class ExtendedSpecsLabelSpecifiersV1(LabelSpecifiers):
-    """仕様拡張プラグイン利用のアノテーション仕様向けLabelSpecifiers プラグインVersion 1.0.1用"""
+    """拡張仕様プラグイン利用のアノテーション仕様向けLabelSpecifiers プラグインVersion 1.0.1用"""
 
     def __init__(self):
         super().__init__()

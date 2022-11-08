@@ -122,7 +122,7 @@ class ProjectCommand:
             title: projectのタイトル
             organization_name: projectを所属させる組織の名前
             plugin_id: このプロジェクトで使用する、組織に登録されている三次元エディタプラグインのid。 省略時は標準プラグインを利用します
-            specs_plugin_id: このプロジェクトで使用する、組織に登録されている仕様拡張プラグインのid。 省略時は標準プラグインを利用します
+            specs_plugin_id: このプロジェクトで使用する、組織に登録されている拡張仕様プラグインのid。 省略時は標準プラグインを利用します
             project_id: 作成するprojectのid。省略した場合自動的にuuidが設定されます。
             overview:  projectの概要
 

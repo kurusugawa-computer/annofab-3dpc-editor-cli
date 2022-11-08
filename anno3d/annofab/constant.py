@@ -21,5 +21,5 @@ default_non_ignore_additional = IgnoreAdditionalDef("__3dpc-editor-non-default-i
 # Annofabで定義されている標準三次元エディタプラグインのID（dev / production共通）
 builtin_3d_editor_plugin_id = "bdc16348-107e-4fbc-af4a-e482bc84a60f"
 
-# Annofabで定義されている標準三次元エディタ用仕様拡張プラグインのID（dev / production共通）
+# Annofabで定義されている標準三次元エディタ用拡張仕様プラグインのID（dev / production共通）
 builtin_3d_extended_specs_plugin_id = "703ababa-96ac-4920-8afb-d4f2bddac7e3"
