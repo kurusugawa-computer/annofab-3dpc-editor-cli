@@ -1,6 +1,6 @@
 # データの投入（Annofab点群形式（KITTIベース））
 
-`project upload_scene` により、[Annofab点群形式（KITTIベース）](../annofab_point_cloud_format.md)のファイル群をAnnoFabへ登録できます。
+`project upload_scene` により、[Annofab点群形式（KITTIベース）](../annofab_point_cloud_format.md)のファイル群をAnnofabへ登録できます。
 あわせて `--upload_kind` を指定することで、タスク作成やアノテーション登録も同時に行うことができます。
 
 
@@ -9,13 +9,13 @@
 ```
 $ anno3d project upload_scene -- --help | cat
 NAME
-    app.py project upload_scene - Annofab点群形式（KITTIベース）のファイル群をAnnoFabにアップロードします
+    app.py project upload_scene - Annofab点群形式（KITTIベース）のファイル群をAnnofabにアップロードします
 
 SYNOPSIS
     app.py project upload_scene PROJECT_ID SCENE_PATH <flags>
 
 DESCRIPTION
-    Annofab点群形式（KITTIベース）のファイル群をAnnoFabにアップロードします
+    Annofab点群形式（KITTIベース）のファイル群をAnnofabにアップロードします
 
 POSITIONAL ARGUMENTS
     PROJECT_ID
@@ -41,9 +41,9 @@ FLAGS
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+        AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+        Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS

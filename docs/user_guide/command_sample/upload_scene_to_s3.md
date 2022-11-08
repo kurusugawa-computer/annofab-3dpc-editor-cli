@@ -1,6 +1,6 @@
 # データの投入（S3プライベートストレージ）
 
-`project upload_scene_to_s3` により、[Annofab点群形式（KITTIベース）](../annofab_point_cloud_format.md)のファイル群を、AWS S3にアップロードした上でAnnoFabへ登録できます。
+`project upload_scene_to_s3` により、[Annofab点群形式（KITTIベース）](../annofab_point_cloud_format.md)のファイル群を、AWS S3にアップロードした上でAnnofabへ登録できます。
 
 事前にAWSの認証情報を設定しておく必要があります。[boto3 : Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) を参考にしてください。
 
@@ -44,9 +44,9 @@ FLAGS
     --force=FORCE
         入力データと補助データを上書きしてアップロードするかどうか。
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+        AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+        Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS

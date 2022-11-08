@@ -21,9 +21,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+        AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+        Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -51,9 +51,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+        AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+        Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS
@@ -83,9 +83,9 @@ POSITIONAL ARGUMENTS
 
 FLAGS
     --annofab_id=ANNOFAB_ID
-        AnnoFabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+        AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
     --annofab_pass=ANNOFAB_PASS
-        AnnoFabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+        Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
 
 NOTES
     You can also use flags syntax for POSITIONAL ARGUMENTS

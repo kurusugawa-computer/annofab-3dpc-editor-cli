@@ -104,7 +104,7 @@ class AnnofabStorageUploader(Uploader):
 
 class S3Uploader(Uploader):
     """
-    AWS S3にファイルをアップロードした上で、AnnoFabに入力データや補助情報を登録するクラス。
+    AWS S3にファイルをアップロードした上で、Annofabに入力データや補助情報を登録するクラス。
     """
 
     def __init__(self, client: AnnofabApi, project: str, s3_path: str, force: bool = False):

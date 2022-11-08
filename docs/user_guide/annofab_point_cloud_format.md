@@ -181,6 +181,6 @@ scene0/
 
 
 ## ラベルファイル
-ラベルファイルの15番目の要素に、AnnoFabの`annotation_id`を格納できます。
+ラベルファイルの15番目の要素に、Annofabの`annotation_id`を格納できます。
 
 
