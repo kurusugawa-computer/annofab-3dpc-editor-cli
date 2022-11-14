@@ -9,13 +9,14 @@ from typing import Dict, List, NewType, Optional, Tuple
 import more_itertools
 import numpy as np
 from annofabapi import AnnofabApi
-from annofabapi.dataclass.annotation_specs import LabelV2
+from annofabapi.dataclass.annotation_specs import LabelV3
 from scipy.spatial.transform import Rotation
 
 from anno3d.annofab.model import (
     XYZ,
-    CuboidAnnotationDetail,
-    CuboidAnnotationDetailData,
+    AnnotationPropsForEditor,
+    CuboidAnnotationDetailBody,
+    CuboidAnnotationDetailCreate,
     CuboidDirection,
     CuboidShape,
     Size,
@@ -157,14 +158,14 @@ class SceneUploader:
             task.put_task(task_id, input_data_id_list)
 
     def _label_to_cuboids(
-        self, id_to_label: Dict[str, LabelV2], labels: List[KittiLabel]
-    ) -> List[CuboidAnnotationDetail]:
-        def detail_data(kitti_label: KittiLabel) -> CuboidAnnotationDetailData:
+        self, id_to_label: Dict[str, LabelV3], labels: List[KittiLabel]
+    ) -> List[CuboidAnnotationDetailCreate]:
+        def detail_data(kitti_label: KittiLabel) -> CuboidAnnotationDetailBody:
             # directionはrotationから計算可能で、且つ3dpc-editorでの読み込みには利用していないが、エディタで編集されない場合があるので、計算しておく
             rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, kitti_label.yaw]))
             direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
 
-            return CuboidAnnotationDetailData(
+            return CuboidAnnotationDetailBody.from_shape(
                 CuboidShape(
                     dimensions=Size(width=kitti_label.width, height=kitti_label.height, depth=kitti_label.depth),
                     location=XYZ(x=kitti_label.x, y=kitti_label.y, z=kitti_label.z + (kitti_label.height / 2)),
@@ -174,12 +175,11 @@ class SceneUploader:
             )
 
         return [
-            CuboidAnnotationDetail(
-                label.annotation_id if label.annotation_id is not None else str(uuid.uuid4()),
-                self._client.account_id,
-                label.type,
-                False,
-                detail_data(label),
+            CuboidAnnotationDetailCreate(
+                annotation_id=label.annotation_id if label.annotation_id is not None else str(uuid.uuid4()),
+                label_id=label.type,
+                body=detail_data(label),
+                editor_props=AnnotationPropsForEditor(can_delete=True),
             )
             for label in labels
             if label.type in id_to_label
@@ -188,7 +188,7 @@ class SceneUploader:
     async def _create_annotations(
         self,
         task: TaskApi,
-        id_to_label: Dict[str, LabelV2],
+        id_to_label: Dict[str, LabelV3],
         task_id: TaskId,
         pathsss: List[Tuple[DataId, List[LabelPaths]]],
     ) -> None:
@@ -291,7 +291,7 @@ class SceneUploader:
         if uploader_input.kind == UploadKind.CREATE_TASK:
             return
 
-        id_to_label: Dict[str, LabelV2] = {
+        id_to_label: Dict[str, LabelV3] = {
             anno_label.label_id: anno_label for anno_label in annofab_labels if anno_label.label_id is not None
         }
 

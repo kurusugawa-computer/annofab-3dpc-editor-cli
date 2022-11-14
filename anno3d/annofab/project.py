@@ -1,18 +1,19 @@
 import colorsys
+import logging
 import random
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from dataclasses import replace
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
 from annofabapi.dataclass.annotation_specs import (
     AdditionalDataDefinitionV2,
-    AnnotationEditorFeature,
-    AnnotationSpecsV2,
+    AnnotationSpecsV3,
     Color,
     InternationalizationMessage,
     InternationalizationMessageMessages,
-    LabelV2,
+    LabelV3,
 )
 from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
@@ -21,30 +22,42 @@ from more_itertools import first_true
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
+    builtin_3d_editor_plugin_id,
+    builtin_3d_extended_specs_plugin_id,
     default_ignore_additional,
     default_non_ignore_additional,
     lang_en,
     lang_ja,
 )
-from anno3d.annofab.model import AnnotationSpecsRequestV2, Label
+from anno3d.annofab.model import AnnotationSpecsRequestV3, Label
+from anno3d.annofab.specifiers.extended_specs_label_specifiers_v1 import ExtendedSpecsLabelSpecifiersV1
 from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
+from anno3d.annofab.specifiers.metadata_label_specifiers import MetadataLabelSpecifiers
 from anno3d.annofab.specifiers.project_specifiers import ProjectSpecifiers
 from anno3d.model.annotation_area import AnnotationArea
-from anno3d.model.label import CuboidLabelMetadata, SegmentLabelMetadata
 from anno3d.model.preset_cuboids import PresetCuboidSize, PresetCuboidSizes, preset_cuboid_size_metadata_prefix
 from anno3d.model.project_specs_meta import ProjectMetadata
 from anno3d.util.modifier import DataModifier
 
+logger: logging.Logger = logging.getLogger(__name__)
+
 
 class ProjectModifiers:
+    def __init__(self, label_specifiers: LabelSpecifiers):
+        self._label_specifiers = label_specifiers
+
     specifiers = ProjectSpecifiers
 
+    @property
+    def extended_specs_plugin_version(self) -> Optional[str]:
+        return self._label_specifiers.extended_specs_plugin_version()
+
     @classmethod
-    def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV2]:
+    def set_annotation_area(cls, area: AnnotationArea) -> DataModifier[AnnotationSpecsV3]:
         return cls.specifiers.annotation_area.mod(lambda _: area)
 
     @classmethod
-    def remove_preset_cuboid_size(cls, key_name: str) -> DataModifier[AnnotationSpecsV2]:
+    def remove_preset_cuboid_size(cls, key_name: str) -> DataModifier[AnnotationSpecsV3]:
         prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
         return cls.specifiers.preset_cuboid_sizes.mod(
             lambda curr: dict(filter(lambda kv: kv[0] != prefixed, curr.items()))
@@ -53,7 +66,7 @@ class ProjectModifiers:
     @classmethod
     def add_preset_cuboid_size(
         cls, key_name: str, ja_name: str, en_name: str, width: float, height: float, depth: float, order: int
-    ) -> DataModifier[AnnotationSpecsV2]:
+    ) -> DataModifier[AnnotationSpecsV3]:
         prefixed = preset_cuboid_size_metadata_prefix + key_name.title()
 
         def update(sizes: PresetCuboidSizes) -> PresetCuboidSizes:
@@ -68,18 +81,105 @@ class ProjectModifiers:
 
         return cls.specifiers.preset_cuboid_sizes.mod(update)
 
-    @classmethod
-    def put_label(
-        cls,
+    def put_cuboid_label(
+        self,
         en_name: str,
-        metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
+    ) -> DataModifier[AnnotationSpecsV3]:
+        set_anno_type = self._label_specifiers.annotation_type.set("user_bounding_box")
+
+        return self.put_label(
+            en_name=en_name,
+            mod_label_info=set_anno_type,
+            ignore_additional=None,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+
+    def put_instance_segment_label(
+        self,
+        en_name: str,
+        layer: int,
+        default_ignore: Optional[bool] = None,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
+    ) -> DataModifier[AnnotationSpecsV3]:
+        set_anno_type = self._label_specifiers.annotation_type.set("user_instance_segment")
+        set_layer = self._label_specifiers.layer.set(layer)
+
+        ignore_additional: Optional[IgnoreAdditionalDef]
+        ignore_id: Optional[str]
+
+        # 無視属性の追加は拡張仕様プラグインを使ってる場合は行わない
+        # ここでifするの微妙だが、ProjectModifiersまで抽象化するのは手間なので、こうしておく
+        if default_ignore is None or self._label_specifiers.extended_specs_plugin_version() is not None:
+            ignore_additional = None
+            ignore_id = None
+        else:
+            ignore_additional = default_ignore_additional if default_ignore else default_non_ignore_additional
+            ignore_id = ignore_additional.id
+
+        set_ignore = self._label_specifiers.ignore.set(ignore_id)
+
+        return self.put_label(
+            en_name=en_name,
+            mod_label_info=set_anno_type.and_then(set_layer).and_then(set_ignore),
+            ignore_additional=ignore_additional,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+
+    def put_semantic_segment_label(
+        self,
+        en_name: str,
+        layer: int,
+        default_ignore: Optional[bool] = None,
+        label_id: str = "",
+        ja_name: str = "",
+        color: Optional[Tuple[int, int, int]] = None,
+    ) -> DataModifier[AnnotationSpecsV3]:
+        set_anno_type = self._label_specifiers.annotation_type.set("user_semantic_segment")
+        set_layer = self._label_specifiers.layer.set(layer)
+
+        ignore_additional: Optional[IgnoreAdditionalDef]
+        ignore_id: Optional[str]
+
+        # 無視属性の追加は拡張仕様プラグインを使ってる場合は行わない
+        # ここでifするの微妙だが、ProjectModifiersまで抽象化するのは手間なので、こうしておく
+        if default_ignore is None or self._label_specifiers.extended_specs_plugin_version() is not None:
+            ignore_additional = None
+            ignore_id = None
+        else:
+            ignore_additional = default_ignore_additional if default_ignore else default_non_ignore_additional
+            ignore_id = ignore_additional.id
+
+        set_ignore = self._label_specifiers.ignore.set(ignore_id)
+
+        return self.put_label(
+            en_name=en_name,
+            mod_label_info=set_anno_type.and_then(set_layer).and_then(set_ignore),
+            ignore_additional=ignore_additional,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+
+    def put_label(
+        self,
+        en_name: str,
+        mod_label_info: DataModifier[LabelV3],
         ignore_additional: Optional[IgnoreAdditionalDef],
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
-    ) -> DataModifier[AnnotationSpecsV2]:
-        def init_label() -> LabelV2:
-            return LabelV2(
+    ) -> DataModifier[AnnotationSpecsV3]:
+        def init_label() -> LabelV3:
+            return LabelV3(
                 label_id=label_id if label_id != "" else str(uuid.uuid4()),
                 label_name=InternationalizationMessage(
                     [
@@ -89,19 +189,15 @@ class ProjectModifiers:
                     lang_ja,
                 ),
                 keybind=[],
+                # 拡張仕様プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま
                 annotation_type=DefaultAnnotationType.CUSTOM.value,
-                bounding_box_metadata=None,
-                segmentation_metadata=None,
+                field_values={},
                 additional_data_definitions=[],
                 color=Color(red=0, green=0, blue=0),
-                annotation_editor_feature=AnnotationEditorFeature(
-                    append=False, erase=False, freehand=False, rectangle_fill=False, polygon_fill=False, fill_near=False
-                ),
-                allow_out_of_image_bounds=False,
                 metadata={},
             )
 
-        def mod(label_opt: Optional[LabelV2]) -> Optional[LabelV2]:
+        def mod(label_opt: Optional[LabelV3]) -> Optional[LabelV3]:
             label = label_opt if label_opt is not None else init_label()
             label.label_name = InternationalizationMessage(
                 [
@@ -112,14 +208,14 @@ class ProjectModifiers:
             )
 
             if ignore_additional is not None:
-                label = LabelSpecifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
+                label = self._label_specifiers.additional(ignore_additional.id).set(ignore_additional.id)(label)
 
             if color is not None:
-                label = LabelSpecifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
+                label = self._label_specifiers.color.set(Color(red=color[0], green=color[1], blue=color[2]))(label)
             else:  # 明度彩度をMAXで固定しランダムに色を選ぶ
                 random_color = colorsys.hsv_to_rgb(random.random(), 1, 1)
 
-                label = LabelSpecifiers.color.set(
+                label = self._label_specifiers.color.set(
                     Color(
                         red=round(255 * random_color[0]),
                         green=round(255 * random_color[1]),
@@ -127,18 +223,20 @@ class ProjectModifiers:
                     )
                 )(label)
 
-            meta_dic: dict = metadata.to_dict(encode_json=True)
-            label.metadata = meta_dic
+            return mod_label_info(label)
 
-            return label
+        mod_additionals = (
+            self.create_ignore_additional_if_necessary(ignore_additional)
+            if ignore_additional is not None
+            else DataModifier.identity(AnnotationSpecsV3)
+        )
 
-        label_specifier = cls.specifiers.label(label_id)
-        return label_specifier.mod(mod)
+        label_specifier = self.specifiers.label(label_id)
+        return label_specifier.mod(mod).and_then(mod_additionals)
 
-    @classmethod
     def create_ignore_additional_if_necessary(
-        cls, additional_def: IgnoreAdditionalDef
-    ) -> DataModifier[AnnotationSpecsV2]:
+        self, additional_def: IgnoreAdditionalDef
+    ) -> DataModifier[AnnotationSpecsV3]:
         def mod(current: Optional[AdditionalDataDefinitionV2]) -> Optional[AdditionalDataDefinitionV2]:
             if current is not None:
                 return current
@@ -160,7 +258,7 @@ class ProjectModifiers:
                 metadata={},
             )
 
-        return cls.specifiers.additional(additional_def.id).mod(mod)
+        return self.specifiers.additional(additional_def.id).mod(mod)
 
 
 class ProjectApi:
@@ -168,6 +266,29 @@ class ProjectApi:
 
     def __init__(self, client: AnnofabApi):
         self._client = client
+
+        # project_id -> ProjectModifiersの辞書
+        self._modifiers_dic: Dict[str, ProjectModifiers] = {}
+
+    def _project_modifiers(self, project_id: str) -> ProjectModifiers:
+        current = self._modifiers_dic.get(project_id, None)
+        if current is not None:
+            return current
+
+        project: Dict[str, Any]
+        project, _ = self._client.get_project(project_id)
+        conf: Dict[str, Any] = project["configuration"]
+        specs_plugin = conf.get("extended_specs_plugin_id", None)
+
+        # 拡張仕様プラグインが利用されているかどうかでLabelSpecifiersの実装を入れ替える
+        if specs_plugin is None:
+            new = ProjectModifiers(MetadataLabelSpecifiers())
+        else:
+            # TODO Pluginに埋まってるバージョンを読んで選択出来るようにしたい
+            # 現状は、1.0.1しか無い＆pluginのdataclassが存在しないのでやってない
+            new = ProjectModifiers(ExtendedSpecsLabelSpecifiersV1())
+        self._modifiers_dic[project_id] = new
+        return new
 
     @staticmethod
     def _decode_project(project: afm.Project) -> Project:
@@ -186,7 +307,13 @@ class ProjectApi:
         return ProjectJobInfo.from_dict(info)
 
     def create_custom_project(
-        self, title: str, organization_name: str, plugin_id: str, project_id: str = "", overview: str = ""
+        self,
+        title: str,
+        organization_name: str,
+        editor_plugin_id: str,
+        specs_plugin_id: str,
+        project_id: str = "",
+        overview: str = "",
     ) -> str:
         """
         カスタムプロジェクトを作成し、作成したprojectのidを返します
@@ -195,7 +322,8 @@ class ProjectApi:
 
             title:
             organization_name:
-            plugin_id:
+            editor_plugin_id:
+            specs_plugin_id:
             project_id:
             overview:
 
@@ -204,13 +332,18 @@ class ProjectApi:
         """
         client = self._client
 
+        if editor_plugin_id == "":
+            editor_plugin_id = builtin_3d_editor_plugin_id
+        if specs_plugin_id == "":
+            specs_plugin_id = builtin_3d_extended_specs_plugin_id
+
         body = {
             "title": title,
             "overview": overview if len(overview) != 0 else None,
             "status": "active",
             "input_data_type": "custom",
             "organization_name": organization_name,
-            "configuration": {"plugin_id": plugin_id},
+            "configuration": {"plugin_id": editor_plugin_id, "extended_specs_plugin_id": specs_plugin_id},
         }
 
         project: Dict[str, Any]
@@ -225,16 +358,17 @@ class ProjectApi:
         return created_id
 
     def _mod_project_specs(
-        self, project_id: str, mod_func: Callable[[AnnotationSpecsV2], AnnotationSpecsV2]
-    ) -> AnnotationSpecsV2:
+        self, project_id: str, mod_func: Callable[[AnnotationSpecsV3], AnnotationSpecsV3]
+    ) -> AnnotationSpecsV3:
         client = self._client
 
         specs = self.get_annotation_specs(project_id)
-        new_specs = mod_func(specs)
-        request = AnnotationSpecsRequestV2.from_specs(new_specs)
+        annotation_type_version = self._project_modifiers(project_id).extended_specs_plugin_version
+        new_specs = replace(mod_func(specs), annotation_type_version=annotation_type_version)
+        request = AnnotationSpecsRequestV3.from_specs(new_specs)
 
-        created_specs, _ = client.put_annotation_specs(project_id, request.to_dict(encode_json=True))
-        return AnnotationSpecsV2.from_dict(created_specs)
+        created_specs, _ = client.put_annotation_specs(project_id, {"v": "3"}, request.to_dict(encode_json=True))
+        return AnnotationSpecsV3.from_dict(created_specs)
 
     def put_cuboid_label(
         self,
@@ -244,32 +378,64 @@ class ProjectApi:
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        return self.put_label(project_id, en_name, CuboidLabelMetadata(), None, label_id, ja_name, color)
+        mod_specs = self._project_modifiers(project_id).put_cuboid_label(
+            en_name=en_name, label_id=label_id, ja_name=ja_name, color=color
+        )
+        return self.put_label(project_id, mod_specs)
 
     def put_segment_label(
         self,
         project_id: str,
         en_name: str,
-        default_ignore: bool,
-        segment_kind: str,
+        default_ignore: Optional[bool],
+        segment_kind: Literal["SEMANTIC", "INSTANCE"],
         layer: int,
         ja_name: str = "",
         label_id: str = "",
         color: Optional[Tuple[int, int, int]] = None,
     ) -> List[Label]:
-        additional_def = default_ignore_additional if default_ignore else default_non_ignore_additional
-        metadata = SegmentLabelMetadata(ignore=additional_def.id, layer=str(layer), segment_kind=segment_kind)
+        """
 
-        return self.put_label(project_id, en_name, metadata, additional_def, label_id, ja_name, color)
+        Args:
+            project_id:
+            en_name:
+            default_ignore: デフォルトで無視属性をOnにするかどうか。　基本的にNone。 拡張仕様プラグインを利用しない古い仕様との互換性のために残っている
+            segment_kind:
+            layer:
+            ja_name:
+            label_id:
+            color: ラベルの表示色。 "(R,G,B)"形式 R/G/Bは、それぞれ0〜255の整数値で指定する
 
-    def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV2:
+        Returns:
+
+        """
+        modifiers = self._project_modifiers(project_id)
+        if segment_kind == "SEMANTIC":
+            mod_specs_f = modifiers.put_semantic_segment_label
+        else:
+            mod_specs_f = modifiers.put_instance_segment_label
+
+        if default_ignore is not None and modifiers.extended_specs_plugin_version is not None:
+            logger.warning("default_ignore(=%s)が指定されていますが、拡張仕様プラグインを利用したプロジェクトが対象であるため、無視します。", default_ignore)
+
+        mod_specs = mod_specs_f(
+            en_name=en_name,
+            layer=layer,
+            default_ignore=default_ignore,
+            label_id=label_id,
+            ja_name=ja_name,
+            color=color,
+        )
+        return self.put_label(project_id, mod_specs)
+
+    def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV3:
         client = self._client
-        specs, _ = client.get_annotation_specs(project_id, {"v": "2"})
+        specs, _ = client.get_annotation_specs(project_id, {"v": "3"})
 
-        return AnnotationSpecsV2.from_dict(specs)
+        return AnnotationSpecsV3.from_dict(specs)
 
     @staticmethod
-    def _from_annofab_label(annofab_label: afm.LabelV2) -> Label:
+    def _from_annofab_label(annofab_label: afm.LabelV3) -> Label:
         messages = annofab_label["label_name"]["messages"]
         color = annofab_label["color"]
         empty_message: dict = InternationalizationMessageMessages("", "").to_dict()
@@ -278,48 +444,27 @@ class ProjectApi:
         metadata = annofab_label["metadata"]
 
         return Label(
-            annofab_label["label_id"], ja_name, en_name, (color["red"], color["green"], color["blue"]), metadata
+            label_id=annofab_label["label_id"],
+            annotation_type=annofab_label["annotation_type"],
+            ja_name=ja_name,
+            en_name=en_name,
+            color=(color["red"], color["green"], color["blue"]),
+            field_values=annofab_label["field_values"],
+            metadata=metadata,
         )
 
-    def put_label(
-        self,
-        project_id: str,
-        en_name: str,
-        metadata: Union[CuboidLabelMetadata, SegmentLabelMetadata],
-        ignore_additional: Optional[IgnoreAdditionalDef],
-        label_id: str = "",
-        ja_name: str = "",
-        color: Optional[Tuple[int, int, int]] = None,
-    ) -> List[Label]:
+    def put_label(self, project_id: str, mod_specs: DataModifier[AnnotationSpecsV3]) -> List[Label]:
         """
 
         Args:
             project_id:
-            label_id:
-            ja_name:
-            en_name:
-            color: ラベルの表示色。 "(R,G,B)"形式 R/G/Bは、それぞれ0〜255の整数値で指定する
-            metadata:
-            ignore_additional:
+            mod_specs: ラベル更新を行うアノテーション仕様の変更関数
 
-        Returns:
+        Returns: 変更後のラベル一覧
 
         """
 
-        mod_labels = ProjectModifiers.put_label(
-            en_name,
-            metadata,
-            ignore_additional,
-            label_id,
-            ja_name,
-            color,
-        )
-        mod_additionals = (
-            ProjectModifiers.create_ignore_additional_if_necessary(ignore_additional)
-            if ignore_additional is not None
-            else DataModifier.identity(AnnotationSpecsV2)
-        )
-        created_specs = self._mod_project_specs(project_id, mod_labels.and_then(mod_additionals))
+        created_specs = self._mod_project_specs(project_id, mod_specs)
 
         if created_specs.labels is None:
             return []

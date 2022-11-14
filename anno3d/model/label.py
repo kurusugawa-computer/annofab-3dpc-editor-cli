@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -7,23 +8,20 @@ from anno3d.model.common import camelcase
 
 @camelcase
 @dataclass(frozen=True)
-class CuboidLabelMetadata(DataClassJsonMixin):
-    type: str = "CUBOID"
+class CuboidLabelInfo(DataClassJsonMixin):
+    """アノテーション仕様のうちCuboid用の部分。 現状存在しないので空"""
 
 
 @camelcase
 @dataclass(frozen=True)
-class SegmentLabelMetadata(DataClassJsonMixin):
+class SegmentLabelInfo(DataClassJsonMixin):
     """
+    アノテーション仕様のうちSegment用部分
+
     Args:
-        ignore: ignore設定に利用するAdditionalDataのid
-        layer: レイヤーを表す数値文字列
-        segment_kind: "SEMANTIC" | "INSTANCE"
-        type: "SEGMENT" 固定
+        ignore: ignore設定に利用するAdditionalDataのid。 通常None。 拡張仕様プラグインを利用しない、古い仕様の場合のみSome
+        layer: レイヤーを表す数値。 0以上の整数
     """
 
-    ignore: str
-    layer: str = "100"
-    segment_kind: str = "SEMANTIC"
-    type: str = "SEGMENT"
-    version: str = "1"
+    ignore: Optional[str] = None
+    layer: int = 100

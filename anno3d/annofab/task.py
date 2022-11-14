@@ -1,4 +1,3 @@
-import json
 from typing import Collection, List, Optional
 
 from annofabapi import AnnofabApi
@@ -6,7 +5,7 @@ from annofabapi import models as afm
 from annofabapi.dataclass.task import Task
 from annofabapi.models import TaskStatus
 
-from anno3d.annofab.model import CuboidAnnotationDetail
+from anno3d.annofab.model import CuboidAnnotationDetailCreate, CuboidAnnotations
 from anno3d.annofab.project import ProjectApi
 
 
@@ -44,20 +43,16 @@ class TaskApi:
         return self._decode_task(result)
 
     def put_cuboid_annotations(
-        self, task_id: str, input_data_id: str, annotations: List[CuboidAnnotationDetail]
+        self, task_id: str, input_data_id: str, details: List[CuboidAnnotationDetailCreate]
     ) -> None:
         client = self._client
         project_id = self._project_id
+        annotations = CuboidAnnotations(
+            project_id=project_id, task_id=task_id, input_data_id=input_data_id, details=details
+        )
 
-        details: List[dict] = CuboidAnnotationDetail.schema().dump(annotations, many=True)
-        for d in details:
-            data: dict = d["data"]
-            d["data"] = json.dumps(data, ensure_ascii=False)
-            d["additional_data_list"] = []
-
-        body = {"project_id": project_id, "task_id": task_id, "input_data_id": input_data_id, "details": details}
-
-        client.put_annotation(project_id, task_id, input_data_id, body)
+        body = annotations.to_json(ensure_ascii=False)
+        client.put_annotation(project_id, task_id, input_data_id, {"v": "2"}, body)
 
     def start_annotate(self, task_id: str) -> Optional[Task]:
         """対象タスクの担当者を自分自身ににして、 annotate状態にする"""
