@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "annofab-3dpc-editor-cli"
-version = "0.1.10a1"
+version = "0.2.0"
 description = "Annofabの3次元プロジェクトを操作するためのCLIです。"
 authors = ["Kurusugawa Computer Inc."]
 repository="https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli"
