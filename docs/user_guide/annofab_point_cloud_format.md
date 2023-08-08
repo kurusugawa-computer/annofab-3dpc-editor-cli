@@ -60,7 +60,8 @@
   "serieses": [
     {
         "type": "kitti_velodyne",
-        "velodyne_dir": "velodyne"  // 点群データが格納されているディレクトリの名前
+        "velodyne_dir": "velodyne",  // 点群データが格納されているディレクトリの名前
+        "format": "xyzi" // 点群データのフォーマット。"xyzi" or "xyzirgb"。 省略時は"xyzi"
     },
     {
         "type": "kitti_image",
@@ -108,7 +109,8 @@ scene0/
   "serieses": [
     {
         "type": "kitti_velodyne",
-        "velodyne_dir": "velodyne"  // 点群データが格納されているディレクトリの名前
+        "velodyne_dir": "velodyne",  // 点群データが格納されているディレクトリの名前
+        "format": "xyzi" // 点群データのフォーマット。"xyzi" or "xyzirgb"。 省略時は"xyzi"
     },
     {
         "type": "kitti_image",
@@ -179,6 +181,43 @@ scene0/
 ```
 
 
+## format
+
+### xyzi
+
+デフォルトのフォーマットです。
+kittiの点群データと同じとなります。
+
+点群データファイルには、ヘッダなどは無く、頂点情報のみで構成された16 * 頂点数\[Byte]のファイルです。
+以下のフォーマットで構成されています。
+
+```
+<pcd>   = <point>*
+<point> = <x><y><z><i>
+<x>     = x座標（32bit float）
+<y>     = y座標（32bit float）
+<z>     = z座標（32bit float）
+<i>     = 反射強度（32bit float, 0.0～1.0に正規化）
+```
+
+### xyzirgb
+
+xyziに色情報を加えた形式です。
+
+点群データファイルには、ヘッダなどは無く、頂点情報のみで構成された28 * 頂点数\[Byte]のファイルです。
+以下のフォーマットで構成されています。
+
+```
+<pcd>   = <point>*
+<point> = <x><y><z><i><r><g><b>
+<x>     = x座標（32bit float）
+<y>     = y座標（32bit float）
+<z>     = z座標（32bit float）
+<i>     = 反射強度（32bit float, 0.0～1.0に正規化）
+<r>     = 色情報 赤（32bit float, 0.0～255.0に正規化）
+<g>     = 色情報 緑（32bit float, 0.0～255.0に正規化）
+<b>     = 色情報 青（32bit float, 0.0～255.0に正規化）
+```
 
 ## ラベルファイル
 ラベルファイルの15番目の要素に、Annofabの`annotation_id`を格納できます。
