@@ -19,7 +19,7 @@ from anno3d.kitti.camera_horizontal_fov_provider import (
 )
 from anno3d.model.common import Vector3
 from anno3d.model.file_paths import FilePaths
-from anno3d.model.frame import FrameMetaData, ImagesMetaData, PointCloudMetaData
+from anno3d.model.frame import FrameMetaData, ImagesMetaData, PcdFormat, PointCloudMetaData
 from anno3d.model.image import ImageCamera, ImageCameraFov, ImageMeta
 from anno3d.model.input_files import InputData, InputDataBody, Supplementary, SupplementaryBody
 from anno3d.model.scene import CameraViewSettings
@@ -36,14 +36,16 @@ class SupplementaryData:
 
 
 def create_frame_meta(
-    parent_dir: Path, input_data_id: str, image_count: int, sensor_height: Optional[float]
+    parent_dir: Path, input_data_id: str, image_count: int, sensor_height: Optional[float], pcd_format: PcdFormat
 ) -> SupplementaryData:
     data_id = frame_meta_id(input_data_id)
     # http://www.cvlibs.net/datasets/kitti/setup.php によると、kittiのvelodyneの設置高は1.73m
     height = sensor_height if sensor_height is not None else 1.73
 
     meta = FrameMetaData(
-        PointCloudMetaData(is_rightHand_system=True, up_vector=Vector3(0, 0, 1), sensor_height=height),
+        PointCloudMetaData(
+            is_rightHand_system=True, up_vector=Vector3(0, 0, 1), sensor_height=height, format=pcd_format
+        ),
         ImagesMetaData(image_count=image_count),
     )
 
@@ -145,6 +147,7 @@ async def upload_async(
     camera_horizontal_fov: CameraHorizontalFovKind,
     fallback_horizontal_fov: Optional[int],  # degree
     sensor_height: Optional[float],
+    pcd_format: PcdFormat,
 ) -> Tuple[str, List[SupplementaryData]]:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(
@@ -157,6 +160,7 @@ async def upload_async(
         camera_horizontal_fov,
         fallback_horizontal_fov,
         sensor_height,
+        pcd_format,
     )
 
 
@@ -168,13 +172,16 @@ def upload(
     camera_horizontal_fov: CameraHorizontalFovKind,
     fallback_horizontal_fov: Optional[int],  # degree
     sensor_height: Optional[float],
+    pcd_format: PcdFormat,
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = uploader.upload_input_data(f"{input_data_id_prefix}{paths.key.id}", paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
-        frame_meta = create_frame_meta(tempdir, input_data_id, len(paths.images) + len(dummy_images), sensor_height)
+        frame_meta = create_frame_meta(
+            tempdir, input_data_id, len(paths.images) + len(dummy_images), sensor_height, pcd_format
+        )
         image_supps: List[SupplementaryData] = [
             meta
             for i in range(0, len(paths.images))
@@ -213,7 +220,7 @@ def upload(
 
 
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
-    create_frame_meta(parent_dir, "sample_input_id", 2, None)
+    create_frame_meta(parent_dir, "sample_input_id", 2, None, PcdFormat("xyzi"))
     fov_provider = create_camera_horizontal_fov_provider(CameraHorizontalFovKind.SETTINGS, paths.images[0], None)
     _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None, fov_provider)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
@@ -230,6 +237,7 @@ def create_kitti_files(
     camera_horizontal_fov: CameraHorizontalFovKind,
     fallback_horizontal_fov: Optional[int],  # degree
     sensor_height: Optional[float],
+    pcd_format: PcdFormat,
 ) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
     input_data_id = f"{input_data_id_prefix}{paths.key.id}".format(input_data_id_prefix, paths.key.id)
@@ -241,7 +249,9 @@ def create_kitti_files(
     input_data_path = input_data_dir / paths.pcd.name
     shutil.copyfile(paths.pcd, input_data_path)
 
-    frame_meta = create_frame_meta(input_data_dir, input_data_id, image_count=1, sensor_height=sensor_height)
+    frame_meta = create_frame_meta(
+        input_data_dir, input_data_id, image_count=1, sensor_height=sensor_height, pcd_format=pcd_format
+    )
 
     images = [
         meta

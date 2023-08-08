@@ -19,7 +19,9 @@ from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
 from anno3d.model.file_paths import FilePaths
+from anno3d.model.frame import PcdFormat
 from anno3d.model.input_files import InputData
+from anno3d.model.scene import Defaults, Scene
 from anno3d.simple_data_uploader import SupplementaryData, create_kitti_files, upload_async
 
 E = TypeVar("E", bound=Enum)
@@ -528,6 +530,7 @@ class ProjectCommand:
                 camera_horizontal_fov=CameraHorizontalFovKind.CALIB,
                 fallback_horizontal_fov=None,
                 sensor_height=sensor_height,
+                pcd_format=PcdFormat("xyzi"),
             )
 
         async def run_with_sem(paths: FilePaths, sem: asyncio.Semaphore) -> Tuple[str, List[SupplementaryData]]:
@@ -739,7 +742,13 @@ class LocalCommand:
 
         inputs = [
             create_kitti_files(
-                input_data_id_prefix, output_dir_path, paths, CameraHorizontalFovKind.CALIB, None, sensor_height
+                input_data_id_prefix,
+                output_dir_path,
+                paths,
+                CameraHorizontalFovKind.CALIB,
+                None,
+                sensor_height,
+                PcdFormat("xyzi"),
             )
             for paths in pathss
         ]
@@ -769,7 +778,14 @@ class LocalCommand:
         Returns:
         """
         output_dir_path = Path(output_dir)
-        loader = ScenePathsLoader(Path(scene_path))
+
+        scene_path_ = Path(scene_path)
+        file = scene_path_
+        if scene_path_.is_dir():
+            file = scene_path_ / Defaults.scene_meta_file
+
+        scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(scene_path_)
+        loader = ScenePathsLoader(scene, file.parent)
         pathss = loader.load()
 
         inputs = [
@@ -780,6 +796,7 @@ class LocalCommand:
                 camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
                 fallback_horizontal_fov=None,
                 sensor_height=sensor_height,
+                pcd_format=PcdFormat(scene.velodyne.format),
             )
             for paths in pathss
         ]

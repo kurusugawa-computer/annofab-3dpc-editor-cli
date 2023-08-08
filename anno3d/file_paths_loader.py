@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-from anno3d.kitti.scene_uploader import Defaults
 from anno3d.model.file_paths import FilePaths, FrameKey, FrameKind, ImagePaths
 from anno3d.model.scene import Scene
 
@@ -40,26 +39,24 @@ class FilePathsLoader:
 
 
 class ScenePathsLoader:
-    def __init__(self, scene_path: Path):
-        self.scene_path = scene_path
+    """コンストラクタに渡されたSceneを元にFilePathsを生成する"""
+
+    def __init__(self, scene: Scene, scene_dir: Path):
+        """
+
+        Args:
+            scene: 対象のscene
+            scene_dir:  sceneの元になったscene.metaファイルの存在するディレクトリのパス
+        """
+        self.scene = scene
+        self.scene_dir = scene_dir
 
     def load(self) -> List[FilePaths]:
         """
         Annofab点群形式（KITTIベース）のファイルを読み込む.
-
-        Args:
-            scene_path: 読み込み対象パス。　以下の何れかとなる
-                         * scene.metaファイルのパス
-                         * scene.metaファイルの存在するディレクトリのパス
-                         * scene.metaが存在しないアップロード対象ディレクトリのパス
-                             * "velodyne/image_2/calib/label_2" のディレクトリがあるという前提で、読み込みを行う
         """
-        file = self.scene_path
-        if self.scene_path.is_dir():
-            file = self.scene_path / Defaults.scene_meta_file
-
-        scene_dir = file.parent
-        scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(self.scene_path)
+        scene_dir = self.scene_dir
+        scene = self.scene
 
         def scene_to_paths(frame_id: str) -> FilePaths:
             images = [

@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 from anno3d.model.scene import XYZ, CameraViewSettings, Scene
 
 
@@ -65,6 +67,7 @@ def test_decode_scene():
     assert scene.id_list[0] == "006497"
     assert scene.id_list[1] == "012187"
     assert scene.velodyne.velodyne_dir == "/root/velodyne"
+    assert scene.velodyne.format == "xyzi"
     assert len(scene.images) == 4
     assert len(scene.labels) == 1
 
@@ -99,3 +102,54 @@ def test_decode_scene():
     assert label.label_dir == "/root/label_2"
     assert label.image_dir == "/root/image_2"
     assert label.calib_dir == "/root/calib"
+
+
+def test_decode_scene_with_format():
+    """formatがある場合に読み込めることのテスト"""
+    json = """{
+  "id_list": [  // nuScenes にならって文字列にする（not数値）
+    "006497",
+    "012187"
+  ],
+  // ディレクトリ名とそのtypeを表す．カメラ画像の場合，対となるcalibデータディレクトリを表す．
+  // 当面はKITTI形式のみ（kitti_velodyne, kitti_image, kitti_label）を予定．
+  "serieses": [
+    {
+        "type": "kitti_velodyne",
+        "velodyne_dir": "velodyne",
+        "format": "xyzirgb"
+    }
+  ]
+}"""
+
+    comment_removed = "\n".join([re.sub("//.*", "", line) for line in json.split("\n")])
+    scene = Scene.decode(Path("/root/"), comment_removed)
+    assert len(scene.id_list) == 2
+    assert scene.id_list[0] == "006497"
+    assert scene.id_list[1] == "012187"
+    assert scene.velodyne.velodyne_dir == "/root/velodyne"
+    assert scene.velodyne.format == "xyzirgb"
+    assert len(scene.images) == 0
+    assert len(scene.labels) == 0
+
+
+def test_decode_scene_with_invalid_format():
+    """formatが防いである場合に読み込みに失敗することのテスト"""
+    json = """{
+  "id_list": [  // nuScenes にならって文字列にする（not数値）
+    "006497",
+    "012187"
+  ],
+  // ディレクトリ名とそのtypeを表す．カメラ画像の場合，対となるcalibデータディレクトリを表す．
+  // 当面はKITTI形式のみ（kitti_velodyne, kitti_image, kitti_label）を予定．
+  "serieses": [
+    {
+        "type": "kitti_velodyne",
+        "velodyne_dir": "velodyne",
+        "format": "hogehoge"
+    }
+  ]
+}"""
+    comment_removed = "\n".join([re.sub("//.*", "", line) for line in json.split("\n")])
+    with pytest.raises(Exception):
+        Scene.decode(Path("/root/"), comment_removed)
