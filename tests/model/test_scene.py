@@ -134,7 +134,7 @@ def test_decode_scene_with_format():
 
 
 def test_decode_scene_with_invalid_format():
-    """formatが防いである場合に読み込みに失敗することのテスト"""
+    """formatが不正である場合に読み込みに失敗することのテスト"""
     json = """{
   "id_list": [  // nuScenes にならって文字列にする（not数値）
     "006497",
