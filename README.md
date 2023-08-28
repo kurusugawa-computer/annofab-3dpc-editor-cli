@@ -22,7 +22,7 @@ https://annofab-3dpc-editor-cli.readthedocs.io/ja/latest/user_guide/command_samp
 
 ```
 $ anno3d version
-annofab-3dpc-editor-cli 0.2.1a1
+annofab-3dpc-editor-cli 0.2.1
 ```
 
 --------------
