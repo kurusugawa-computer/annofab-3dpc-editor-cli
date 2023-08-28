@@ -27,6 +27,7 @@ from anno3d.annofab.uploader import Uploader
 from anno3d.kitti.calib import read_calibration, transform_labels_into_lidar_coordinates
 from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.model.file_paths import FilePaths, FrameKey, ImagePaths, LabelPaths
+from anno3d.model.frame import PcdFormat
 from anno3d.model.kitti_label import KittiLabel
 from anno3d.model.scene import Defaults, Scene
 from anno3d.simple_data_uploader import SupplementaryData, upload_async
@@ -236,6 +237,7 @@ class SceneUploader:
         paths: FilePaths,
         camera_horizontal_fov: CameraHorizontalFovKind,
         sensor_height: Optional[float],
+        pcd_format: PcdFormat,
     ) -> Tuple[str, List[SupplementaryData]]:
         async def run() -> Tuple[str, List[SupplementaryData]]:
             return await upload_async(
@@ -246,6 +248,7 @@ class SceneUploader:
                 camera_horizontal_fov,
                 fallback_horizontal_fov=None,
                 sensor_height=sensor_height,
+                pcd_format=pcd_format,
             )
 
         if self._sem is not None:
@@ -272,6 +275,7 @@ class SceneUploader:
                 paths,
                 uploader_input.camera_horizontal_fov,
                 uploader_input.sensor_height,
+                PcdFormat(scene.velodyne.format),
             )
             for paths in pathss
         ]

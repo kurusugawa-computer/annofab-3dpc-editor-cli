@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import ClassVar, List, Optional, Type, cast
+from typing import ClassVar, List, Literal, Optional, Type, cast
 
 from dataclasses_json import DataClassJsonMixin
 from more_itertools import first_true
@@ -15,6 +15,7 @@ class Series(DataClassJsonMixin):
 @dataclass(frozen=True)
 class KittiVelodyneSeries(Series):
     velodyne_dir: str
+    format: Literal["xyzi", "xyzirgb"] = "xyzi"
     type: str = "kitti_velodyne"
     type_value: ClassVar[str] = "kitti_velodyne"
 
@@ -107,6 +108,8 @@ class Scene(DataClassJsonMixin):
         )
         if velodyne is None:
             raise RuntimeError("sceneにkitti_velodyneが含まれていません")
+        if velodyne.format not in ["xyzi", "xyzirgb"]:
+            raise RuntimeError(f"kitti_velodyneのformatはxyziかxyzirgbである必要がありますが、{velodyne.format}が指定されています")
 
         def convert_path(path: str) -> str:
             return (scene_dir / path).as_posix()
