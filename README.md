@@ -128,6 +128,10 @@ poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
 ```
 
 ## PyPIへの公開
+[GitHubのReleases](https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli/releases)からリリースを作成してください。
+GitHub Actionsにより自動でPyPIに公開されます。
+
+手動でPyPIに公開する場合は、以下のコマンドを実行してください。
 
 ```
 $ make publish
