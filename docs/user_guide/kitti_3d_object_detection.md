@@ -49,8 +49,6 @@ binファイルには以下の情報が含まれています。
 * z
 * intensity
 
-2021/03時点の3dpc-editorでは、intensityは参照していません。
-
 binファイルの読み方は、以下を参照してください。
 
 - [https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L80:L87](https://github.com/yanii/kitti-pcl/blob/3b4ebfd49912702781b7c5b1cf88a00a8974d944/KITTI_README.TXT#L80:L87)
