@@ -56,6 +56,26 @@ python 3.8 および poetry の導入がなされた `docker/Dockerfile` を用�
 
 システムにpython 3.8を直接インストールして使うなら`pyenv`は要らない
 
+#### 前提ライブラリなどのインストール
+
+<details>
+<summary>ubuntu 22.04の場合</summary>
+
+```
+sudo apt-get update
+
+
+sudo apt-get install make build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev python3-openssl
+```
+
+</details>
+
+
+<details>
+<summary>ubuntu 18.04の場合</summary>
+
 ```
 sudo apt-get update
 
@@ -63,6 +83,11 @@ sudo apt-get install build-essential libssl-dev zlib1g-dev libbz2-dev \
 libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
 xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
 ```
+
+</details>
+
+
+#### pyenvとpythonのインストール
 
 ```
 curl https://pyenv.run | bash
@@ -80,6 +105,7 @@ eval "$(pyenv virtualenv-init -)"
 pyenv install 3.8.3
 pyenv global 3.8.3
 ```
+
 
 ### pipx
 
