@@ -24,7 +24,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 annofabapi = ">=0.71.1"
 dataclasses-json = "^0.5.7"
 fire = "^0.3.1"
