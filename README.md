@@ -29,8 +29,8 @@ annofab-3dpc-editor-cli 0.2.2a1
 ## 開発環境
 
  * poetry
-     * Poetry version 1.0.5
- * python 3.8
+     * Poetry version 1.8.3
+ * python 3.12
  
  
 ### 開発環境初期化
@@ -54,7 +54,7 @@ python 3.8 および poetry の導入がなされた `docker/Dockerfile` を用�
 
 ### pyenv
 
-システムにpython 3.8を直接インストールして使うなら`pyenv`は要らない
+システムにpython 3.12を直接インストールして使うなら`pyenv`は要らない
 
 #### 前提ライブラリなどのインストール
 
@@ -102,8 +102,8 @@ eval "$(pyenv virtualenv-init -)"
 ```
 
 ```
-pyenv install 3.8.3
-pyenv global 3.8.3
+pyenv install 3.12.4
+pyenv global 3.12.4
 ```
 
 
