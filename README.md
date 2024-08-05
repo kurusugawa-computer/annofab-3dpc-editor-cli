@@ -49,8 +49,6 @@ poetry install
 poetryのインストール手順一例を以下に示す  
 2020/05/21 ubuntu 18.04 にて確認
 
-ローカルの環境に以下の手順でインストールする以外に，
-python 3.8 および poetry の導入がなされた `docker/Dockerfile` を用いても良い．
 
 ### pyenv
 
