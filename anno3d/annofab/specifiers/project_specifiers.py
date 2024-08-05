@@ -27,7 +27,7 @@ class ProjectSpecifiers:
 
     @classmethod
     def label(cls, label_id: str) -> DataSpecifier[AS, Optional[LabelV3]]:
-        predicate: Callable[[LabelV3], bool] = lambda l: l.label_id == label_id
+        predicate: Callable[[LabelV3], bool] = lambda l: l.label_id == label_id  # noqa: E741
         return cls.labels.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
 
     class Additionals:

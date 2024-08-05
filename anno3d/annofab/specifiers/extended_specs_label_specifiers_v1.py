@@ -25,7 +25,7 @@ class ExtendedSpecsLabelSpecifiersV1(LabelSpecifiers):
                 return replace(
                     # encode_jsonがTrueの時、Valueを全てJsonに直接変換可能な型に変換しようとする
                     label,
-                    field_values=values.to_dict(encode_json=True),
+                    field_values=values.to_dict(encode_json=True),  # type: ignore[arg-type]
                 )
             else:
                 return label
@@ -43,7 +43,7 @@ class ExtendedSpecsLabelSpecifiersV1(LabelSpecifiers):
                 return replace(
                     # encode_jsonがTrueの時、Valueを全てJsonに直接変換可能な型に変換しようとする
                     label,
-                    field_values=values.to_dict(encode_json=True),
+                    field_values=values.to_dict(encode_json=True),  # type: ignore[arg-type]
                 )
             else:
                 return label

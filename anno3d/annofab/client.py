@@ -20,7 +20,7 @@ class ClientLoader:
         endpoint = (
             self._annofab_endpoint if self._annofab_endpoint is not None else annofabapi.resource.DEFAULT_ENDPOINT_URL
         )
-        resource = annofabapi.build(self._annofab_id, self._annofab_pass, endpoint)
+        resource = annofabapi.build(self._annofab_id, self._annofab_pass, endpoint_url=endpoint)
         try:
             yield resource
         finally:

@@ -1,42 +1,42 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.154.0/containers/docker-existing-dockerfile
 {
-	"name": "KCI Python",
+	"name": "${localWorkspaceFolderBasename}",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": ".",
-		"args": {
-			"COMPOSE_VERSION": "1.27.4",
-		},
-		"target": "devcontainer"
+		"args": {}
 	},
 	"containerUser": "vscode",
 	"remoteUser": "vscode",
-	"updateRemoteUserUID": true,
-	"overrideCommand": false,
+	// マウント対象のディレクトリを事前に作成する
 	"initializeCommand": "mkdir -p ${localWorkspaceFolder}/.devcontainer/venv",
 	"mounts": [
-		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-		"source=${localWorkspaceFolder}/.devcontainer/.extensions,target=/home/vscode/.vscode-server/extensions,type=bind",
-		// ホスト側のvenvとコンテナ側のvenvを分離して、ホスト側でpoetryコマンドを利用できるようにする
+		// ホスト側のvenvとコンテン側のvenvを分類して、ホスト側でpoetryコマンドを利用できるようにする
 		"source=${localWorkspaceFolder}/.devcontainer/venv,target=${containerWorkspaceFolder}/.venv,type=bind"
 	],
-	"forwardPorts": [],
 	"runArgs": [
 		"--init",
 		"--net=host",
 		"--env=ANNOFAB_USER_ID",
 		"--env=ANNOFAB_PASSWORD"
 	],
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind,consistency=cached",
+	"workspaceFolder": "/workspaces",
 	"postStartCommand": "poetry install",
-	"extensions": [
-		"bungcip.better-toml",
-		"jgclark.vscode-todo-highlight",
-		"lextudio.restructuredtext",
-		"mosapride.zenkaku",
-		"ms-python.python",
-		"ms-python.vscode-pylance",
-		"njpwerner.autodocstring",
-		"streetsidesoftware.code-spell-checker"
-	]
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"mosapride.zenkaku",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"charliermarsh.ruff",
+				"streetsidesoftware.code-spell-checker",
+				"bungcip.better-toml",
+				"njpwerner.autodocstring",
+				"mechatroner.rainbow-csv",
+				"lextudio.restructuredtext"
+			]
+		}
+	}
 }

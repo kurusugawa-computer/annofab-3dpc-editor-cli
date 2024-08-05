@@ -9,7 +9,7 @@ class GenList:
     @staticmethod
     def gen_zoom_in(pred: Callable[[A], bool]) -> Callable[[List[A]], Optional[A]]:
         """Listの要素のうち最初に条件を満たす値を取得するzoom_inを生成する"""
-        return lambda l: more_itertools.first_true(l, pred=pred)
+        return lambda l: more_itertools.first_true(l, pred=pred)  # noqa: E741
 
     @staticmethod
     def gen_zoom_out(pred: Callable[[A], bool]) -> Callable[[List[A], Optional[A]], List[A]]:
