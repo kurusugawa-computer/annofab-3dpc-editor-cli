@@ -154,10 +154,13 @@ poetry completions bash | sudo tee /etc/bash_completion.d/poetry.bash-completion
 ## PyPIへの公開
 [GitHubのReleases](https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli/releases)からリリースを作成してください。
 GitHub Actionsにより自動でPyPIに公開されます。
+バージョン情報は、`poetry build`時に[poetry-dynamic-versioning](https://github.com/mtkennerly/poetry-dynamic-versioning)によって、Gitのバージョンタグから生成されます。
 
 手動でPyPIに公開する場合は、以下のコマンドを実行してください。
 
 ```
+# VSCode Dev Containersでは、`/usr/local/lib/python3.12/dist-packages/`にインストールしようとするため、`sudo`で実行する必要があります。
+$ sudo poetry self add "poetry-dynamic-versioning[plugin]@1.4.0"
 $ make publish
 ```
 

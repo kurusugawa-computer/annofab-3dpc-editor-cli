@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "annofab-3dpc-editor-cli"
-version = "0.2.2a1"
+version = "0.0.0" # `poetry-dynamic-versioning`を使ってGitHubのバージョンタグを取得している。変更不要
 description = "Annofabの3次元プロジェクトを操作するためのCLIです。"
 authors = ["Kurusugawa Computer Inc."]
 repository="https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli"
@@ -63,6 +63,10 @@ multi_line_output = 3
 [tool.poetry.scripts]
 anno3d = "anno3d.app:main"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
