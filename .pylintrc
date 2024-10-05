@@ -29,3 +29,5 @@ disable=
     similarities, # Similar lines in 2 files
     # ===== 修正すべき項目 =====
     empty-docstring,
+    too-many-positional-arguments, # コマンドに対応するメソッドでは引数の数が多くなるため
+    
