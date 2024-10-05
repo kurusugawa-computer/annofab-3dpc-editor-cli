@@ -297,8 +297,8 @@ class ProjectCommand:
         project_id: str,
         annofab_id: Optional[str] = env_annofab_user_id,
         annofab_pass: Optional[str] = env_annofab_password,
-        annofab_endpoint: Optional[str] = env_annofab_endpoint,
         annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
         対象プロジェクトのアノテーション範囲を、「全体」に設定します。
@@ -579,9 +579,9 @@ class ProjectCommand:
         sensor_height: Optional[float],
         parallelism: Optional[int],
         force: bool,
-        annofab_id: str,
-        annofab_pass: str,
-        annofab_pat: str,  # TODO
+        annofab_id: Optional[str],
+        annofab_pass: Optional[str],
+        annofab_pat: Optional[str],
     ) -> None:
         project = project_id
 
