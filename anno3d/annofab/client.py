@@ -6,13 +6,21 @@ from annofabapi import AnnofabApi, Resource
 
 
 class ClientLoader:
-    _annofab_id: str
-    _annofab_pass: str
+    _annofab_id: Optional[str]
+    _annofab_pass: Optional[str]
+    _annofab_pat: Optional[str]
     _annofab_endpoint: Optional[str]
 
-    def __init__(self, annofab_id: str, annofab_pass: str, endpoint: Optional[str]) -> None:
+    def __init__(
+        self,
+        annofab_id: Optional[str],
+        annofab_pass: Optional[str],
+        annofab_pat: Optional[str],
+        endpoint: Optional[str],
+    ) -> None:
         self._annofab_id = annofab_id
         self._annofab_pass = annofab_pass
+        self._annofab_pat = annofab_pat
         self._annofab_endpoint = endpoint
 
     @contextmanager
@@ -20,7 +28,12 @@ class ClientLoader:
         endpoint = (
             self._annofab_endpoint if self._annofab_endpoint is not None else annofabapi.resource.DEFAULT_ENDPOINT_URL
         )
-        resource = annofabapi.build(self._annofab_id, self._annofab_pass, endpoint_url=endpoint)
+        resource = annofabapi.build(
+            self._annofab_id,
+            self._annofab_pass,
+            self._annofab_pat,
+            endpoint_url=endpoint,
+        )
         try:
             yield resource
         finally:
