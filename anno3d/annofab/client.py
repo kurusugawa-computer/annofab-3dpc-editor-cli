@@ -6,6 +6,11 @@ from annofabapi import AnnofabApi, Resource
 
 
 class ClientLoader:
+    """
+    Raises:
+        ValueError: 「`annofab_pat`がNone」 AND 「`annofab_id` OR `annofab_pass`がNone」のとき
+    """
+
     _annofab_id: Optional[str]
     _annofab_pass: Optional[str]
     _annofab_pat: Optional[str]
@@ -18,6 +23,9 @@ class ClientLoader:
         annofab_pat: Optional[str],
         endpoint: Optional[str],
     ) -> None:
+        if annofab_pass is None and (annofab_id is None or annofab_pass is None):
+            raise ValueError("以下のいずれかの条件を満たす必要があります。(A) 'annofab_pat'を指定する。 (B) 'annofab_id'と'annofab_pass'の両方を指定する。")
+
         self._annofab_id = annofab_id
         self._annofab_pass = annofab_pass
         self._annofab_pat = annofab_pat
