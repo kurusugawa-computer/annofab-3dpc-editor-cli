@@ -50,9 +50,6 @@ add_stdout_handler(root_logger, logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
-env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
-env_annofab_pat = os.environ.get("ANNOFAB_PAT")
 env_annofab_endpoint = os.environ.get("ANNOFAB_ENDPOINT")
 
 
@@ -81,7 +78,11 @@ def get_annofab_credential(
         cli_annofab_pass: コマンドライン引数で指定されたAnnofabのパスワード
         cli_annofab_pat: コマンドライン引数で指定されたAnnofabのパーソナルアクセストークン
     """
-    password = cli_annofab_pass if cli_annofab_pass is not None else os.environ.get("ANNOFAB_PASSWORD")
+    env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
+    env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
+    env_annofab_pat = os.environ.get("ANNOFAB_PAT")
+
+    password = cli_annofab_pass if cli_annofab_pass is not None else env_annofab_password
     if cli_annofab_pat is not None:
         return Pat(token=cli_annofab_pat)
 
@@ -97,7 +98,7 @@ def get_annofab_credential(
     if env_annofab_pat is not None:
         return Pat(token=env_annofab_pat)
 
-    if env_annofab_user_id is not None and env_annofab_password is not None:
+    if env_annofab_user_id is not None:
         if password is None:
             print(
                 "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
@@ -222,9 +223,9 @@ class ProjectCommand:
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -269,9 +270,9 @@ class ProjectCommand:
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -335,9 +336,9 @@ class ProjectCommand:
     @staticmethod
     def set_whole_annotation_area(
         project_id: str,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -370,9 +371,9 @@ class ProjectCommand:
     def set_sphere_annotation_area(
         project_id: str,
         radius: float,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -407,9 +408,9 @@ class ProjectCommand:
         project_id: str,
         x: Tuple[float, float],
         y: Tuple[float, float],
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -457,9 +458,9 @@ class ProjectCommand:
     def remove_preset_cuboid_size(
         project_id: str,
         key_name: str,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -502,9 +503,9 @@ class ProjectCommand:
         height: float,
         depth: float,
         order: int,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -555,9 +556,9 @@ class ProjectCommand:
         sensor_height: Optional[float] = None,
         parallelism: Optional[int] = None,
         force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -675,9 +676,9 @@ class ProjectCommand:
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
         parallelism: Optional[int] = None,
         force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -749,9 +750,9 @@ class ProjectCommand:
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
         parallelism: Optional[int] = None,
         force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
-        annofab_pat: Optional[str] = env_annofab_pat,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
