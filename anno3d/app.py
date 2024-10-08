@@ -116,29 +116,6 @@ def get_annofab_credential(
     raise InvalidCredentialError("AnnofabのユーザーIDまたはパスワードが指定されていません。")
 
 
-def validate_annofab_credential(
-    annofab_id: Optional[str], annofab_pass: Optional[str], annofab_pat: Optional[str]
-) -> bool:
-    """
-    Annofabの認証情報が指定されていることを確認します。
-    以下の条件をすべて満たす場合は処理を終了します。
-    * `annofab_pat`が指定されていない
-    * `annofab_id`と`annofab_pass`の両方が指定されていない
-    """
-    if annofab_pat is not None:
-        return True
-    elif annofab_id is not None and annofab_pass is not None:
-        return True
-    else:
-        print(
-            "AnnofabのユーザIDまたはパスワードが指定されていないため、終了します。"
-            "ユーザーIDは環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--annofab_id' に指定してください。"
-            "パスワードは環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' に指定してください。",
-            file=sys.stderr,
-        )
-        return False
-
-
 def validate_aws_credentail() -> bool:
     if boto3.DEFAULT_SESSION is None:
         boto3.setup_default_session()
