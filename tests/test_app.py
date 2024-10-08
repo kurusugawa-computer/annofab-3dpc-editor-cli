@@ -2,19 +2,16 @@ import os
 
 import pytest
 
-from anno3d.annofab.client import ClientLoader, IdPass, Pat
+from anno3d.annofab.client import IdPass, Pat
 from anno3d.app import InvalidCredentialError, get_annofab_credential
 
 
-class Test引数なしでbuildした時:
+class Test_get_annofab_credential:
     @pytest.fixture(autouse=True)
     def setup(self):
-        print("clear env")
         os.environ.pop("ANNOFAB_USER_ID", None)
         os.environ.pop("ANNOFAB_PASSWORD", None)
         os.environ.pop("ANNOFAB_PAT", None)
-        yield
-        # もとに戻す
 
     def test_コマンドライン引数で指定されたパーソナルアクセストークンの優先順位は1番目(
         self,
