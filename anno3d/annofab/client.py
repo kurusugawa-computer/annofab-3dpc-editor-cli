@@ -1,34 +1,40 @@
 from contextlib import contextmanager
-from typing import Generator, Optional
+from dataclasses import dataclass
+from typing import Generator, Optional, Union
 
 import annofabapi
 from annofabapi import AnnofabApi, Resource
 
+from anno3d.util.type_util import assert_noreturn
+
+
+@dataclass(frozen=True)
+class IdPass:
+    """ユーザIDとパスワード"""
+
+    user_id: str
+    password: str
+
+
+@dataclass(frozen=True)
+class Pat:
+    """Personal Access Token"""
+
+    token: str
+
+
+Credential = Union[IdPass, Pat]
+
 
 class ClientLoader:
-    """
-    Raises:
-        ValueError: 「`annofab_pat`がNone」 AND 「`annofab_id` OR `annofab_pass`がNone」のとき
-    """
-
-    _annofab_id: Optional[str]
-    _annofab_pass: Optional[str]
-    _annofab_pat: Optional[str]
-    _annofab_endpoint: Optional[str]
+    _credential: Credential
 
     def __init__(
         self,
-        annofab_id: Optional[str],
-        annofab_pass: Optional[str],
-        annofab_pat: Optional[str],
+        credential: Credential,
         endpoint: Optional[str],
     ) -> None:
-        if annofab_pass is None and (annofab_id is None or annofab_pass is None):
-            raise ValueError("以下のいずれかの条件を満たす必要があります。(A) 'annofab_pat'を指定する。 (B) 'annofab_id'と'annofab_pass'の両方を指定する。")
-
-        self._annofab_id = annofab_id
-        self._annofab_pass = annofab_pass
-        self._annofab_pat = annofab_pat
+        self._credential = credential
         self._annofab_endpoint = endpoint
 
     @contextmanager
@@ -36,10 +42,21 @@ class ClientLoader:
         endpoint = (
             self._annofab_endpoint if self._annofab_endpoint is not None else annofabapi.resource.DEFAULT_ENDPOINT_URL
         )
+        annofab_id = None
+        annofab_pass = None
+        annofab_pat = None
+        if isinstance(self._credential, IdPass):
+            annofab_id = self._credential.user_id
+            annofab_pass = self._credential.password
+        elif isinstance(self._credential, Pat):
+            annofab_pat = self._credential.token
+        else:
+            assert_noreturn(self._credential)
+
         resource = annofabapi.build(
-            self._annofab_id,
-            self._annofab_pass,
-            self._annofab_pat,
+            annofab_id,
+            annofab_pass,
+            annofab_pat,
             endpoint_url=endpoint,
         )
         try:
