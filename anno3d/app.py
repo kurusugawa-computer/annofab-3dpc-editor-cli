@@ -113,7 +113,7 @@ def get_annofab_credential(
         "パーソナルアクセストークンは環境変数'ANNOFAB_PAT' または コマンドライン引数 '--annofab_pat' に指定してください。",
         file=sys.stderr,
     )
-    raise InvalidCredentialError("AnnofabのユーザーIDまたはパスワードが指定されていません。")
+    raise InvalidCredentialError("AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていません。")
 
 
 def validate_aws_credentail() -> bool:
