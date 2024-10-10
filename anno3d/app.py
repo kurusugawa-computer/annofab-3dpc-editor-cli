@@ -11,6 +11,8 @@ import fire
 
 from anno3d import __version__
 from anno3d.annofab.client import ClientLoader
+from anno3d.annofab.client import Credential as AnnofabCredential
+from anno3d.annofab.client import IdPass, Pat
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
@@ -48,29 +50,70 @@ add_stdout_handler(root_logger, logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
-env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
 env_annofab_endpoint = os.environ.get("ANNOFAB_ENDPOINT")
 
 
-def validate_annofab_credential(annofab_id: Optional[str], annofab_pass: Optional[str]) -> bool:
+class InvalidCredentialError(Exception):
+    pass
+
+
+def get_annofab_credential(
+    cli_annofab_id: Optional[str],
+    cli_annofab_pass: Optional[str],
+    cli_annofab_pat: Optional[str],
+) -> AnnofabCredential:
     """
-    Annofabの認証情報が指定されていることを確認します。
-    どちらかが指定されていない場合は処理を終了します。
+    Annofabの認証情報を取得します。
+
+    認証情報の優先順位は以下の通りです。
+
+    1. コマンドライン引数で指定されたAnnofabのパーソナルアクセストークン
+    2. コマンドライン引数で指定されたAnnofabのユーザーID
+    3. 環境変数`ANNOFAB_PAT`に設定されたAnnofabのパーソナルアクセストークン
+    4. 環境変数`ANNOFAB_USER_ID`に設定されたAnnofabのユーザーID
+
+
+    Args:
+        cli_annofab_id: コマンドライン引数で指定されたAnnofabのユーザーID
+        cli_annofab_pass: コマンドライン引数で指定されたAnnofabのパスワード
+        cli_annofab_pat: コマンドライン引数で指定されたAnnofabのパーソナルアクセストークン
     """
-    if annofab_id is None:
-        print(
-            "AnnofabのユーザIDが指定されていないため、終了します。環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--annofab_id' にユーザIDを指定してください。",
-            file=sys.stderr,
-        )
-        return False
-    if annofab_pass is None:
-        print(
-            "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
-            file=sys.stderr,
-        )
-        return False
-    return True
+    env_annofab_user_id = os.environ.get("ANNOFAB_USER_ID")
+    env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
+    env_annofab_pat = os.environ.get("ANNOFAB_PAT")
+
+    password = cli_annofab_pass if cli_annofab_pass is not None else env_annofab_password
+    if cli_annofab_pat is not None:
+        return Pat(token=cli_annofab_pat)
+
+    if cli_annofab_id is not None:
+        if password is None:
+            print(
+                "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
+                file=sys.stderr,
+            )
+            raise InvalidCredentialError("Annofabのパスワードが指定されていません。")
+        return IdPass(user_id=cli_annofab_id, password=password)
+
+    if env_annofab_pat is not None:
+        return Pat(token=env_annofab_pat)
+
+    if env_annofab_user_id is not None:
+        if password is None:
+            print(
+                "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
+                file=sys.stderr,
+            )
+            raise InvalidCredentialError("Annofabのパスワードが指定されていません。")
+        return IdPass(user_id=env_annofab_user_id, password=password)
+
+    print(
+        "AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていないため、終了します。"
+        "ユーザーIDは環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--annofab_id' に指定してください。"
+        "パーソナルアクセストークンは環境変数'ANNOFAB_PAT' または コマンドライン引数 '--annofab_pat' に指定してください。",
+        file=sys.stderr,
+    )
+    raise InvalidCredentialError("AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていません。")
 
 
 def validate_aws_credentail() -> bool:
@@ -109,8 +152,9 @@ class ProjectCommand:
         plugin_id: str = "",
         specs_plugin_id: str = "",
         overview: str = "",
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -119,6 +163,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             title: projectのタイトル
@@ -131,10 +176,12 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             created_project_id = ProjectApi(api).create_custom_project(
                 title=title,
@@ -153,8 +200,9 @@ class ProjectCommand:
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -162,6 +210,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -174,13 +223,14 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
-        assert annofab_id is not None and annofab_pass is not None
+
         # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
         label_id = str(label_id)
-        validate_annofab_credential(annofab_id, annofab_pass)
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_cuboid_label(project_id, en_name, label_id, ja_name, color)
             labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
@@ -197,8 +247,9 @@ class ProjectCommand:
         label_id: str = "",
         ja_name: str = "",
         color: Optional[Tuple[int, int, int]] = None,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -206,6 +257,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -226,9 +278,11 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
-        assert annofab_id is not None and annofab_pass is not None
+
         # 数値に変換可能な場合は型がintに変わるので、strに明示的に変換する。
         label_id = str(label_id)
 
@@ -240,7 +294,7 @@ class ProjectCommand:
         if layer < 0:
             raise RuntimeError(f"layerは、0以上の整数である必要がありますが、{layer} でした")
 
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             labels = ProjectApi(api).put_segment_label(
                 project_id,
@@ -259,8 +313,9 @@ class ProjectCommand:
     @staticmethod
     def set_whole_annotation_area(
         project_id: str,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -270,6 +325,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -277,11 +333,12 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(project_id, WholeAnnotationArea())
             logger.info("メタデータを更新しました。")
@@ -291,8 +348,9 @@ class ProjectCommand:
     def set_sphere_annotation_area(
         project_id: str,
         radius: float,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -302,6 +360,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -310,11 +369,12 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(project_id, SphereAnnotationArea(area_radius=str(radius)))
             logger.info("メタデータを更新しました。")
@@ -325,8 +385,9 @@ class ProjectCommand:
         project_id: str,
         x: Tuple[float, float],
         y: Tuple[float, float],
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -336,6 +397,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -345,11 +407,12 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
 
         min_x = str(min(x))
         max_x = str(max(x))
@@ -357,7 +420,13 @@ class ProjectCommand:
         max_y = str(max(y))
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).set_annotation_area(
-                project_id, RectAnnotationArea(area_min_x=min_x, area_max_x=max_x, area_min_y=min_y, area_max_y=max_y)
+                project_id,
+                RectAnnotationArea(
+                    area_min_x=min_x,
+                    area_max_x=max_x,
+                    area_min_y=min_y,
+                    area_max_y=max_y,
+                ),
             )
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
@@ -366,8 +435,9 @@ class ProjectCommand:
     def remove_preset_cuboid_size(
         project_id: str,
         key_name: str,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -376,6 +446,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -385,12 +456,14 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
         assert key_name.isalnum()
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
 
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).remove_preset_cuboid_size(project_id, key_name)
@@ -407,8 +480,9 @@ class ProjectCommand:
         height: float,
         depth: float,
         order: int,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -417,6 +491,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
@@ -432,12 +507,14 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
         assert key_name.isalnum()
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
 
         with client_loader.open_api() as api:
             new_meta = ProjectApi(api).add_preset_cuboid_size(
@@ -456,8 +533,9 @@ class ProjectCommand:
         sensor_height: Optional[float] = None,
         parallelism: Optional[int] = None,
         force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -465,6 +543,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 登録先のプロジェクトid
@@ -479,10 +558,11 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
-        assert annofab_id is not None and annofab_pass is not None
         asyncio.run(
             ProjectCommand._upload_kitti_data_async(
                 project_id,
@@ -494,8 +574,7 @@ class ProjectCommand:
                 sensor_height,
                 parallelism,
                 force,
-                annofab_id,
-                annofab_pass,
+                annofab_credential,
             )
         )
 
@@ -510,18 +589,19 @@ class ProjectCommand:
         sensor_height: Optional[float],
         parallelism: Optional[int],
         force: bool,
-        annofab_id: str,
-        annofab_pass: str,
+        annofab_credential: AnnofabCredential,
     ) -> None:
         project = project_id
 
         kitti_dir_path = Path(kitti_dir)
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         sem_opt = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
-        async def run_without_sem(paths: FilePaths) -> Tuple[str, List[SupplementaryData]]:
+        async def run_without_sem(
+            paths: FilePaths,
+        ) -> Tuple[str, List[SupplementaryData]]:
             return await upload_async(
                 input_data_id_prefix,
                 uploader,
@@ -573,8 +653,9 @@ class ProjectCommand:
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
         parallelism: Optional[int] = None,
         force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -583,6 +664,7 @@ class ProjectCommand:
         Args:
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 登録先のプロジェクトid
@@ -605,18 +687,21 @@ class ProjectCommand:
         Returns:
 
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
 
         enum_upload_kind = _decode_enum(UploadKind, upload_kind)
         if not validate_task_id_prefix(task_id_prefix, enum_upload_kind):
             return
 
-        assert annofab_id is not None and annofab_pass is not None
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             scene_uploader = SceneUploader(
-                api, AnnofabStorageUploader(api, project=project_id, force=force), parallelism
+                api,
+                AnnofabStorageUploader(api, project=project_id, force=force),
+                parallelism,
             )
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
@@ -642,8 +727,9 @@ class ProjectCommand:
         upload_kind: str = UploadKind.CREATE_ANNOTATION.value,
         parallelism: Optional[int] = None,
         force: bool = False,
-        annofab_id: Optional[str] = env_annofab_user_id,
-        annofab_pass: Optional[str] = env_annofab_password,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
         annofab_endpoint: Optional[str] = env_annofab_endpoint,
     ) -> None:
         """
@@ -669,12 +755,15 @@ class ProjectCommand:
             force: 入力データと補助データを上書きしてアップロードするかどうか。
             annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
             annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
         """
-        if not validate_annofab_credential(annofab_id, annofab_pass):
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
             return
-        assert annofab_id is not None and annofab_pass is not None
+
         if not validate_aws_credentail():
             return
 
@@ -682,10 +771,12 @@ class ProjectCommand:
         if not validate_task_id_prefix(task_id_prefix, enum_upload_kind):
             return
 
-        client_loader = ClientLoader(annofab_id, annofab_pass, annofab_endpoint)
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
             uploader = SceneUploader(
-                api, S3Uploader(api, project=project_id, force=force, s3_path=s3_path), parallelism
+                api,
+                S3Uploader(api, project=project_id, force=force, s3_path=s3_path),
+                parallelism,
             )
             uploader_input = SceneUploaderInput(
                 project_id=project_id,
