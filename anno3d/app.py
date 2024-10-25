@@ -676,7 +676,7 @@ class ProjectCommand:
                                    calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90ととする
             sensor_height: velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。
                            省略した場合、kittiのセンサ高(1.73)を採用する
-            frame_per_task: タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
+            frame_per_task: タスクを作る場合、１タスクあたり何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
             upload_kind: 処理の種類　省略した場合 "annotation" //
                          data => 入力データと補助データの登録のみを行う //
                          task => 上記に加えて、タスクの生成を行う //
@@ -746,7 +746,7 @@ class ProjectCommand:
                                    calib => 対象の画像にキャリブレーションデータが存在すればそこから計算し、なければ90[degree]ととする
             sensor_height: velodyneのセンサ設置高。 velodyne座標系上で -sensor_height 辺りに地面が存在すると認識する。
                            省略した場合、kittiのセンサ高(1.73)を採用する
-            frame_per_task: タスクを作る場合、１タスク辺り何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
+            frame_per_task: タスクを作る場合、１タスクあたり何個のinput_dataを登録するか。 省略した場合 シーン単位でタスクを作成
             upload_kind: 処理の種類　省略した場合 "annotation" //
                          data => 入力データと補助データの登録のみを行う //
                          task => 上記に加えて、タスクの生成を行う //
