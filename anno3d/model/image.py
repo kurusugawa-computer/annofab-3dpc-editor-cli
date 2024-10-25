@@ -24,7 +24,7 @@ class ImageCamera(DataClassJsonMixin):
 @camelcase
 @dataclass(frozen=True)
 class kitti3DCalib(DataClassJsonMixin):
-    # 4x3行列 (P2)
+    # 3x4行列 (P2)
     camera_matrix: List[float]
 
     # 3x3行列 R0_rect
