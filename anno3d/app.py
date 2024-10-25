@@ -116,7 +116,7 @@ def get_annofab_credential(
     raise InvalidCredentialError("AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていません。")
 
 
-def validate_aws_credentail() -> bool:
+def validate_aws_credential() -> bool:
     if boto3.DEFAULT_SESSION is None:
         boto3.setup_default_session()
     result = boto3.DEFAULT_SESSION.get_credentials() is not None  # type: ignore
@@ -764,7 +764,7 @@ class ProjectCommand:
         except InvalidCredentialError:
             return
 
-        if not validate_aws_credentail():
+        if not validate_aws_credential():
             return
 
         enum_upload_kind = _decode_enum(UploadKind, upload_kind)
