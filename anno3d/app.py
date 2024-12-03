@@ -16,7 +16,7 @@ from anno3d.annofab.client import IdPass, Pat
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
-from anno3d.file_paths_loader import FilePathsLoader
+from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
 from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
 from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
@@ -876,9 +876,7 @@ class LocalCommand:
             file = scene_path_ / Defaults.scene_meta_file
 
         scene = Scene.decode_path(file) if file.exists() else Scene.default_scene(scene_path_)
-
-        pathss = SceneUploader.scene_to_paths(scene)
-
+        pathss = ScenePathsLoader(scene).load()
         inputs = [
             create_kitti_files(
                 input_data_id_prefix,

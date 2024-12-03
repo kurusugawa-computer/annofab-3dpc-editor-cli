@@ -89,7 +89,7 @@ class SceneUploader:
         return self.upload_scene(scene, uploader_input)
 
     @staticmethod
-    def scene_to_paths(scene: Scene) -> List[FilePaths]:
+    def _scene_to_paths(scene: Scene) -> List[FilePaths]:
         def id_to_paths(frame_id: str) -> FilePaths:
             images = [
                 ImagePaths(
@@ -283,7 +283,7 @@ class SceneUploader:
         logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
 
         uploader = self._uploader
-        pathss = self.scene_to_paths(scene)
+        pathss = self._scene_to_paths(scene)
         specs = self._project.get_annotation_specs(uploader_input.project_id)
         annofab_labels = specs.labels
         if annofab_labels is None:
