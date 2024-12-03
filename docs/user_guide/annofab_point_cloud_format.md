@@ -125,6 +125,7 @@ scene0/
                 "z": 0.8
             },
         },
+        "display_name": "補助画像" // imageの概要名
     },
   ],
 }
