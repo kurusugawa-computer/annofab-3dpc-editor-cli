@@ -125,7 +125,7 @@ scene0/
                 "z": 0.8
             },
         },
-        "display_name": "補助画像" // imageの概要名
+        "display_name": "front_cam" // 画像の名前
     },
   ],
 }
