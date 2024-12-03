@@ -36,3 +36,4 @@ class FilePaths:
     pcd: Path
     images: List[ImagePaths]
     labels: List[LabelPaths]
+    image_names: List[str]

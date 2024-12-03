@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import List, Literal
 
 from dataclasses_json import DataClassJsonMixin
 
@@ -28,7 +28,7 @@ class PointCloudMetaData(DataClassJsonMixin):
 @camelcase
 @dataclass(frozen=True)
 class ImagesMetaData(DataClassJsonMixin):
-    image_count: int
+    image_names: List[str]
     calib_kind: str = "kitti3dDetection"
 
 
@@ -39,4 +39,4 @@ class FrameMetaData(DataClassJsonMixin):
 
     points: PointCloudMetaData
     images: ImagesMetaData
-    version: Literal["2"] = "2"
+    version: Literal["3"] = "3"

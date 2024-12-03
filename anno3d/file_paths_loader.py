@@ -31,8 +31,15 @@ class FilePathsLoader:
             return FilePaths(
                 FrameKey(kind, frame_id),
                 pcd=pcd_dir / f"{frame_id}.bin",
-                images=[ImagePaths(image_dir / f"{frame_id}.png", calib_dir / f"{frame_id}.txt", None)],
+                images=[
+                    ImagePaths(
+                        image_dir / f"{frame_id}.png",
+                        calib_dir / f"{frame_id}.txt",
+                        None,
+                    )
+                ],
                 labels=[],
+                image_names=[],
             )
 
         return [id_to_paths(pcd_file) for pcd_file in os.listdir(pcd_dir)]
@@ -73,6 +80,7 @@ class ScenePathsLoader:
                 pcd=scene_dir / f"{scene.velodyne.velodyne_dir}/{frame_id}.bin",
                 images=images,
                 labels=[],
+                image_names=[],
             )
 
         return [scene_to_paths(frame_id) for frame_id in scene.id_list]

@@ -107,7 +107,11 @@ class SceneUploader:
                 for label in scene.labels
             ]
             return FilePaths(
-                FrameKey(None, frame_id), Path(scene.velodyne.velodyne_dir) / f"{frame_id}.bin", images, labels
+                FrameKey(None, frame_id),
+                Path(scene.velodyne.velodyne_dir) / f"{frame_id}.bin",
+                images,
+                labels,
+                image_names=[],
             )
 
         return [id_to_paths(frame_id) for frame_id in scene.id_list]
@@ -145,7 +149,11 @@ class SceneUploader:
 
         return result_dict
 
-    def _create_tasks(self, project_id: str, task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]]) -> None:
+    def _create_tasks(
+        self,
+        project_id: str,
+        task_to_data_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]],
+    ) -> None:
         """タスクを作成します。
 
         Notes:
@@ -168,10 +176,21 @@ class SceneUploader:
 
             return CuboidAnnotationDetailBody.from_shape(
                 CuboidShape(
-                    dimensions=Size(width=kitti_label.width, height=kitti_label.height, depth=kitti_label.depth),
-                    location=XYZ(x=kitti_label.x, y=kitti_label.y, z=kitti_label.z + (kitti_label.height / 2)),
+                    dimensions=Size(
+                        width=kitti_label.width,
+                        height=kitti_label.height,
+                        depth=kitti_label.depth,
+                    ),
+                    location=XYZ(
+                        x=kitti_label.x,
+                        y=kitti_label.y,
+                        z=kitti_label.z + (kitti_label.height / 2),
+                    ),
                     rotation=XYZ(x=0.0, y=0.0, z=kitti_label.yaw),  # このyawがそのままでいいのか不明
-                    direction=CuboidDirection(front=XYZ(direction[0], direction[1], direction[2]), up=XYZ(0, 0, 1)),
+                    direction=CuboidDirection(
+                        front=XYZ(direction[0], direction[1], direction[2]),
+                        up=XYZ(0, 0, 1),
+                    ),
                 )
             )
 
@@ -286,7 +305,9 @@ class SceneUploader:
             return
 
         task_to_data_dict = self._get_task_to_data_dict(
-            uploader_input.task_id_prefix, data_and_pathss, uploader_input.frame_per_task
+            uploader_input.task_id_prefix,
+            data_and_pathss,
+            uploader_input.frame_per_task,
         )
 
         logger.info("タスクを%d件作成します。", len(task_to_data_dict))

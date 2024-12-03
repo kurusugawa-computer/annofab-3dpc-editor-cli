@@ -10,21 +10,28 @@ import boto3
 import fire
 
 from anno3d import __version__
-from anno3d.annofab.client import ClientLoader
+from anno3d.annofab.client import ClientLoader, IdPass, Pat
 from anno3d.annofab.client import Credential as AnnofabCredential
-from anno3d.annofab.client import IdPass, Pat
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
 from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
 from anno3d.kitti.camera_horizontal_fov_provider import CameraHorizontalFovKind
 from anno3d.kitti.scene_uploader import SceneUploader, SceneUploaderInput, UploadKind
-from anno3d.model.annotation_area import RectAnnotationArea, SphereAnnotationArea, WholeAnnotationArea
+from anno3d.model.annotation_area import (
+    RectAnnotationArea,
+    SphereAnnotationArea,
+    WholeAnnotationArea,
+)
 from anno3d.model.file_paths import FilePaths
 from anno3d.model.frame import PcdFormat
 from anno3d.model.input_files import InputData
 from anno3d.model.scene import Defaults, Scene
-from anno3d.simple_data_uploader import SupplementaryData, create_kitti_files, upload_async
+from anno3d.simple_data_uploader import (
+    SupplementaryData,
+    create_kitti_files,
+    upload_async,
+)
 
 E = TypeVar("E", bound=Enum)
 
@@ -40,7 +47,11 @@ def _decode_enum(enum: Type[E], value: Any) -> E:
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
     handler = logging.StreamHandler()
     handler.setLevel(level)
-    handler.setFormatter(logging.Formatter("[%(asctime)s] [%(process)d] [%(name)s] [%(levelname)s] %(message)s"))
+    handler.setFormatter(
+        logging.Formatter(
+            "[%(asctime)s] [%(process)d] [%(name)s] [%(levelname)s] %(message)s"
+        )
+    )
     target.addHandler(handler)
 
 
@@ -82,7 +93,9 @@ def get_annofab_credential(
     env_annofab_password = os.environ.get("ANNOFAB_PASSWORD")
     env_annofab_pat = os.environ.get("ANNOFAB_PAT")
 
-    password = cli_annofab_pass if cli_annofab_pass is not None else env_annofab_password
+    password = (
+        cli_annofab_pass if cli_annofab_pass is not None else env_annofab_password
+    )
     if cli_annofab_pat is not None:
         return Pat(token=cli_annofab_pat)
 
@@ -113,7 +126,9 @@ def get_annofab_credential(
         "パーソナルアクセストークンは環境変数'ANNOFAB_PAT' または コマンドライン引数 '--annofab_pat' に指定してください。",
         file=sys.stderr,
     )
-    raise InvalidCredentialError("AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていません。")
+    raise InvalidCredentialError(
+        "AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていません。"
+    )
 
 
 def validate_aws_credential() -> bool:
@@ -177,7 +192,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -224,7 +241,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -232,8 +251,12 @@ class ProjectCommand:
         label_id = str(label_id)
         client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
-            labels = ProjectApi(api).put_cuboid_label(project_id, en_name, label_id, ja_name, color)
-            labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
+            labels = ProjectApi(api).put_cuboid_label(
+                project_id, en_name, label_id, ja_name, color
+            )
+            labels_json = Label.schema().dumps(
+                labels, many=True, ensure_ascii=False, indent=2
+            )
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
 
@@ -279,7 +302,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -292,7 +317,9 @@ class ProjectCommand:
             )
         safe_segment_type = cast(Literal["SEMANTIC", "INSTANCE"], segment_type)
         if layer < 0:
-            raise RuntimeError(f"layerは、0以上の整数である必要がありますが、{layer} でした")
+            raise RuntimeError(
+                f"layerは、0以上の整数である必要がありますが、{layer} でした"
+            )
 
         client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
@@ -306,7 +333,9 @@ class ProjectCommand:
                 ja_name=ja_name,
                 color=color,
             )
-            labels_json = Label.schema().dumps(labels, many=True, ensure_ascii=False, indent=2)
+            labels_json = Label.schema().dumps(
+                labels, many=True, ensure_ascii=False, indent=2
+            )
             logger.info("Label(=%s) を作成・更新しました", label_id)
             logger.info(labels_json)
 
@@ -334,13 +363,17 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
         client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
-            new_meta = ProjectApi(api).set_annotation_area(project_id, WholeAnnotationArea())
+            new_meta = ProjectApi(api).set_annotation_area(
+                project_id, WholeAnnotationArea()
+            )
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
@@ -370,13 +403,17 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
         client_loader = ClientLoader(annofab_credential, annofab_endpoint)
         with client_loader.open_api() as api:
-            new_meta = ProjectApi(api).set_annotation_area(project_id, SphereAnnotationArea(area_radius=str(radius)))
+            new_meta = ProjectApi(api).set_annotation_area(
+                project_id, SphereAnnotationArea(area_radius=str(radius))
+            )
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
 
@@ -408,7 +445,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -457,7 +496,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -508,7 +549,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -559,7 +602,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -613,7 +658,9 @@ class ProjectCommand:
                 pcd_format=PcdFormat("xyzi"),
             )
 
-        async def run_with_sem(paths: FilePaths, sem: asyncio.Semaphore) -> Tuple[str, List[SupplementaryData]]:
+        async def run_with_sem(
+            paths: FilePaths, sem: asyncio.Semaphore
+        ) -> Tuple[str, List[SupplementaryData]]:
             async with sem:
                 return await run_without_sem(paths)
 
@@ -688,7 +735,9 @@ class ProjectCommand:
 
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -707,7 +756,9 @@ class ProjectCommand:
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
                 frame_per_task=frame_per_task,
-                camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
+                camera_horizontal_fov=_decode_enum(
+                    CameraHorizontalFovKind, camera_horizontal_fov
+                ),
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
                 kind=enum_upload_kind,
@@ -760,7 +811,9 @@ class ProjectCommand:
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
         """
         try:
-            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+            annofab_credential = get_annofab_credential(
+                annofab_id, annofab_pass, annofab_pat
+            )
         except InvalidCredentialError:
             return
 
@@ -782,7 +835,9 @@ class ProjectCommand:
                 project_id=project_id,
                 input_data_id_prefix=input_data_id_prefix,
                 frame_per_task=frame_per_task,
-                camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
+                camera_horizontal_fov=_decode_enum(
+                    CameraHorizontalFovKind, camera_horizontal_fov
+                ),
                 sensor_height=sensor_height,
                 task_id_prefix=task_id_prefix,
                 kind=enum_upload_kind,
@@ -801,7 +856,9 @@ class LocalCommand:
                 writer.write(input_data.to_json(ensure_ascii=False, sort_keys=True))
                 writer.write("\n")
 
-        logger.info("%d 件のinput dataを、%sに出力しました", len(inputs), output_dir_path)
+        logger.info(
+            "%d 件のinput dataを、%sに出力しました", len(inputs), output_dir_path
+        )
         logger.info("メタデータ: %s", all_files_json.absolute())
 
     @staticmethod
@@ -875,7 +932,11 @@ class LocalCommand:
         if scene_path_.is_dir():
             file = scene_path_ / Defaults.scene_meta_file
 
-        scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(scene_path_)
+        scene = (
+            Scene.decode_path(file)
+            if file.is_file()
+            else Scene.default_scene(scene_path_)
+        )
         loader = ScenePathsLoader(scene, file.parent)
         pathss = loader.load()
 
@@ -884,7 +945,9 @@ class LocalCommand:
                 input_data_id_prefix,
                 output_dir_path,
                 paths,
-                camera_horizontal_fov=_decode_enum(CameraHorizontalFovKind, camera_horizontal_fov),
+                camera_horizontal_fov=_decode_enum(
+                    CameraHorizontalFovKind, camera_horizontal_fov
+                ),
                 fallback_horizontal_fov=None,
                 sensor_height=sensor_height,
                 pcd_format=PcdFormat(scene.velodyne.format),
