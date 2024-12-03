@@ -85,7 +85,7 @@ class SceneUploader:
         if scene_path.is_dir():
             file = scene_path / Defaults.scene_meta_file
 
-        scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(scene_path)
+        scene = Scene.decode_path(file) if file.exists() else Scene.default_scene(scene_path)
         return self.upload_scene(scene, uploader_input)
 
     @staticmethod
@@ -99,6 +99,9 @@ class SceneUploader:
                 )
                 for image in scene.images
             ]
+            image_names = [
+                image.display_name if image.display_name else str(index) for index, image in enumerate(scene.images, 1)
+            ]
             labels = [
                 LabelPaths(
                     Path(label.label_dir) / f"{frame_id}.txt",
@@ -111,7 +114,7 @@ class SceneUploader:
                 Path(scene.velodyne.velodyne_dir) / f"{frame_id}.bin",
                 images,
                 labels,
-                image_names=[],
+                image_names=image_names,
             )
 
         return [id_to_paths(frame_id) for frame_id in scene.id_list]

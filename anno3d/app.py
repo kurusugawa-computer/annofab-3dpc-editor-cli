@@ -934,7 +934,7 @@ class LocalCommand:
 
         scene = (
             Scene.decode_path(file)
-            if file.is_file()
+            if file.exists()
             else Scene.default_scene(scene_path_)
         )
         loader = ScenePathsLoader(scene, file.parent)

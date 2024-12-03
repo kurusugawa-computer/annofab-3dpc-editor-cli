@@ -267,7 +267,7 @@ def create_kitti_files(
     frame_meta = create_frame_meta(
         input_data_dir,
         input_data_id,
-        image_names=["1"], # kittiはimageが1つで名前を持てないので固定。仕様が変わったら直すべき
+        image_names=["1"],  # kittiはimageが1つで名前を持てないので固定。仕様が変わったら直すべき
         sensor_height=sensor_height,
         pcd_format=pcd_format,
     )
