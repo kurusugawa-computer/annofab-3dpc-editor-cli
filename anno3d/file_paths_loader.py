@@ -45,6 +45,7 @@ class FilePathsLoader:
         return [id_to_paths(pcd_file) for pcd_file in os.listdir(pcd_dir)]
 
 
+# 多分もう使わない
 class ScenePathsLoader:
     """コンストラクタに渡されたSceneを元にFilePathsを生成する"""
 
