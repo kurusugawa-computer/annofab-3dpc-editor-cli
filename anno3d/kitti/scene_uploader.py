@@ -110,6 +110,10 @@ class SceneUploader:
                 )
                 for label in scene.labels
             ]
+
+            if len(image_names) != len(set(image_names)):
+                raise ValueError(f"kitti_imageのdisplay_nameには、それぞれ別の名前を付ける必要があります。現在の値={image_names}")
+
             return FilePaths(
                 FrameKey(None, frame_id),
                 Path(scene.velodyne.velodyne_dir) / f"{frame_id}.bin",
