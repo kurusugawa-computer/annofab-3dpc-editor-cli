@@ -30,6 +30,7 @@ class PointCloudMetaData(DataClassJsonMixin):
 class ImagesMetaData(DataClassJsonMixin):
     image_names: List[str]
     calib_kind: str = "kitti3dDetection"
+    version: Literal["2"] = "2"
 
 
 @camelcase
