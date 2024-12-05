@@ -19,25 +19,11 @@ from anno3d.kitti.camera_horizontal_fov_provider import (
 )
 from anno3d.model.common import Vector3
 from anno3d.model.file_paths import FilePaths
-from anno3d.model.frame import (
-    FrameMetaData,
-    ImagesMetaData,
-    PcdFormat,
-    PointCloudMetaData,
-)
+from anno3d.model.frame import FrameMetaData, ImagesMetaData, PcdFormat, PointCloudMetaData
 from anno3d.model.image import ImageCamera, ImageCameraFov, ImageMeta
-from anno3d.model.input_files import (
-    InputData,
-    InputDataBody,
-    Supplementary,
-    SupplementaryBody,
-)
+from anno3d.model.input_files import InputData, InputDataBody, Supplementary, SupplementaryBody
 from anno3d.model.scene import CameraViewSettings
-from anno3d.supplementary_id import (
-    camera_image_calib_id,
-    camera_image_id,
-    frame_meta_id,
-)
+from anno3d.supplementary_id import camera_image_calib_id, camera_image_id, frame_meta_id
 
 logger = logging.getLogger(__name__)
 
@@ -102,16 +88,12 @@ def _create_image_meta(
     # http://www.cvlibs.net/publications/Geiger2012CVPR.pdf 2.1. Sensors and Data Acquisition によると
     # カメラの画角は 90度 * 35度　らしい
     fov = ImageCameraFov(camera_horizontal_fov.value(), 35.0 / 180.0 * math.pi)
-    camera_position = Vector3(
-        0, 0, 1.65 - 1.73
-    )  # kittiにおける カメラ設置高(1.65) - velodyne設置高(1.73)
+    camera_position = Vector3(0, 0, 1.65 - 1.73)  # kittiにおける カメラ設置高(1.65) - velodyne設置高(1.73)
     yaw = 0.0
 
     if settings is not None:
         if settings.position is not None:
-            camera_position = Vector3(
-                settings.position.x, settings.position.y, settings.position.z
-            )
+            camera_position = Vector3(settings.position.x, settings.position.y, settings.position.z)
         if settings.direction is not None:
             yaw = settings.direction
 
@@ -134,9 +116,7 @@ def _create_image_meta(
     return SupplementaryData(data_id, file, "text")
 
 
-def _create_dummy_image_meta(
-    parent_dir: Path, input_data_id: str, number: int
-) -> SupplementaryData:
+def _create_dummy_image_meta(parent_dir: Path, input_data_id: str, number: int) -> SupplementaryData:
     data_id = camera_image_calib_id(input_data_id, number)
 
     num = number % 4
@@ -163,9 +143,7 @@ def _upload_supplementaries(
     uploader: Uploader, input_data_id: str, supplementary_list: List[SupplementaryData]
 ) -> None:
     for supp in supplementary_list:
-        uploader.upload_supplementary(
-            input_data_id, supp.data_id, supp.path, supp.data_type
-        )
+        uploader.upload_supplementary(input_data_id, supp.data_id, supp.path, supp.data_type)
 
 
 async def upload_async(
@@ -204,35 +182,25 @@ def upload(
     pcd_format: PcdFormat,
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
-    input_data_id = uploader.upload_input_data(
-        f"{input_data_id_prefix}{paths.key.id}", paths.pcd
-    )
+    input_data_id = uploader.upload_input_data(f"{input_data_id_prefix}{paths.key.id}", paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         image_names = paths.image_names
         # namesが無かったら作る
         if len(paths.image_names) == 0:
-            image_names = [
-                str(i) for i in range(1, len(paths.images) + len(dummy_images) + 1)
-            ]
+            image_names = [str(i) for i in range(1, len(paths.images) + len(dummy_images) + 1)]
 
         tempdir = Path(tempdir_str)
-        frame_meta = create_frame_meta(
-            tempdir, input_data_id, image_names, sensor_height, pcd_format
-        )
+        frame_meta = create_frame_meta(tempdir, input_data_id, image_names, sensor_height, pcd_format)
         image_supps: List[SupplementaryData] = [
             meta
             for i in range(0, len(paths.images))
             for image_paths in [paths.images[i]]
             for fov_provider in [
-                create_camera_horizontal_fov_provider(
-                    camera_horizontal_fov, image_paths, fallback_horizontal_fov
-                )
+                create_camera_horizontal_fov_provider(camera_horizontal_fov, image_paths, fallback_horizontal_fov)
             ]
             for meta in [
-                SupplementaryData(
-                    camera_image_id(input_data_id, i), image_paths.image, "image"
-                ),
+                SupplementaryData(camera_image_id(input_data_id, i), image_paths.image, "image"),
                 _create_image_meta(
                     tempdir,
                     image_paths.calib,
@@ -267,22 +235,14 @@ def upload(
 
 # 多分使ってない
 def create_meta_file(parent_dir: Path, paths: FilePaths) -> None:
-    create_frame_meta(
-        parent_dir, "sample_input_id", ["1", "2"], None, PcdFormat("xyzi")
-    )
-    fov_provider = create_camera_horizontal_fov_provider(
-        CameraHorizontalFovKind.SETTINGS, paths.images[0], None
-    )
-    _create_image_meta(
-        parent_dir, paths.images[0].calib, "sample_input_id", 0, None, fov_provider
-    )
+    create_frame_meta(parent_dir, "sample_input_id", ["1", "2"], None, PcdFormat("xyzi"))
+    fov_provider = create_camera_horizontal_fov_provider(CameraHorizontalFovKind.SETTINGS, paths.images[0], None)
+    _create_image_meta(parent_dir, paths.images[0].calib, "sample_input_id", 0, None, fov_provider)
     _create_dummy_image_meta(parent_dir, "sample_input_id", 1)
 
 
 def create_supplementary(data: SupplementaryData) -> Supplementary:
-    return Supplementary(
-        data.data_id, SupplementaryBody(data.data_id, data.path.absolute().as_posix())
-    )
+    return Supplementary(data.data_id, SupplementaryBody(data.data_id, data.path.absolute().as_posix()))
 
 
 def create_kitti_files(
@@ -295,14 +255,10 @@ def create_kitti_files(
     pcd_format: PcdFormat,
 ) -> InputData:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
-    input_data_id = f"{input_data_id_prefix}{paths.key.id}".format(
-        input_data_id_prefix, paths.key.id
-    )
+    input_data_id = f"{input_data_id_prefix}{paths.key.id}".format(input_data_id_prefix, paths.key.id)
     input_data_dir = parent_dir / paths.key.id
     if input_data_dir.exists():
-        raise RuntimeError(
-            f"データ生成先ディレクトリがすでに存在します: {input_data_dir.absolute()}"
-        )
+        raise RuntimeError(f"データ生成先ディレクトリがすでに存在します: {input_data_dir.absolute()}")
 
     input_data_dir.mkdir(parents=True)
     input_data_path = input_data_dir / paths.pcd.name
@@ -325,9 +281,7 @@ def create_kitti_files(
         for image_id in [camera_image_id(input_data_id, i)]
         for image_path in [input_data_dir / f"{image_id}.{image.extension}"]
         for fov_provider in [
-            create_camera_horizontal_fov_provider(
-                camera_horizontal_fov, image, fallback_horizontal_fov
-            )
+            create_camera_horizontal_fov_provider(camera_horizontal_fov, image, fallback_horizontal_fov)
         ]
         for _ in [shutil.copyfile(image.image, image_path)]
         for meta in [
@@ -346,6 +300,5 @@ def create_kitti_files(
     return InputData(
         input_data_id,
         InputDataBody(paths.pcd.name, input_data_path.absolute().as_posix()),
-        [create_supplementary(frame_meta)]
-        + [create_supplementary(image) for image in images],
+        [create_supplementary(frame_meta)] + [create_supplementary(image) for image in images],
     )
