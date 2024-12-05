@@ -20,6 +20,7 @@ class FrameKey:
 @dataclass(frozen=True)
 class ImagePaths:
     image: Path
+    extension: str
     calib: Optional[Path]
     camera_settings: Optional[CameraViewSettings]
 

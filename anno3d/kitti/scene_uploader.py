@@ -62,13 +62,17 @@ class SceneUploader:
     _project: ProjectApi
     _sem: Optional[asyncio.Semaphore]
 
-    def __init__(self, client: AnnofabApi, uploader: Uploader, parallelism: Optional[int]):
+    def __init__(
+        self, client: AnnofabApi, uploader: Uploader, parallelism: Optional[int]
+    ):
         self._client = client
         self._project = ProjectApi(client)
         self._uploader = uploader
         self._sem = asyncio.Semaphore(parallelism) if parallelism is not None else None
 
-    def upload_from_path(self, scene_path: Path, uploader_input: SceneUploaderInput) -> None:
+    def upload_from_path(
+        self, scene_path: Path, uploader_input: SceneUploaderInput
+    ) -> None:
         """
         Args:
             scene_path: 読み込み対象パス。　以下の何れかとなる
@@ -85,7 +89,11 @@ class SceneUploader:
         if scene_path.is_dir():
             file = scene_path / Defaults.scene_meta_file
 
-        scene = Scene.decode_path(file) if file.exists() else Scene.default_scene(scene_path)
+        scene = (
+            Scene.decode_path(file)
+            if file.exists()
+            else Scene.default_scene(scene_path)
+        )
         return self.upload_scene(scene, uploader_input)
 
     @staticmethod
@@ -94,13 +102,17 @@ class SceneUploader:
             images = [
                 ImagePaths(
                     Path(image.image_dir) / f"{frame_id}.{image.file_extension}",
-                    Path(image.calib_dir) / f"{frame_id}.txt" if image.calib_dir is not None else None,
+                    image.file_extension,
+                    Path(image.calib_dir) / f"{frame_id}.txt"
+                    if image.calib_dir is not None
+                    else None,
                     image.camera_view_setting,
                 )
                 for image in scene.images
             ]
             image_names = [
-                image.display_name if image.display_name else str(index) for index, image in enumerate(scene.images, 1)
+                image.display_name if image.display_name else str(index)
+                for index, image in enumerate(scene.images, 1)
             ]
             labels = [
                 LabelPaths(
@@ -147,7 +159,9 @@ class SceneUploader:
 
         result_dict: Dict[TaskId, List[Tuple[DataId, FilePaths]]] = {}
         for task_count, data_list in enumerate(chunked_by_tasks):
-            task_id = task_id_template.format(id_prefix=id_prefix, task_count=task_count)
+            task_id = task_id_template.format(
+                id_prefix=id_prefix, task_count=task_count
+            )
             result_dict[TaskId(task_id)] = data_list
 
         return result_dict
@@ -166,7 +180,9 @@ class SceneUploader:
         task = TaskApi(self._client, project, project_id)
 
         for task_id, data_id_and_pathss in task_to_data_dict.items():
-            input_data_id_list = [input_data_id for input_data_id, _ in data_id_and_pathss]
+            input_data_id_list = [
+                input_data_id for input_data_id, _ in data_id_and_pathss
+            ]
             task.put_task(task_id, input_data_id_list)
 
     def _label_to_cuboids(
@@ -189,7 +205,9 @@ class SceneUploader:
                         y=kitti_label.y,
                         z=kitti_label.z + (kitti_label.height / 2),
                     ),
-                    rotation=XYZ(x=0.0, y=0.0, z=kitti_label.yaw),  # このyawがそのままでいいのか不明
+                    rotation=XYZ(
+                        x=0.0, y=0.0, z=kitti_label.yaw
+                    ),  # このyawがそのままでいいのか不明
                     direction=CuboidDirection(
                         front=XYZ(direction[0], direction[1], direction[2]),
                         up=XYZ(0, 0, 1),
@@ -199,7 +217,9 @@ class SceneUploader:
 
         return [
             CuboidAnnotationDetailCreate(
-                annotation_id=label.annotation_id if label.annotation_id is not None else str(uuid.uuid4()),
+                annotation_id=label.annotation_id
+                if label.annotation_id is not None
+                else str(uuid.uuid4()),
                 label_id=label.type,
                 body=detail_data(label),
                 editor_props=AnnotationPropsForEditor(can_delete=True),
@@ -223,7 +243,9 @@ class SceneUploader:
                     for paths in pathss
                     for calib in [read_calibration(paths.calib)]
                     for labels in [KittiLabel.decode_path(paths.label)]
-                    for transformed_label in transform_labels_into_lidar_coordinates(labels, calib)
+                    for transformed_label in transform_labels_into_lidar_coordinates(
+                        labels, calib
+                    )
                 ]
                 cuboid_labels = self._label_to_cuboids(id_to_label, transformed_labels)
 
@@ -279,7 +301,9 @@ class SceneUploader:
         else:
             return await run()
 
-    async def upload_scene_async(self, scene: Scene, uploader_input: SceneUploaderInput) -> None:
+    async def upload_scene_async(
+        self, scene: Scene, uploader_input: SceneUploaderInput
+    ) -> None:
         logger.info("upload scene: %s", scene.to_json(indent=2, ensure_ascii=False))
 
         uploader = self._uploader
@@ -287,7 +311,9 @@ class SceneUploader:
         specs = self._project.get_annotation_specs(uploader_input.project_id)
         annofab_labels = specs.labels
         if annofab_labels is None:
-            raise RuntimeError(f"対象プロジェクト(={uploader_input.project_id})のラベル設定が存在しません")
+            raise RuntimeError(
+                f"対象プロジェクト(={uploader_input.project_id})のラベル設定が存在しません"
+            )
 
         logger.info("input-dataのアップロードを開始します")
         data_tasks = [
@@ -301,7 +327,10 @@ class SceneUploader:
             )
             for paths in pathss
         ]
-        input_ids = [DataId(input_data_id) for input_data_id, _ in await asyncio.gather(*data_tasks)]
+        input_ids = [
+            DataId(input_data_id)
+            for input_data_id, _ in await asyncio.gather(*data_tasks)
+        ]
         data_and_pathss = list(zip(input_ids, pathss))
         logger.info("%d件のデータをアップロードしました", len(data_and_pathss))
         if uploader_input.kind == UploadKind.DATA_ONLY:
@@ -320,7 +349,9 @@ class SceneUploader:
             return
 
         id_to_label: Dict[str, LabelV3] = {
-            anno_label.label_id: anno_label for anno_label in annofab_labels if anno_label.label_id is not None
+            anno_label.label_id: anno_label
+            for anno_label in annofab_labels
+            if anno_label.label_id is not None
         }
 
         annotation_tasks = [
@@ -331,7 +362,9 @@ class SceneUploader:
                 data_and_label_pathss,
             )
             for task_id, data_id_and_pathss in task_to_data_dict.items()
-            for data_and_label_pathss in [[(data_id, pathss.labels) for data_id, pathss in data_id_and_pathss]]
+            for data_and_label_pathss in [
+                [(data_id, pathss.labels) for data_id, pathss in data_id_and_pathss]
+            ]
         ]
 
         await asyncio.gather(*annotation_tasks)

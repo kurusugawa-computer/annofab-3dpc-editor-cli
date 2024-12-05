@@ -34,6 +34,7 @@ class FilePathsLoader:
                 images=[
                     ImagePaths(
                         image_dir / f"{frame_id}.png",
+                        "png",
                         calib_dir / f"{frame_id}.txt",
                         None,
                     )
@@ -67,13 +68,17 @@ class ScenePathsLoader:
             images = [
                 ImagePaths(
                     Path(image.image_dir) / f"{frame_id}.{image.file_extension}",
-                    Path(image.calib_dir) / f"{frame_id}.txt" if image.calib_dir is not None else None,
+                    image.file_extension,
+                    Path(image.calib_dir) / f"{frame_id}.txt"
+                    if image.calib_dir is not None
+                    else None,
                     image.camera_view_setting,
                 )
                 for image in scene.images
             ]
             image_names = [
-                image.display_name if image.display_name else str(index) for index, image in enumerate(scene.images, 1)
+                image.display_name if image.display_name else str(index)
+                for index, image in enumerate(scene.images, 1)
             ]
             return FilePaths(
                 FrameKey(None, frame_id),
