@@ -104,6 +104,16 @@ class Uploader(abc.ABC):
 
 class AnnofabStorageUploader(Uploader):
     def upload_tempdata(self, upload_file: Path, *, content_type: Optional[str] = None) -> str:
+        """
+        ファイルをAnnofabストレージ（AWS S3）にアップロードします。
+
+        Args:
+            upload_file: アップロードするファイル
+            content_type: アップロードするファイルのContent-Type。Noneの場合はファイル名から推測します。
+
+        Returns:
+            アップロードしたファイルのS3 URI
+        """
         client = self._client
 
         data_path_dict, _ = client.create_temp_path(self._project)
@@ -141,6 +151,16 @@ class S3Uploader(Uploader):
         return f"s3://{self._s3_bucket}/{key}"
 
     def upload_tempdata(self, upload_file: Path, *, content_type: Optional[str] = None) -> str:
+        """
+        ファイルをAWS S3にアップロードします。
+
+        Args:
+            upload_file: アップロードするファイル
+            content_type: アップロードするファイルのContent-Type。Noneの場合はファイル名から推測します。
+
+        Returns:
+            アップロードしたファイルのS3 URI
+        """
         client = self._s3_client
         key = self._s3_prefix_key + f"{upload_file.parent.name}/{upload_file.name}"
 
