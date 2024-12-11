@@ -174,7 +174,7 @@ def upload(
     sensor_height: Optional[float],
     pcd_format: PcdFormat,
 ) -> Tuple[str, List[SupplementaryData]]:
-    input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
+    input_data_id_prefix = f"{input_data_id_prefix}_" if input_data_id_prefix else ""
     input_data_id = uploader.upload_input_data(f"{input_data_id_prefix}{paths.key.id}", paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
@@ -239,7 +239,7 @@ def create_kitti_files(
     sensor_height: Optional[float],
     pcd_format: PcdFormat,
 ) -> InputData:
-    input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
+    input_data_id_prefix = f"{input_data_id_prefix}_" if input_data_id_prefix else ""
     input_data_id = f"{input_data_id_prefix}{paths.key.id}".format(input_data_id_prefix, paths.key.id)
     input_data_dir = parent_dir / paths.key.id
     if input_data_dir.exists():
