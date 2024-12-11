@@ -33,6 +33,7 @@ class SupplementaryData:
     data_id: str
     path: Path
     data_type: Literal["custom", "image", "text"]
+    content_type: Optional[str] = None
 
 
 def create_frame_meta(
@@ -53,7 +54,7 @@ def create_frame_meta(
     with file.open("w", encoding="UTF-8") as writer:
         writer.write(meta.to_json(ensure_ascii=False, indent=3))
 
-    return SupplementaryData(data_id, file, "text")
+    return SupplementaryData(data_id, file, "text", content_type="application/json")
 
 
 def _create_image_meta(
@@ -106,7 +107,7 @@ def _create_image_meta(
     with file.open("w", encoding="UTF-8") as writer:
         writer.write(meta.to_json(ensure_ascii=False, indent=3))
 
-    return SupplementaryData(data_id, file, "text")
+    return SupplementaryData(data_id, file, "text", content_type="application/json")
 
 
 def _create_dummy_image_meta(parent_dir: Path, input_data_id: str, number: int) -> SupplementaryData:
@@ -129,14 +130,16 @@ def _create_dummy_image_meta(parent_dir: Path, input_data_id: str, number: int) 
     with file.open("w", encoding="UTF-8") as writer:
         writer.write(meta.to_json(ensure_ascii=False, indent=3))
 
-    return SupplementaryData(data_id, file, "text")
+    return SupplementaryData(data_id, file, "text", content_type="application/json")
 
 
 def _upload_supplementaries(
     uploader: Uploader, input_data_id: str, supplementary_list: List[SupplementaryData]
 ) -> None:
     for supp in supplementary_list:
-        uploader.upload_supplementary(input_data_id, supp.data_id, supp.path, supp.data_type)
+        uploader.upload_supplementary(
+            input_data_id, supp.data_id, supp.path, supp.data_type, content_type=supp.content_type
+        )
 
 
 async def upload_async(
@@ -175,7 +178,9 @@ def upload(
     pcd_format: PcdFormat,
 ) -> Tuple[str, List[SupplementaryData]]:
     input_data_id_prefix = input_data_id_prefix + "_" if input_data_id_prefix else ""
-    input_data_id = uploader.upload_input_data(f"{input_data_id_prefix}{paths.key.id}", paths.pcd)
+    input_data_id = uploader.upload_input_data(
+        f"{input_data_id_prefix}{paths.key.id}", paths.pcd, content_type="application/octet-stream"
+    )
 
     with tempfile.TemporaryDirectory() as tempdir_str:
         tempdir = Path(tempdir_str)
