@@ -1,0 +1,21 @@
+target-version = "py39"
+line-length = 120
+
+[lint]
+select = [
+    "E", # Error
+    "F", # Pyflakes
+    "W", # Warning
+    "B",  # flake8-bugbear
+    "NPY", # NumPy-specific rules
+    "RUF", # Ruff-specific rules
+    "FURB" # refurb
+]
+
+ignore = [
+    "E501", # 一時的に無視する。TODO 後で修正して無視しないようにする。
+    "E731", # 一時的に無視する。TODO 後で修正して無視しないようにする。
+    "RUF001", # 全角記号など`ambiguous unicode character`も使いたいため
+    "RUF002",# 全角記号など`ambiguous unicode character`も使いたいため
+    "RUF003",# 全角記号など`ambiguous unicode character`も使いたいため
+]
