@@ -22,7 +22,7 @@ class DataPath:
 logger = getLogger(__name__)
 
 
-def get_content_type(upload_file: Path) -> str:
+def _get_content_type(upload_file: Path) -> str:
     """
     アップロードするファイルのContent-Typeを取得する。
     """
