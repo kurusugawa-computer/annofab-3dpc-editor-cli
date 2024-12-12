@@ -10,7 +10,8 @@ lint:
 	poetry run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
 
 format:
-	poetry run isort anno3d tests
+	# isortの替わりにruffを使っている
+	poetry run ruff check anno3d tests --select I --fix-only --exit-zero
 	poetry run black .
 
 test:

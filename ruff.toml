@@ -6,6 +6,7 @@ select = [
     "E", # Error
     "F", # Pyflakes
     "W", # Warning
+    "I", # isort
     "B",  # flake8-bugbear
     "NPY", # NumPy-specific rules
     "RUF", # Ruff-specific rules
