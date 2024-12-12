@@ -122,7 +122,7 @@ class AnnofabStorageUploader(Uploader):
         # XXX エラー処理とか例外処理とか何もないので注意
         with upload_file.open(mode="rb") as data:
             if content_type is None:
-                content_type = get_content_type(upload_file)
+                content_type = _get_content_type(upload_file)
             requests.put(data_path.url, data, headers={"Content-Type": content_type}, timeout=30)
 
         return data_path.path
@@ -166,7 +166,7 @@ class S3Uploader(Uploader):
 
         if self._force or not self.s3_key_exists(key):
             if content_type is None:
-                content_type = get_content_type(upload_file)
+                content_type = _get_content_type(upload_file)
             client.upload_file(
                 Filename=str(upload_file), Bucket=self._s3_bucket, Key=key, ExtraArgs={"ContentType": content_type}
             )
