@@ -151,5 +151,5 @@ def test_decode_scene_with_invalid_format():
   ]
 }"""
     comment_removed = "\n".join([re.sub("//.*", "", line) for line in json.split("\n")])
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         Scene.decode(Path("/root/"), comment_removed)
