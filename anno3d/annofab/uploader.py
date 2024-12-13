@@ -1,4 +1,5 @@
 import abc
+import mimetypes
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
@@ -19,6 +20,17 @@ class DataPath:
 
 
 logger = getLogger(__name__)
+
+
+def _get_content_type(upload_file: Path) -> str:
+    """
+    アップロードするファイルのContent-Typeを取得する。
+    """
+    content_type, _ = mimetypes.guess_type(upload_file)
+    if content_type is None:
+        # ファイル名から推測できない場合
+        return "application/octet-stream"
+    return content_type
 
 
 class Uploader(abc.ABC):
@@ -43,11 +55,11 @@ class Uploader(abc.ABC):
         return self._client_wrapper.get_input_data_or_none(self._project, input_data_id)
 
     @abc.abstractmethod
-    def upload_tempdata(self, upload_file: Path) -> str:
+    def upload_tempdata(self, upload_file: Path, *, content_type: Optional[str] = None) -> str:
         pass
 
-    def upload_input_data(self, input_data_id: str, file: Path) -> str:
-        path = self.upload_tempdata(file)
+    def upload_input_data(self, input_data_id: str, file: Path, *, content_type: Optional[str] = None) -> str:
+        path = self.upload_tempdata(file, content_type=content_type)
 
         data_id = input_data_id
         body = {"input_data_name": file.name, "input_data_path": path}
@@ -67,8 +79,10 @@ class Uploader(abc.ABC):
         supplementary_id: str,
         file: Path,
         supplementary_data_type: Literal["custom", "image", "text"],
+        *,
+        content_type: Optional[str] = None,
     ) -> str:
-        path = self.upload_tempdata(file)
+        path = self.upload_tempdata(file, content_type=content_type)
         body = {
             "supplementary_data_name": supplementary_id,
             "supplementary_data_path": path,
@@ -89,7 +103,17 @@ class Uploader(abc.ABC):
 
 
 class AnnofabStorageUploader(Uploader):
-    def upload_tempdata(self, upload_file: Path) -> str:
+    def upload_tempdata(self, upload_file: Path, *, content_type: Optional[str] = None) -> str:
+        """
+        ファイルをAnnofabストレージ（AWS S3）にアップロードします。
+
+        Args:
+            upload_file: アップロードするファイル
+            content_type: アップロードするファイルのContent-Type。Noneの場合はファイル名から推測します。
+
+        Returns:
+            アップロードしたファイルのS3 URI
+        """
         client = self._client
 
         data_path_dict, _ = client.create_temp_path(self._project)
@@ -97,7 +121,9 @@ class AnnofabStorageUploader(Uploader):
         data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
         # XXX エラー処理とか例外処理とか何もないので注意
         with upload_file.open(mode="rb") as data:
-            requests.put(data_path.url, data, headers={"Content-Type": "application/octet-stream"}, timeout=30)
+            if content_type is None:
+                content_type = _get_content_type(upload_file)
+            requests.put(data_path.url, data, headers={"Content-Type": content_type}, timeout=30)
 
         return data_path.path
 
@@ -124,13 +150,26 @@ class S3Uploader(Uploader):
     def get_s3_uri(self, key: str) -> str:
         return f"s3://{self._s3_bucket}/{key}"
 
-    def upload_tempdata(self, upload_file: Path) -> str:
+    def upload_tempdata(self, upload_file: Path, *, content_type: Optional[str] = None) -> str:
+        """
+        ファイルをAWS S3にアップロードします。
+
+        Args:
+            upload_file: アップロードするファイル
+            content_type: アップロードするファイルのContent-Type。Noneの場合はファイル名から推測します。
+
+        Returns:
+            アップロードしたファイルのS3 URI
+        """
         client = self._s3_client
         key = self._s3_prefix_key + f"{upload_file.parent.name}/{upload_file.name}"
 
         if self._force or not self.s3_key_exists(key):
-            client.upload_file(Filename=str(upload_file), Bucket=self._s3_bucket, Key=key)
-
+            if content_type is None:
+                content_type = _get_content_type(upload_file)
+            client.upload_file(
+                Filename=str(upload_file), Bucket=self._s3_bucket, Key=key, ExtraArgs={"ContentType": content_type}
+            )
             return self.get_s3_uri(key)
         else:
             raise RuntimeError(f"AWS S3にオブジェクトがすでに存在します。Bucket='{self._s3_bucket}', Key='{key}'")
