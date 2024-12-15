@@ -46,6 +46,7 @@ class KittiImageSeries(Series):
     image_dir: str
     calib_dir: Optional[str] = None
     camera_view_setting: Optional[CameraViewSettings] = None
+    display_name: Optional[str] = None
     type: str = "kitti_image"
     type_value: ClassVar[str] = "kitti_image"
     file_extension: str = "png"
@@ -154,7 +155,10 @@ class Scene(DataClassJsonMixin):
             velodyne=KittiVelodyneSeries(str(velo_dir.absolute())),
             images=[
                 KittiImageSeries(
-                    image_dir=str(image_dir.absolute()), calib_dir=str(calib_dir.absolute()), camera_view_setting=None
+                    image_dir=str(image_dir.absolute()),
+                    calib_dir=str(calib_dir.absolute()),
+                    camera_view_setting=None,
+                    display_name=None,
                 )
             ],
             labels=[KittiLabelSeries(str(label_dir.absolute()), str(image_dir.absolute()), str(calib_dir.absolute()))],
