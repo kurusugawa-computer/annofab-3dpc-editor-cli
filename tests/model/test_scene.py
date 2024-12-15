@@ -151,5 +151,5 @@ def test_decode_scene_with_invalid_format():
   ]
 }"""
     comment_removed = "\n".join([re.sub("//.*", "", line) for line in json.split("\n")])
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="kitti_velodyneのformatは.+である必要がありますが、hogehogeが指定されています"):
         Scene.decode(Path("/root/"), comment_removed)

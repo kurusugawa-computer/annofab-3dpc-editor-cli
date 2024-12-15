@@ -10,9 +10,8 @@ import boto3
 import fire
 
 from anno3d import __version__
-from anno3d.annofab.client import ClientLoader
+from anno3d.annofab.client import ClientLoader, IdPass, Pat
 from anno3d.annofab.client import Credential as AnnofabCredential
-from anno3d.annofab.client import IdPass, Pat
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 
 from dataclasses_json import DataClassJsonMixin
@@ -19,7 +19,7 @@ class ProjectMetadataVersion(DataClassJsonMixin):
 class ProjectMetadata(DataClassJsonMixin):
     annotation_area: AnnotationArea
     preset_cuboid_sizes: PresetCuboidSizes
-    version: ProjectMetadataVersion = ProjectMetadataVersion()
+    version: ProjectMetadataVersion = field(default_factory=ProjectMetadataVersion)
 
 
 def decode_project_meta_from_v0(data: Dict[str, str]) -> ProjectMetadata:  # pylint: disable=unused-argument
