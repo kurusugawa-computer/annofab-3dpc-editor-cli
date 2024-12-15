@@ -272,8 +272,6 @@ def create_kitti_files(
         pcd_format=pcd_format,
     )
 
-    print("image_id")
-
     images = [
         meta
         for i in range(0, len(paths.images))

@@ -85,7 +85,7 @@ class SceneUploader:
         if scene_path.is_dir():
             file = scene_path / Defaults.scene_meta_file
 
-        scene = Scene.decode_path(file) if file.exists() else Scene.default_scene(scene_path)
+        scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(scene_path)
         return self.upload_scene(scene, uploader_input)
 
     @staticmethod
