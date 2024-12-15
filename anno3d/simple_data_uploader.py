@@ -18,7 +18,7 @@ from anno3d.kitti.camera_horizontal_fov_provider import (
     create_camera_horizontal_fov_provider,
 )
 from anno3d.model.common import Vector3
-from anno3d.model.file_paths import FilePaths
+from anno3d.model.file_paths import FilePaths, filepaths_to_image_names
 from anno3d.model.frame import FrameMetaData, ImagesMetaData, PcdFormat, PointCloudMetaData
 from anno3d.model.image import ImageCamera, ImageCameraFov, ImageMeta
 from anno3d.model.input_files import InputData, InputDataBody, Supplementary, SupplementaryBody
@@ -185,13 +185,14 @@ def upload(
     input_data_id = uploader.upload_input_data(f"{input_data_id_prefix}{paths.key.id}", paths.pcd)
 
     with tempfile.TemporaryDirectory() as tempdir_str:
-        image_names = paths.image_names
-        # namesが無かったら作る
-        if len(paths.image_names) == 0:
-            image_names = [str(i) for i in range(1, len(paths.images) + len(dummy_images) + 1)]
-
         tempdir = Path(tempdir_str)
-        frame_meta = create_frame_meta(tempdir, input_data_id, image_names, sensor_height, pcd_format)
+        frame_meta = create_frame_meta(
+            tempdir,
+            input_data_id,
+            filepaths_to_image_names(paths, dummy_images),
+            sensor_height,
+            pcd_format,
+        )
         image_supps: List[SupplementaryData] = [
             meta
             for i in range(0, len(paths.images))
@@ -267,7 +268,7 @@ def create_kitti_files(
     frame_meta = create_frame_meta(
         input_data_dir,
         input_data_id,
-        image_names=paths.image_names,
+        image_names=filepaths_to_image_names(paths, []),
         sensor_height=sensor_height,
         pcd_format=pcd_format,
     )
