@@ -38,7 +38,6 @@ pylint = "^3.2"
 
 [tool.poetry.group.formatter.dependencies]
 black = "^22.6.0"
-isort = "^5.10.1"
 
 
 [tool.poetry.group.test.dependencies]
@@ -81,10 +80,6 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-include_trailing_comma = true
-line_length = 120
-multi_line_output = 3
 
 [tool.poetry.scripts]
 anno3d = "anno3d.app:main"
