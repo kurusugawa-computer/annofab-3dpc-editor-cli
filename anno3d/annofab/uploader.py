@@ -136,7 +136,10 @@ class S3Uploader(Uploader):
     def __init__(self, client: AnnofabApi, project: str, s3_path: str, force: bool = False):
         tmp = s3_path.split("/")
         self._s3_bucket = tmp[0]
-        self._s3_prefix_key = s3_path[len(self._s3_bucket + "/") :]
+        s3_prefix_key = s3_path[len(self._s3_bucket + "/") :]
+        if not s3_prefix_key.endswith("/"):
+            s3_prefix_key += "/"
+        self._s3_prefix_key = s3_prefix_key
         self._s3_client = boto3.client("s3")
         super().__init__(client=client, project=project, force=force)
 
