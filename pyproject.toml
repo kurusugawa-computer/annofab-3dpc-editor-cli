@@ -23,23 +23,48 @@ annofabapi = "^1"
 dataclasses-json = ">=0.5.7,<1"
 fire = ">=0.3.1,<1"
 more-itertools = "^8.5.0"
-numpy = "^1.23.0"
+
+numpy = ">=1.23, <3"
 scipy = "^1.9.0"
 boto3 = "^1.17.20"
 
-[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.linter.dependencies]
 ruff = "^0.8"
-pytest = "^7.1.2"
 mypy = "^1.11"
 flake8 = "^7.1"
+pylint = "^3.2"
+
+
+[tool.poetry.group.formatter.dependencies]
 black = "^22.6.0"
 isort = "^5.10.1"
-pylint = "^3.2"
-# document
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.1.2"
+
+
+[tool.poetry.group.documentation.dependencies]
 sphinx = "^5.1.1"
 pydata-sphinx-theme = "^0.9.0"
 types-requests = "^2.25.0"
 myst-parser = "^0.18.1"
+
+
+[tool.poetry.group.dev-only.dependencies]
+# 開発環境用のライブラリのバージョンを指定する必要がある場合に記載します。
+# このセクションで指定したバージョンは、wheelファイルには影響しません。
+
+# numpy 2.1以上でないと、Python 3.13用のwheelファイルがPyPIにないため、numpyのバージョンを指定する
+numpy = [
+    {version="^2.1", python=">=3.13"}
+]
+# scipy 1.14.1以上でないと、Python 3.13用のwheelファイルがPyPIにないため、scipyのバージョンを指定する
+scipy = [
+    {version="^1.14.1", python=">=3.13"}
+]
+
 
 [tool.black]
 line-length = 120
