@@ -592,7 +592,7 @@ class ProjectCommand:
     ) -> None:
         project = project_id
 
-        kitti_dir_path = Path(kitti_dir)
+        kitti_dir_path = Path(str(kitti_dir))
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
         client_loader = ClientLoader(annofab_credential, annofab_endpoint)
@@ -711,7 +711,7 @@ class ProjectCommand:
                 task_id_prefix=task_id_prefix,
                 kind=enum_upload_kind,
             )
-            scene_uploader.upload_from_path(Path(scene_path), uploader_input)
+            scene_uploader.upload_from_path(Path(str(scene_path)), uploader_input)
 
     @staticmethod
     def upload_scene_to_s3(
@@ -786,7 +786,7 @@ class ProjectCommand:
                 task_id_prefix=task_id_prefix,
                 kind=enum_upload_kind,
             )
-            uploader.upload_from_path(Path(scene_path), uploader_input)
+            uploader.upload_from_path(Path(str(scene_path)), uploader_input)
 
 
 class LocalCommand:
@@ -825,8 +825,8 @@ class LocalCommand:
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
         """
-        kitti_dir_path = Path(kitti_dir)
-        output_dir_path = Path(output_dir)
+        kitti_dir_path = Path(str(kitti_dir))
+        output_dir_path = Path(str(output_dir))
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
         pathss = loader.load(None)[skip : (skip + size)]
 
@@ -867,9 +867,9 @@ class LocalCommand:
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
         """
-        output_dir_path = Path(output_dir)
+        output_dir_path = Path(str(output_dir))
 
-        scene_path_ = Path(scene_path)
+        scene_path_ = Path(str(scene_path))
         file = scene_path_
         if scene_path_.is_dir():
             file = scene_path_ / Defaults.scene_meta_file
