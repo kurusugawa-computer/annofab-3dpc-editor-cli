@@ -875,9 +875,7 @@ class LocalCommand:
             file = scene_path_ / Defaults.scene_meta_file
 
         scene = Scene.decode_path(file) if file.is_file() else Scene.default_scene(scene_path_)
-        loader = ScenePathsLoader(scene, file.parent)
-        pathss = loader.load()
-
+        pathss = ScenePathsLoader(scene).load()
         inputs = [
             create_kitti_files(
                 input_data_id_prefix,
