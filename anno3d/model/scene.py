@@ -110,7 +110,9 @@ class Scene(DataClassJsonMixin):
         if velodyne is None:
             raise RuntimeError("sceneにkitti_velodyneが含まれていません")
         if velodyne.format not in ["xyzi", "xyzirgb"]:
-            raise RuntimeError(f"kitti_velodyneのformatはxyziかxyzirgbである必要がありますが、{velodyne.format}が指定されています")
+            raise RuntimeError(
+                f"kitti_velodyneのformatはxyziかxyzirgbである必要がありますが、{velodyne.format}が指定されています"
+            )
 
         def convert_path(path: str) -> str:
             return (scene_dir / path).as_posix()
