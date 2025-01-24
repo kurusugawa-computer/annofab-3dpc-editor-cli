@@ -9,8 +9,6 @@ from annofabapi.dataclass.annotation_specs import (
     InspectionPhrase,
     LabelV3,
 )
-from annofabapi.dataclass.job import ProjectJobInfo
-from annofabapi.dataclass.project import Project
 from annofabapi.models import AnnotationSpecsMovieOption
 from dataclasses_json import DataClassJsonMixin, config
 from marshmallow import fields
@@ -28,12 +26,6 @@ class Label(DataClassJsonMixin):
     )
     field_values: Dict[str, typing.Any]
     metadata: Dict[str, str]
-
-
-@dataclass
-class TaskGenerateResponse(DataClassJsonMixin):
-    project: Project
-    job: ProjectJobInfo
 
 
 @dataclass

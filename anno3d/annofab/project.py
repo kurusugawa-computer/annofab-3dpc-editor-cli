@@ -15,10 +15,8 @@ from annofabapi.dataclass.annotation_specs import (
     InternationalizationMessageMessages,
     LabelV3,
 )
-from annofabapi.dataclass.job import ProjectJobInfo
 from annofabapi.dataclass.project import Project
 from annofabapi.models import AdditionalDataDefinitionType, DefaultAnnotationType
-from more_itertools import first_true
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
@@ -302,10 +300,6 @@ class ProjectApi:
 
         return self._decode_project(result)
 
-    @staticmethod
-    def _decode_jobinfo(info: afm.ProjectJobInfo) -> ProjectJobInfo:
-        return ProjectJobInfo.from_dict(info)
-
     def create_custom_project(
         self,
         title: str,
@@ -494,14 +488,3 @@ class ProjectApi:
             project_id, ProjectModifiers.add_preset_cuboid_size(key_name, ja_name, en_name, width, height, depth, order)
         )
         return ProjectSpecifiers.metadata.get(new_spec)
-
-    def get_job(self, project_id: str, job: ProjectJobInfo) -> Optional[ProjectJobInfo]:
-        client = self._client
-        if job.job_type is None:
-            raise RuntimeError(f"ジョブ(={job.job_id})のjob_typeがありません")
-        params = {"type": job.job_type.value, "limit": "200"}
-        result, _ = client.get_project_job(project_id, params)
-        jobs: List[afm.ProjectJobInfo] = result["list"]
-        jobs2 = [self._decode_jobinfo(j) for j in jobs]
-
-        return first_true(jobs2, pred=lambda j: j.job_id == job.job_id)
