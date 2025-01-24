@@ -118,7 +118,7 @@ def get_annofab_credential(
 def validate_aws_credential() -> bool:
     if boto3.DEFAULT_SESSION is None:
         boto3.setup_default_session()
-    result = boto3.DEFAULT_SESSION.get_credentials() is not None  # type: ignore
+    result = boto3.DEFAULT_SESSION.get_credentials() is not None
     if not result:
         print(
             "AWSの認証情報が正しくないため、終了します。"
