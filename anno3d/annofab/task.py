@@ -2,8 +2,8 @@ from typing import Collection, List, Optional
 
 from annofabapi import AnnofabApi
 from annofabapi import models as afm
-from annofabapi.dataclass.task import Task
-from annofabapi.models import TaskStatus
+from annofabapi.pydantic_models.task import Task
+from annofabapi.pydantic_models.task_status import TaskStatus
 
 from anno3d.annofab.model import CuboidAnnotationDetailCreate, CuboidAnnotations
 
