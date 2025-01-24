@@ -15,8 +15,8 @@ from annofabapi.dataclass.annotation_specs import (
     InternationalizationMessageMessages,
     LabelV3,
 )
-from annofabapi.dataclass.project import Project
 from annofabapi.models import AdditionalDataDefinitionType, DefaultAnnotationType
+from annofabapi.pydantic_models.project import Project
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
