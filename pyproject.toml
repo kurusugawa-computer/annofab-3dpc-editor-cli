@@ -19,7 +19,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-annofabapi = "^1"
+annofabapi = "^1.2"
 dataclasses-json = ">=0.5.7,<1"
 fire = ">=0.3.1,<1"
 more-itertools = "^8.5.0"
