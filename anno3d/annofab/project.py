@@ -290,7 +290,9 @@ class ProjectApi:
 
     @staticmethod
     def _decode_project(project: afm.Project) -> Project:
-        return Project.from_dict(project)
+        result = Project.from_dict(project)
+        assert result is not None
+        return result
 
     def get_project(self, project_id) -> Optional[Project]:
         client = self._client

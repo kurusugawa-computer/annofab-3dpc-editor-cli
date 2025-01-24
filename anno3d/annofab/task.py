@@ -22,7 +22,9 @@ class TaskApi:
 
     @staticmethod
     def _decode_task(task: afm.Task) -> Task:
-        return Task.from_dict(task)
+        result = Task.from_dict(task)
+        assert result is not None
+        return result
 
     def get_task(self, task_id: str) -> Optional[Task]:
         client = self._client
