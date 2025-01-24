@@ -161,8 +161,7 @@ class SceneUploader:
         Notes:
             タスクは数件しか作成しないことを想定しているので、同期的に`putTask`APIを実行しています。
         """
-        project = self._project
-        task = TaskApi(self._client, project, project_id)
+        task = TaskApi(self._client, project_id)
 
         for task_id, data_id_and_pathss in task_to_data_dict.items():
             input_data_id_list = [input_data_id for input_data_id, _ in data_id_and_pathss]
@@ -324,7 +323,7 @@ class SceneUploader:
 
         annotation_tasks = [
             self._create_annotations(
-                TaskApi(self._client, self._project, uploader_input.project_id),
+                TaskApi(self._client, uploader_input.project_id),
                 id_to_label,
                 task_id,
                 data_and_label_pathss,
