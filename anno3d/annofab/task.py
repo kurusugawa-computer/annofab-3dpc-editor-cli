@@ -6,17 +6,14 @@ from annofabapi.dataclass.task import Task
 from annofabapi.models import TaskStatus
 
 from anno3d.annofab.model import CuboidAnnotationDetailCreate, CuboidAnnotations
-from anno3d.annofab.project import ProjectApi
 
 
 class TaskApi:
     _client: AnnofabApi
-    _project: ProjectApi
     _project_id: str
 
-    def __init__(self, client: AnnofabApi, project: ProjectApi, project_id: str):
+    def __init__(self, client: AnnofabApi, project_id: str):
         self._client = client
-        self._project = project
         self._project_id = project_id
 
     @property
