@@ -15,8 +15,8 @@ from annofabapi.dataclass.annotation_specs import (
     InternationalizationMessageMessages,
     LabelV3,
 )
-from annofabapi.dataclass.project import Project
 from annofabapi.models import AdditionalDataDefinitionType, DefaultAnnotationType
+from annofabapi.pydantic_models.project import Project
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
@@ -290,7 +290,9 @@ class ProjectApi:
 
     @staticmethod
     def _decode_project(project: afm.Project) -> Project:
-        return Project.from_dict(project)
+        result = Project.from_dict(project)
+        assert result is not None
+        return result
 
     def get_project(self, project_id) -> Optional[Project]:
         client = self._client
