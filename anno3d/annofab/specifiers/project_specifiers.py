@@ -27,7 +27,7 @@ class ProjectSpecifiers:
 
     @classmethod
     def label(cls, label_id: str) -> DataSpecifier[AS, Optional[LabelV3]]:
-        predicate: Callable[[LabelV3], bool] = lambda l: l.label_id == label_id  # noqa: E741
+        predicate: Callable[[LabelV3], bool] = lambda l: l.label_id == label_id  # noqa: E731, E741
         return cls.labels.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
 
     class Additionals:
@@ -43,7 +43,7 @@ class ProjectSpecifiers:
 
     @classmethod
     def additional(cls, additional_id: str) -> DataSpecifier[AS, Optional[AdditionalDataDefinitionV2]]:
-        predicate: Callable[[AdditionalDataDefinitionV2], bool] = (
+        predicate: Callable[[AdditionalDataDefinitionV2], bool] = (  # noqa: E731
             lambda additionals: additionals.additional_data_definition_id == additional_id
         )
 
