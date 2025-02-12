@@ -8,8 +8,7 @@ lint:
 	poetry run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
 
 format:
-	# isortの替わりにruffを使っている
-	poetry run ruff check anno3d tests --select I --fix-only --exit-zero
+	poetry run ruff check anno3d tests --fix-only --exit-zero
 	poetry run ruff format anno3d tests
 
 test:
