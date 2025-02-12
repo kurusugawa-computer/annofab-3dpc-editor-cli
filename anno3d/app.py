@@ -88,7 +88,7 @@ def get_annofab_credential(
     if cli_annofab_id is not None:
         if password is None:
             print(
-                "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
+                "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",  # noqa: E501
                 file=sys.stderr,
             )
             raise InvalidCredentialError("Annofabのパスワードが指定されていません。")
@@ -100,7 +100,7 @@ def get_annofab_credential(
     if env_annofab_user_id is not None:
         if password is None:
             print(
-                "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",
+                "Annofabのパスワードが指定されていないため、終了します。環境変数'ANNOFAB_PASSWORD' または コマンドライン引数 '--annofab_pass' にパスワードを指定してください。",  # noqa: E501
                 file=sys.stderr,
             )
             raise InvalidCredentialError("Annofabのパスワードが指定されていません。")
@@ -109,7 +109,7 @@ def get_annofab_credential(
     print(
         "AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていないため、終了します。"
         "ユーザーIDは環境変数'ANNOFAB_USER_ID' または コマンドライン引数 '--annofab_id' に指定してください。"
-        "パーソナルアクセストークンは環境変数'ANNOFAB_PAT' または コマンドライン引数 '--annofab_pat' に指定してください。",
+        "パーソナルアクセストークンは環境変数'ANNOFAB_PAT' または コマンドライン引数 '--annofab_pat' に指定してください。",  # noqa: E501
         file=sys.stderr,
     )
     raise InvalidCredentialError("AnnofabのユーザーIDまたはパーソナルアクセストークンが指定されていません。")
@@ -174,7 +174,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -221,7 +221,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -276,7 +276,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -287,7 +287,7 @@ class ProjectCommand:
 
         if segment_type not in (segment_type_semantic, segment_type_instance):
             raise RuntimeError(
-                f"segment_typeの値は、{segment_type_semantic} もしくは {segment_type_instance} でなければなりませんが、 {segment_type} でした"
+                f"segment_typeの値は、{segment_type_semantic} もしくは {segment_type_instance} でなければなりませんが、 {segment_type} でした"  # noqa: E501
             )
         safe_segment_type = cast(Literal["SEMANTIC", "INSTANCE"], segment_type)
         if layer < 0:
@@ -331,7 +331,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -367,7 +367,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -405,7 +405,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -454,7 +454,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -505,7 +505,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -556,7 +556,7 @@ class ProjectCommand:
             force: 入力データと補助データを上書きしてアップロードするかどうか。
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -685,7 +685,7 @@ class ProjectCommand:
 
         Returns:
 
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -757,7 +757,7 @@ class ProjectCommand:
             annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
-        """
+        """  # noqa: E501
         try:
             annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
         except InvalidCredentialError:
@@ -824,7 +824,7 @@ class LocalCommand:
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
-        """
+        """  # noqa: E501
         kitti_dir_path = Path(str(kitti_dir))
         output_dir_path = Path(str(output_dir))
         loader = FilePathsLoader(kitti_dir_path, kitti_dir_path, kitti_dir_path)
@@ -866,7 +866,7 @@ class LocalCommand:
             sensor_height: 点群のセンサ(velodyne)の設置高。単位は点群の単位系（=kittiであれば[m]）
                            3dpc-editorは、この値を元に地面の高さを仮定する。 指定が無い場合はkittiのvelodyneの設置高を採用する
         Returns:
-        """
+        """  # noqa: E501
         output_dir_path = Path(str(output_dir))
 
         scene_path_ = Path(str(scene_path))

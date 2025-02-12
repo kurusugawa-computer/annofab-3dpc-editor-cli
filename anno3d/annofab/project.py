@@ -187,7 +187,7 @@ class ProjectModifiers:
                     lang_ja,
                 ),
                 keybind=[],
-                # 拡張仕様プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま
+                # 拡張仕様プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま  # noqa: E501
                 annotation_type=DefaultAnnotationType.CUSTOM.value,
                 field_values={},
                 additional_data_definitions=[],
@@ -404,7 +404,7 @@ class ProjectApi:
 
         Returns:
 
-        """
+        """  # noqa: E501
         modifiers = self._project_modifiers(project_id)
         if segment_kind == "SEMANTIC":
             mod_specs_f = modifiers.put_semantic_segment_label

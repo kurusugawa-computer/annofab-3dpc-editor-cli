@@ -171,7 +171,7 @@ class SceneUploader:
         self, id_to_label: Dict[str, LabelV3], labels: List[KittiLabel]
     ) -> List[CuboidAnnotationDetailCreate]:
         def detail_data(kitti_label: KittiLabel) -> CuboidAnnotationDetailBody:
-            # directionはrotationから計算可能で、且つ3dpc-editorでの読み込みには利用していないが、エディタで編集されない場合があるので、計算しておく
+            # directionはrotationから計算可能で、且つ3dpc-editorでの読み込みには利用していないが、エディタで編集されない場合があるので、計算しておく  # noqa: E501
             rotation = Rotation.from_euler("xyz", np.array([0.0, 0.0, kitti_label.yaw]))
             direction = rotation.apply(np.array([1.0, 0.0, 0.0]))
 

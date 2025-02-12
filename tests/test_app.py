@@ -92,7 +92,7 @@ class Test_get_annofab_credential:
         assert credential.user_id == "cli_user_id"
         assert credential.password == "env_password"
 
-    def test_コマンドライン引数でユーザーIDが指定されている状態でパスワードが指定されないとInvalidCredentialErrorがraiseされる(
+    def test_コマンドライン引数でユーザーIDが指定されている状態でパスワードが指定されないとInvalidCredentialErrorがraiseされる(  # noqa: E501
         self,
     ):
         with pytest.raises(InvalidCredentialError):
