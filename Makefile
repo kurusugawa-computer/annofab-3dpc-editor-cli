@@ -3,6 +3,7 @@
 ONLY=""
 
 lint:
+	poetry run ruff format --check anno3d tests
 	poetry run ruff check anno3d tests
 	poetry run mypy anno3d tests
 	poetry run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
