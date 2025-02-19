@@ -187,7 +187,7 @@ class ProjectModifiers:
                     lang_ja,
                 ),
                 keybind=[],
-                # 拡張仕様プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま
+                # 拡張仕様プラグインを使っている場合annotation_typeはmod_label_infoで上書きされるはず。 そうでなければそのまま  # noqa: E501
                 annotation_type=DefaultAnnotationType.CUSTOM.value,
                 field_values={},
                 additional_data_definitions=[],
@@ -346,7 +346,9 @@ class ProjectApi:
 
         project, response = client.put_project(project_id, request_body=body)
         if response.status_code != 200:
-            raise RuntimeError(f"Project新規作成時のhttp status codeは200ですが、{response.status_code}が返されました。")
+            raise RuntimeError(
+                f"Project新規作成時のhttp status codeは200ですが、{response.status_code}が返されました。"
+            )
 
         created_id: str = project["project_id"]
         return created_id
@@ -402,7 +404,7 @@ class ProjectApi:
 
         Returns:
 
-        """
+        """  # noqa: E501
         modifiers = self._project_modifiers(project_id)
         if segment_kind == "SEMANTIC":
             mod_specs_f = modifiers.put_semantic_segment_label
@@ -410,7 +412,10 @@ class ProjectApi:
             mod_specs_f = modifiers.put_instance_segment_label
 
         if default_ignore is not None and modifiers.extended_specs_plugin_version is not None:
-            logger.warning("default_ignore(=%s)が指定されていますが、拡張仕様プラグインを利用したプロジェクトが対象であるため、無視します。", default_ignore)
+            logger.warning(
+                "default_ignore(=%s)が指定されていますが、拡張仕様プラグインを利用したプロジェクトが対象であるため、無視します。",
+                default_ignore,
+            )
 
         mod_specs = mod_specs_f(
             en_name=en_name,

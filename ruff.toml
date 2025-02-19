@@ -14,8 +14,6 @@ select = [
 ]
 
 ignore = [
-    "E501", # 一時的に無視する。TODO 後で修正して無視しないようにする。
-    "E731", # 一時的に無視する。TODO 後で修正して無視しないようにする。
     "RUF001", # 全角記号など`ambiguous unicode character`も使いたいため
     "RUF002",# 全角記号など`ambiguous unicode character`も使いたいため
     "RUF003",# 全角記号など`ambiguous unicode character`も使いたいため

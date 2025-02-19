@@ -20,8 +20,7 @@ class ValueProvider(Generic[A]):
         return OrElseValueProvider(self, that)
 
     @abstractmethod
-    def value_opt(self) -> Optional[A]:
-        ...
+    def value_opt(self) -> Optional[A]: ...
 
 
 class OrElseValueProvider(ValueProvider[A]):

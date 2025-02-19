@@ -60,7 +60,7 @@ def test_decode_scene():
   ],
   // これ以外の項目はoptionとする．有ろうが無かろうが，3DPCE側は気にしない．
   "dummy": "value"
-}"""
+}"""  # noqa: E501
     comment_removed = "\n".join([re.sub("//.*", "", line) for line in json.split("\n")])
     scene = Scene.decode(Path("/root/"), comment_removed)
     assert len(scene.id_list) == 2

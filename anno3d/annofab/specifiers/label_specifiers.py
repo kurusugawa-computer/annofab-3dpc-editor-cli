@@ -96,7 +96,7 @@ class LabelSpecifiers(ABC):
         return self._additionals
 
     def additional(self, additional_id: str) -> DataSpecifier[LabelV3, Optional[str]]:
-        predicate: Callable[[str], bool] = lambda additional: additional == additional_id
+        predicate: Callable[[str], bool] = lambda additional: additional == additional_id  # noqa: E731
         return self.additionals.zoom(GenList.gen_zoom_in(predicate), GenList.gen_zoom_out(predicate))
 
     @property

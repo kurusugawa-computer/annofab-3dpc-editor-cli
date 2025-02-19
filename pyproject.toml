@@ -17,6 +17,8 @@ packages = [
     { include = "anno3d" }
 ]
 
+requires-poetry = ">=2.0"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 annofabapi = "^1.2"
@@ -32,12 +34,7 @@ boto3 = "^1.17.20"
 [tool.poetry.group.linter.dependencies]
 ruff = "^0.8"
 mypy = "^1.11"
-flake8 = "^7.1"
 pylint = "^3.2"
-
-
-[tool.poetry.group.formatter.dependencies]
-black = "^22.6.0"
 
 
 [tool.poetry.group.test.dependencies]
@@ -65,22 +62,6 @@ scipy = [
 ]
 
 
-[tool.black]
-line-length = 120
-exclude = '''
-(
-    migrations
-    | .mypy_cache
-    | .pytest_cache
-    | venv
-    | dist
-    | .git
-    | .idea
-    | .devcontainer
-)
-'''
-
-
 [tool.poetry.scripts]
 anno3d = "anno3d.app:main"
 
@@ -89,5 +70,5 @@ enable = true
 
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+requires = ["poetry-core>=2.0", "poetry-dynamic-versioning>=1.7.0,<2.0.0"]
 build-backend = "poetry_dynamic_versioning.backend"
