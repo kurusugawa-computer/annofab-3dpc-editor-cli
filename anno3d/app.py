@@ -33,7 +33,9 @@ def _decode_enum(enum: Type[E], value: Any) -> E:
         if e.value == value:
             return e
 
-    raise ValueError(f"{value}は有効な、{enum.__name__}型の値ではありません")
+    raise ValueError(
+        f"{value} は有効な {enum.__name__} 型の値ではありません。有効な値は以下の通りです: {[e.value for e in enum]}"
+    )
 
 
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
