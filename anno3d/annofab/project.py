@@ -538,7 +538,7 @@ class ProjectApi:
         self, project_id: str, mod_func: Callable[[ProjectExtraData3dV1], ProjectExtraData3dV1]
     ) -> ProjectExtraData3dV1:
         def mod(value_dict: dict[str, Any]) -> dict[str, Any]:
-            value = ProjectExtraData3dV1.from_dict(value_dict)
+            value = ProjectExtraData3dV1.from_dict_safe(value_dict)
             return mod_func(value).to_dict()
 
         extra_data = self._mod_project_extra_data(project_id, project_extra_data_3d_kind_id, mod)

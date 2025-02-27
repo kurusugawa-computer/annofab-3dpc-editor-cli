@@ -1,7 +1,7 @@
 import typing
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from annofabapi.dataclass.annotation_specs import (
     AdditionalDataDefinitionV2,
@@ -246,4 +246,14 @@ class ThumbnailSettings(DataClassJsonMixin):
 @dataclass
 class ProjectExtraData3dV1(DataClassJsonMixin):
     thumbnail: ThumbnailSettings
-    version: str = "1"
+    version: Literal["1"] = "1"
+
+    @classmethod
+    def from_dict_safe(cls, obj: dict) -> "ProjectExtraData3dV1":
+        """from_dict + versionチェック"""
+
+        version = obj.get("version")
+        if version == "1":
+            return cls.from_dict(obj)
+        else:
+            raise ValueError(f"Unexpected ProjectExtraData3d.version: {version}")
