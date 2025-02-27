@@ -545,16 +545,14 @@ class ProjectCommand:
             annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
                               環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
             project_id: 対象プロジェクト
-            image_selection: サムネイル生成に使用する画像の選択方法。 "visibility" または "first_intersect" を指定する。
-                            "visibility"の場合、カメラの視点から最も見える画像が選択される。
-                            "first_intersect"の場合、最初にカメラと交差する画像が選択される。
-                            指定しない場合は "visibility"
-            direction: バウンディングボックスの姿勢表示方法。"none" / "front" / "floor" / "all" のいずれかを指定する。
-                        "none"の場合、バウンディングボックスの姿勢を表示しない。
-                        "front"の場合、バウンディングボックスの前方にマーカーを表示する。
-                        "floor"の場合、バウンディングボックスの底面にマーカーを表示する。
-                        "all"の場合、バウンディングボックスの前方と底面にマーカーを表示する。
-                        指定しない場合は "all"
+            image_selection: サムネイルの背景に使用する画像の選択方法。省略した場合は "visibility" になります。 //
+                            visibility => 最もアノテーションの視認性が高いと判断したものを使用する //
+                            first_intersect => 最初にアノテーションが重畳できた画像を使用する
+            direction: バウンディングボックスの姿勢表示方法。省略した場合は "all" になります。 //
+                        none => バウンディングボックスの姿勢を表示しない //
+                        front => バウンディングボックスの前方にマーカーを表示する //
+                        floor => バウンディングボックスの底面にマーカーを表示する //
+                        all => バウンディングボックスの前方と底面にマーカーを表示する
 
         Returns:
 
