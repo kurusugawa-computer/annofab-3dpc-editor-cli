@@ -508,9 +508,7 @@ class ProjectApi:
         )
         return ProjectSpecifiers.metadata.get(new_spec)
 
-    def _mod_project_extra_data(
-        self, project_id: str, kind_id: str, mod_func: Callable[[dict[str, Any]], dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _mod_project_extra_data(self, project_id: str, kind_id: str, mod_func: Callable[[Optional[Any]], Any]) -> Any:
         client = self._client
 
         kinds_list, _ = client.get_project_extra_data_kinds(project_id)
@@ -527,10 +525,13 @@ class ProjectApi:
         extra_data = ProjectExtraData.from_dict(extra_data_dict)
         assert extra_data is not None
         extra_data_value = extra_data.value.actual_instance
-        assert isinstance(extra_data_value, (ProjectExtraDataValueDefault, ProjectExtraDataValueSaved))
-        assert isinstance(extra_data_value.value, dict)
+        old_value = (
+            extra_data_value.value
+            if isinstance(extra_data_value, (ProjectExtraDataValueDefault, ProjectExtraDataValueSaved))
+            else None
+        )
 
-        new_value = mod_func(extra_data_value.value)
+        new_value = mod_func(old_value)
 
         body = PutProjectExtraDataBody(
             value=new_value,
@@ -543,17 +544,18 @@ class ProjectApi:
         assert extra_data is not None
         extra_data_value = extra_data.value.actual_instance
         assert isinstance(extra_data_value, ProjectExtraDataValueSaved)
-        assert isinstance(extra_data_value.value, dict)
         return extra_data_value.value
 
     def _mod_project_extra_data_3d(
         self, project_id: str, mod_func: Callable[[ProjectExtraData3dV1], ProjectExtraData3dV1]
     ) -> ProjectExtraData3dV1:
-        def mod(value_dict: dict[str, Any]) -> dict[str, Any]:
-            value = ProjectExtraData3dV1.from_dict_safe(value_dict)
+        def mod(value: Optional[Any]) -> Any:
+            assert isinstance(value, dict)
+            value = ProjectExtraData3dV1.from_dict_safe(value)
             return mod_func(value).to_dict()
 
         extra_data = self._mod_project_extra_data(project_id, project_extra_data_3d_kind_id, mod)
+        assert isinstance(extra_data, dict)
         return ProjectExtraData3dV1.from_dict(extra_data)
 
     def enable_thumbnail_generation(
