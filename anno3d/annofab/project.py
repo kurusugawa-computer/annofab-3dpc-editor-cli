@@ -18,9 +18,11 @@ from annofabapi.dataclass.annotation_specs import (
 from annofabapi.dataclass.project import Project
 from annofabapi.models import AdditionalDataDefinitionType, DefaultAnnotationType
 from annofabapi.pydantic_models.project_extra_data import ProjectExtraData
+from annofabapi.pydantic_models.project_extra_data_kind import ProjectExtraDataKind, ProjectExtraDataKindScope
 from annofabapi.pydantic_models.project_extra_data_value_default import ProjectExtraDataValueDefault
 from annofabapi.pydantic_models.project_extra_data_value_saved import ProjectExtraDataValueSaved
 from annofabapi.pydantic_models.put_project_extra_data_body import PutProjectExtraDataBody
+from more_itertools import first_true
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
@@ -510,6 +512,16 @@ class ProjectApi:
         self, project_id: str, kind_id: str, mod_func: Callable[[dict[str, Any]], dict[str, Any]]
     ) -> dict[str, Any]:
         client = self._client
+
+        kinds_list, _ = client.get_project_extra_data_kinds(project_id)
+        kinds = [ProjectExtraDataKind.from_dict(kinds_list) for kinds_list in kinds_list]
+        kind = first_true(kinds, None, lambda k: k and k.id == kind_id)
+        if kind is None:
+            raise ValueError(
+                "必要なProjectExtraDataを利用できません。プロジェクトが3Dエディタ用に設定されていない可能性があります。"
+                + f" project_id={project_id} kind_id={kind_id}"
+            )
+        assert kind.scope in [ProjectExtraDataKindScope.PROJECT, ProjectExtraDataKindScope.BOTH]
 
         extra_data_dict, _ = client.get_project_extra_data(project_id, kind_id)
         extra_data = ProjectExtraData.from_dict(extra_data_dict)
