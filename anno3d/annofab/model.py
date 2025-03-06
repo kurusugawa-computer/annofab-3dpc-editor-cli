@@ -1,6 +1,7 @@
 import typing
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
+from enum import Enum
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from annofabapi.dataclass.annotation_specs import (
     AdditionalDataDefinitionV2,
@@ -215,3 +216,44 @@ class AnnotationSpecsRequestV3(DataClassJsonMixin):
             option=specs.option,
             metadata=specs.metadata,
         )
+
+
+class ImageSelection(Enum):
+    VISIBILITY = "visibility"
+    FIRST_INTERSECT = "first_intersect"
+
+
+class DirectionAppearance(Enum):
+    NONE = "none"
+    FRONT = "front"
+    FLOOR = "floor"
+    ALL = "all"
+
+
+@dataclass
+class ThumbnailSettings(DataClassJsonMixin):
+    enabled: bool
+    image_selection: ImageSelection = field(
+        default=ImageSelection.VISIBILITY,
+        metadata=config(mm_field=fields.Str(), encoder=lambda x: x.value, decoder=ImageSelection),
+    )
+    direction: DirectionAppearance = field(
+        default=DirectionAppearance.ALL,
+        metadata=config(mm_field=fields.Str(), encoder=lambda x: x.value, decoder=DirectionAppearance),
+    )
+
+
+@dataclass
+class ProjectExtraData3dV1(DataClassJsonMixin):
+    thumbnail: ThumbnailSettings
+    version: Literal["1"] = "1"
+
+    @classmethod
+    def from_dict_safe(cls, obj: dict) -> "ProjectExtraData3dV1":
+        """from_dict + versionチェック"""
+
+        version = obj.get("version")
+        if version == "1":
+            return cls.from_dict(obj)
+        else:
+            raise ValueError(f"Unexpected ProjectExtraData3d.version: {version}")

@@ -14,14 +14,14 @@ files = [
 
 [[package]]
 name = "annofabapi"
-version = "1.2.1"
+version = "1.3.0"
 description = "Python Clinet Library of Annofab WebAPI (https://annofab.com/docs/api/)"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "annofabapi-1.2.1-py3-none-any.whl", hash = "sha256:85752a38485d6f975e48e6211a9c68b0222ffcb9997c0b01b3d3fdd56a64a1e3"},
-    {file = "annofabapi-1.2.1.tar.gz", hash = "sha256:050c95ca258a9d13ce9fed569d492031a879f2063b77d18f5cabd474d453cc7f"},
+    {file = "annofabapi-1.3.0-py3-none-any.whl", hash = "sha256:c9c137224b639148c32ae8d67e3eee489091ce50ac0aeb6df58408a6ab6bf049"},
+    {file = "annofabapi-1.3.0.tar.gz", hash = "sha256:c9133a93b8bcb30f7331ba70f53629a2d70e43efa2adeb5d266bddef6c940ddb"},
 ]
 
 [package.dependencies]
@@ -1756,4 +1756,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9"
-content-hash = "6f7df72e46af54fd277a3fc19473a848ee405842f533c58eccaa5017cf57ef27"
+content-hash = "79899d68a46d50fabb9feb02f3fd7db4335dc8eb3ec1b7d3651e4c04a46acaaa"

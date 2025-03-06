@@ -17,6 +17,12 @@ from annofabapi.dataclass.annotation_specs import (
 )
 from annofabapi.dataclass.project import Project
 from annofabapi.models import AdditionalDataDefinitionType, DefaultAnnotationType
+from annofabapi.pydantic_models.project_extra_data import ProjectExtraData
+from annofabapi.pydantic_models.project_extra_data_kind import ProjectExtraDataKind, ProjectExtraDataKindScope
+from annofabapi.pydantic_models.project_extra_data_value_default import ProjectExtraDataValueDefault
+from annofabapi.pydantic_models.project_extra_data_value_saved import ProjectExtraDataValueSaved
+from annofabapi.pydantic_models.put_project_extra_data_body import PutProjectExtraDataBody
+from more_itertools import first_true
 
 from anno3d.annofab.constant import (
     IgnoreAdditionalDef,
@@ -26,8 +32,16 @@ from anno3d.annofab.constant import (
     default_non_ignore_additional,
     lang_en,
     lang_ja,
+    project_extra_data_3d_kind_id,
 )
-from anno3d.annofab.model import AnnotationSpecsRequestV3, Label
+from anno3d.annofab.model import (
+    AnnotationSpecsRequestV3,
+    DirectionAppearance,
+    ImageSelection,
+    Label,
+    ProjectExtraData3dV1,
+    ThumbnailSettings,
+)
 from anno3d.annofab.specifiers.extended_specs_label_specifiers_v1 import ExtendedSpecsLabelSpecifiersV1
 from anno3d.annofab.specifiers.label_specifiers import LabelSpecifiers
 from anno3d.annofab.specifiers.metadata_label_specifiers import MetadataLabelSpecifiers
@@ -493,3 +507,66 @@ class ProjectApi:
             project_id, ProjectModifiers.add_preset_cuboid_size(key_name, ja_name, en_name, width, height, depth, order)
         )
         return ProjectSpecifiers.metadata.get(new_spec)
+
+    def _mod_project_extra_data(self, project_id: str, kind_id: str, mod_func: Callable[[Optional[Any]], Any]) -> Any:
+        client = self._client
+
+        kinds_list, _ = client.get_project_extra_data_kinds(project_id)
+        kinds = [ProjectExtraDataKind.from_dict(kinds_list) for kinds_list in kinds_list]
+        kind = first_true(kinds, None, lambda k: k and k.id == kind_id)
+        if kind is None:
+            raise ValueError(
+                "必要なProjectExtraDataを利用できません。プロジェクトが3Dエディタ用に設定されていない可能性があります。"
+                + f" project_id={project_id} kind_id={kind_id}"
+            )
+        assert kind.scope in [ProjectExtraDataKindScope.PROJECT, ProjectExtraDataKindScope.BOTH]
+
+        extra_data_dict, _ = client.get_project_extra_data(project_id, kind_id)
+        extra_data = ProjectExtraData.from_dict(extra_data_dict)
+        assert extra_data is not None
+        extra_data_value = extra_data.value.actual_instance
+        old_value = (
+            extra_data_value.value
+            if isinstance(extra_data_value, (ProjectExtraDataValueDefault, ProjectExtraDataValueSaved))
+            else None
+        )
+
+        new_value = mod_func(old_value)
+
+        body = PutProjectExtraDataBody(
+            value=new_value,
+            last_updated_datetime=extra_data_value.updated_datetime
+            if isinstance(extra_data_value, ProjectExtraDataValueSaved)
+            else None,
+        ).to_json()
+        extra_data_dict, _ = client.put_project_extra_data(project_id, kind_id, request_body=body)
+        extra_data = ProjectExtraData.from_dict(extra_data_dict)
+        assert extra_data is not None
+        extra_data_value = extra_data.value.actual_instance
+        assert isinstance(extra_data_value, ProjectExtraDataValueSaved)
+        return extra_data_value.value
+
+    def _mod_project_extra_data_3d(
+        self, project_id: str, mod_func: Callable[[ProjectExtraData3dV1], ProjectExtraData3dV1]
+    ) -> ProjectExtraData3dV1:
+        def mod(value: Optional[Any]) -> Any:
+            assert isinstance(value, dict)
+            value = ProjectExtraData3dV1.from_dict_safe(value)
+            return mod_func(value).to_dict()
+
+        extra_data = self._mod_project_extra_data(project_id, project_extra_data_3d_kind_id, mod)
+        assert isinstance(extra_data, dict)
+        return ProjectExtraData3dV1.from_dict(extra_data)
+
+    def enable_thumbnail_generation(
+        self, project_id: str, image_selection: ImageSelection, direction: DirectionAppearance
+    ) -> ThumbnailSettings:
+        thumbnail = ThumbnailSettings(enabled=True, image_selection=image_selection, direction=direction)
+        new_settings = self._mod_project_extra_data_3d(project_id, lambda data: replace(data, thumbnail=thumbnail))
+        return new_settings.thumbnail
+
+    def disable_thumbnail_generation(self, project_id: str) -> ThumbnailSettings:
+        new_settings = self._mod_project_extra_data_3d(
+            project_id, lambda data: replace(data, thumbnail=ThumbnailSettings(enabled=False))
+        )
+        return new_settings.thumbnail

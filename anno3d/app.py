@@ -13,6 +13,7 @@ from anno3d import __version__
 from anno3d.annofab.client import ClientLoader, IdPass, Pat
 from anno3d.annofab.client import Credential as AnnofabCredential
 from anno3d.annofab.constant import segment_type_instance, segment_type_semantic
+from anno3d.annofab.model import DirectionAppearance, ImageSelection
 from anno3d.annofab.project import Label, ProjectApi
 from anno3d.annofab.uploader import AnnofabStorageUploader, S3Uploader
 from anno3d.file_paths_loader import FilePathsLoader, ScenePathsLoader
@@ -33,7 +34,9 @@ def _decode_enum(enum: Type[E], value: Any) -> E:
         if e.value == value:
             return e
 
-    raise ValueError(f"{value}は有効な、{enum.__name__}型の値ではありません")
+    raise ValueError(
+        f"{value} は有効な {enum.__name__} 型の値ではありません。有効な値は以下の通りです: {[e.value for e in enum]}"
+    )
 
 
 def add_stdout_handler(target: logging.Logger, level: int = logging.INFO):
@@ -521,6 +524,90 @@ class ProjectCommand:
             )
             logger.info("メタデータを更新しました。")
             logger.info(new_meta.to_json(ensure_ascii=False, indent=2))
+
+    @staticmethod
+    def enable_thumbnail_generation(
+        project_id: str,
+        image_selection: Optional[Literal["visibility", "first_intersect"]] = "visibility",
+        direction: Optional[Literal["none", "front", "floor", "all"]] = "all",
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
+    ) -> None:
+        """
+        対象プロジェクトでサムネイル生成を有効にします。
+
+        Args:
+            annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
+            project_id: 対象プロジェクト
+            image_selection: サムネイルの背景に使用する画像の選択方法。省略した場合は "visibility" になります。 //
+                            visibility => 最もアノテーションの視認性が高いと判断したものを使用する //
+                            first_intersect => 最初にアノテーションが重畳できた画像を使用する
+            direction: バウンディングボックスの姿勢表示方法。省略した場合は "all" になります。 //
+                        none => バウンディングボックスの姿勢を表示しない //
+                        front => バウンディングボックスの前方にマーカーを表示する //
+                        floor => バウンディングボックスの底面にマーカーを表示する //
+                        all => バウンディングボックスの前方と底面にマーカーを表示する
+
+        Returns:
+
+        """  # noqa: E501
+
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
+            return
+
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
+
+        with client_loader.open_api() as api:
+            new_settings = ProjectApi(api).enable_thumbnail_generation(
+                project_id=project_id,
+                image_selection=_decode_enum(ImageSelection, image_selection),
+                direction=_decode_enum(DirectionAppearance, direction),
+            )
+            logger.info("設定を更新しました。")
+            logger.info(new_settings.to_json(ensure_ascii=False, indent=2))
+
+    @staticmethod
+    def disable_thumbnail_generation(
+        project_id: str,
+        annofab_id: Optional[str] = None,
+        annofab_pass: Optional[str] = None,
+        annofab_pat: Optional[str] = None,
+        annofab_endpoint: Optional[str] = env_annofab_endpoint,
+    ) -> None:
+        """
+        対象プロジェクトでサムネイル生成を無効にします。
+
+        Args:
+            annofab_id: AnnofabのユーザID。指定が無い場合は環境変数`ANNOFAB_USER_ID`の値を採用する
+            annofab_pass: Annofabのパスワード。指定が無い場合は環境変数`ANNOFAB_PASSWORD`の値を採用する
+            annofab_pat: Annofabのパーソナルアクセストークン。指定が無い場合は環境変数`ANNOFAB_PAT`の値を採用する
+            annofab_endpoint: AnnofabのAPIアクセス先エンドポイントを指定します。 省略した場合は環境変数`ANNOFAB_ENDPOINT`の値を利用します。\
+                              環境変数も指定されていない場合、デフォルトのエンドポイント（https://annofab.com）を利用します
+            project_id: 対象プロジェクト
+
+        Returns:
+
+        """  # noqa: E501
+
+        try:
+            annofab_credential = get_annofab_credential(annofab_id, annofab_pass, annofab_pat)
+        except InvalidCredentialError:
+            return
+
+        client_loader = ClientLoader(annofab_credential, annofab_endpoint)
+
+        with client_loader.open_api() as api:
+            new_settings = ProjectApi(api).disable_thumbnail_generation(project_id)
+            logger.info("設定を更新しました。")
+            logger.info(new_settings.to_json(ensure_ascii=False, indent=2))
 
     @staticmethod
     def upload_kitti_data(
