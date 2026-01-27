@@ -123,7 +123,7 @@ class AnnofabStorageUploader(Uploader):
         with upload_file.open(mode="rb") as data:
             if content_type is None:
                 content_type = _get_content_type(upload_file)
-            requests.put(data_path.url, data, headers={"Content-Type": content_type}, timeout=None)
+            requests.put(data_path.url, data, headers={"Content-Type": content_type}, timeout=300)
 
         return data_path.path
 
