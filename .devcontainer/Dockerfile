@@ -56,22 +56,17 @@ RUN set -x \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Python / pip
-RUN ln -s $(which python3.12) /usr/bin/python
-RUN curl -sSL https://bootstrap.pypa.io/get-pip.py | python -
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PIP_DEFAULT_TIMEOUT=100 \
-    PIP_NO_CACHE_DIR=on \
-    PIP_DISABLE_PIP_VERSION_CHECK=on
-
-# poetry
-RUN set -x \
-    && python -m pip install "poetry<2.2"
-
 # Add user / Grant sudo privileges
 RUN useradd -m -s /bin/bash -u 5000 -U vscode \
     && echo "vscode ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/ALL
 
 USER vscode
 
-RUN poetry config virtualenvs.in-project true
+RUN set -x \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && echo 'eval "$(uv generate-shell-completion bash)"' >> /home/vscode/.bashrc \
+    && echo 'eval "$(uvx --generate-shell-completion bash)"' >> /home/vscode/.bashrc
+
+ENV PATH=/home/vscode/.local/bin:${PATH} \
+    UV_NO_CACHE=1 \
+    UV_LINK_MODE=copy
