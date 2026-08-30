@@ -62,7 +62,3 @@ source = "uv-dynamic-versioning"
 
 [tool.hatch.build.targets.wheel]
 packages = ["anno3d"]
-
-[tool.uv-dynamic-versioning]
-enable = true
-fallback-version = "0.0.0"
