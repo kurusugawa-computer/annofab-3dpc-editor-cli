@@ -1,4 +1,4 @@
-.PHONY: lint test docs publish
+.PHONY: lint test docs
 
 ONLY=""
 
@@ -22,6 +22,3 @@ endif
 docs:
 	cd docs && uv run make html
 
-publish:
-	uv build
-	uv publish
