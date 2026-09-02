@@ -35,6 +35,7 @@ uvをインストールしてから、依存関係と開発用の仮想環境を
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
 uv sync
 ```
 
