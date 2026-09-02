@@ -28,13 +28,9 @@ RUN set -x \
 
 # Install Ubuntu packages
 RUN set -x \
-    # Python3.12をインストールするために、deadsnakes PPAを追加
-    && add-apt-repository ppa:deadsnakes/ppa \
     # Install packages
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        # python
-        python3.12-dev \
         # common tools
         bash-completion \
         build-essential \
@@ -57,11 +53,22 @@ RUN set -x \
 
 
 # Add user / Grant sudo privileges
-RUN useradd -m -s /bin/bash -u 5000 -U vscode \
-    && echo "vscode ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/ALL
+ARG USERNAME=vscode
+RUN useradd -m -s /bin/bash -u 5000 -U ${USERNAME} \
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/ALL
 
-USER vscode
+USER ${USERNAME}
 
+ARG UV_VERSION=0.12.9
 RUN set -x \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh 
+    && curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh 
+
+ENV PATH=/home/${USERNAME}/.local/bin/:${PATH}
+    
+# install python
+ARG PYTHON_VERSION=3.12
+RUN uv python install ${PYTHON_VERSION}
+    
+    
+
 
