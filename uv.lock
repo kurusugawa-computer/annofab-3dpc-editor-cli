@@ -71,7 +71,7 @@ requires-dist = [
     { name = "botocore", specifier = ">=1.42.13,<2" },
     { name = "dataclasses-json", specifier = ">=0.5.7,<1" },
     { name = "fire", specifier = ">=0.3.1,<1" },
-    { name = "more-itertools", specifier = ">=8.5.0,<9" },
+    { name = "more-itertools", specifier = ">=8.5.0" },
     { name = "numpy", specifier = ">=1.23,<3" },
     { name = "scipy", specifier = ">=1.9.0,<2" },
 ]
