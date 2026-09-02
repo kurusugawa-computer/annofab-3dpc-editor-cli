@@ -1,4 +1,4 @@
-.PHONY: lint test docs
+.PHONY: lint format test docs
 
 ONLY=""
 
