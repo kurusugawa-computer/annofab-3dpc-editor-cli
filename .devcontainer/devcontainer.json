@@ -24,7 +24,7 @@
 	],
 	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind,consistency=cached",
 	"workspaceFolder": "/workspaces",
-	"postStartCommand": "uv sync",
+	"postStartCommand": "uv sync  --locked",
 	"customizations": {
 		"vscode": {
 			"extensions": [
