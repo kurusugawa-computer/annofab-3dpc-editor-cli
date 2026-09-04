@@ -1,26 +1,23 @@
-.PHONY: lint test docs publish
+.PHONY: lint format test docs
 
 ONLY=""
 
 lint:
-	poetry run ruff format --check anno3d tests
-	poetry run ruff check anno3d tests
-	poetry run mypy anno3d tests
-	poetry run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
+	uv run ruff format --check anno3d tests
+	uv run ruff check anno3d tests
+	uv run mypy anno3d tests
+	uv run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
 
 format:
-	poetry run ruff check anno3d tests --fix-only --exit-zero
-	poetry run ruff format anno3d tests
+	uv run ruff check anno3d tests --fix-only --exit-zero
+	uv run ruff format anno3d tests
 
 test:
 ifeq ($(ONLY),"")
-		poetry run pytest
+		uv run pytest
 else
-		poetry run pytest ${ONLY}
+		uv run pytest ${ONLY}
 endif
 
 docs:
-	cd docs && poetry run make html
-
-publish:
-	poetry publish --build
+	cd docs && uv run make html
