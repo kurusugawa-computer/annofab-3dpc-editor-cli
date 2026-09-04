@@ -5,7 +5,7 @@ description = "Annofabの3次元プロジェクトを操作するためのCLIで
 authors = [{ name = "Kurusugawa Computer Inc." }]
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Intended Audience :: Developers",
     "Environment :: Console",

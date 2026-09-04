@@ -1,11 +1,9 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Generator, Optional, Union
+from typing import Generator, Optional, Union, assert_never
 
 import annofabapi
 from annofabapi import AnnofabApi, Resource
-
-from anno3d.util.type_util import assert_noreturn
 
 
 @dataclass(frozen=True)
@@ -51,7 +49,7 @@ class ClientLoader:
         elif isinstance(self._credential, Pat):
             annofab_pat = self._credential.token
         else:
-            assert_noreturn(self._credential)
+            assert_never(self._credential)
 
         resource = annofabapi.build(
             annofab_id,
