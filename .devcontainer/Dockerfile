@@ -61,15 +61,12 @@ USER ${USERNAME}
 
 ARG UV_VERSION=0.12.9
 RUN set -x \
-    && curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh 
+    && curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
 
 
 ENV PATH=/home/${USERNAME}/.local/bin/:${PATH} \
     UV_NO_CACHE=1
-    
+
 # install python
 ARG PYTHON_VERSION=3.12
 RUN uv python install ${PYTHON_VERSION}
-
-
-

@@ -21,4 +21,3 @@ endif
 
 docs:
 	cd docs && uv run make html
-
