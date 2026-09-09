@@ -18,14 +18,11 @@ ignore = [
     "RUF001", # 全角記号など`ambiguous unicode character`も使いたいため
     "RUF002",# 全角記号など`ambiguous unicode character`も使いたいため
     "RUF003",# 全角記号など`ambiguous unicode character`も使いたいため
-    # 既存の Pylint 設定で無効化していたルール、および Pylint にはない
-    # Ruff 固有の厳格なルールは、移行時の挙動を維持するため無効化する。
-    "PLC2401", # テスト関数名に日本語を利用するため
-    "PLC1802", # len(SEQUENCE) による空判定を許容するため
-    "PLR0913", # コマンドに対応する関数では引数が多くなるため
-    "PLR0917", # コマンドに対応する関数では位置引数が多くなるため
-    "PLR0912", # 分岐数が多い関数を許容するため
-    "PLR2004", # テストの期待値などのリテラル比較を許容するため
-    "PLR5501", # return 後の else を許容するため
-    "PLW0603", # global 文を許容するため
+    "PLC2401", # Pylint: non-ascii-name。テスト関数名に日本語を利用するため
+    "PLC1802", # Pylint: len-as-condition。len(SEQUENCE) による空判定を許容するため
+    "PLR0913", # Pylint: too-many-arguments。コマンドに対応する関数では引数が多くなるため
+    "PLR0917", # Pylint: too-many-positional-arguments。コマンドに対応する関数では位置引数が多くなるため
+    "PLR0912", # Pylint: too-many-branches。分岐数が多い関数を許容するため
+    "PLR2004", # Pylint 拡張: magic-value-comparison。テストの期待値などのリテラル比較を許容するため
+    "PLR5501", # Pylint: consider-using-elif。else 内の if を許容するため
 ]
