@@ -33,7 +33,6 @@ anno3d = "anno3d.app:main"
 linter = [
     "ruff>=0.16,<0.17",
     "mypy>=2.3,<3",
-    "pylint>=4,<5",
 ]
 test = [
     "pytest>=9,<10",

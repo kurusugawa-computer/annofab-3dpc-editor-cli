@@ -17,7 +17,7 @@ class ExtendedSpecsLabelSpecifiersV1(LabelSpecifiers):
         def zoom_in_segment_field_values(label: LabelV3) -> Optional[SegmentFieldValues]:
             try:
                 return SegmentFieldValues.from_dict(label.field_values)
-            except:  # noqa: E722  pylint: disable=bare-except
+            except:  # noqa: E722
                 return None
 
         def zoom_out_segment_field_values(label: LabelV3, values: Optional[SegmentFieldValues]) -> LabelV3:
@@ -35,7 +35,7 @@ class ExtendedSpecsLabelSpecifiersV1(LabelSpecifiers):
         def zoom_in_cuboid_field_values(label: LabelV3) -> Optional[CuboidFieldValues]:
             try:
                 return CuboidFieldValues.from_dict(label.field_values)
-            except:  # noqa: E722  pylint: disable=bare-except
+            except:  # noqa: E722
                 return None
 
         def zoom_out_cuboid_field_values(label: LabelV3, values: Optional[CuboidFieldValues]) -> LabelV3:
