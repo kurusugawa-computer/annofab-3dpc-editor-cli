@@ -300,7 +300,7 @@ class SceneUploader:
             for paths in pathss
         ]
         input_ids = [DataId(input_data_id) for input_data_id, _ in await asyncio.gather(*data_tasks)]
-        data_and_pathss = list(zip(input_ids, pathss))
+        data_and_pathss = list(zip(input_ids, pathss, strict=True))
         logger.info("%d件のデータをアップロードしました", len(data_and_pathss))
         if uploader_input.kind == UploadKind.DATA_ONLY:
             return
