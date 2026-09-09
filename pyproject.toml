@@ -31,7 +31,7 @@ anno3d = "anno3d.app:main"
 
 [dependency-groups]
 linter = [
-    "ruff>=0.8,<0.9",
+    "ruff>=0.16,<0.17",
     "mypy>=1.11,<2",
     "pylint>=3.2,<4",
 ]
