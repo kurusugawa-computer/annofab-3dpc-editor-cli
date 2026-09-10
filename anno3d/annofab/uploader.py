@@ -1,4 +1,5 @@
 import abc
+import logging
 import mimetypes
 from dataclasses import dataclass
 from logging import getLogger
@@ -11,6 +12,7 @@ import requests
 from annofabapi import AnnofabApi
 from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
+from tenacity import before_sleep_log, retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
 
 @dataclass(frozen=True)
@@ -20,6 +22,18 @@ class DataPath:
 
 
 logger = getLogger(__name__)
+
+_RETRYABLE_HTTP_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
+_UPLOAD_TIMEOUT = 600
+
+
+def _is_retryable_upload_error(error: BaseException) -> bool:
+    """一時的な通信エラー、または再試行可能なHTTPエラーかを返す。"""
+    if isinstance(error, requests.exceptions.HTTPError):
+        response = error.response
+        return response is not None and response.status_code in _RETRYABLE_HTTP_STATUS_CODES
+
+    return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
 
 
 def _get_content_type(upload_file: Path) -> str:
@@ -119,11 +133,28 @@ class AnnofabStorageUploader(Uploader):
         data_path_dict, _ = client.create_temp_path(self._project)
 
         data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
-        # XXX エラー処理とか例外処理とか何もないので注意
-        with upload_file.open(mode="rb") as data:
-            if content_type is None:
-                content_type = _get_content_type(upload_file)
-            requests.put(data_path.url, data, headers={"Content-Type": content_type}, timeout=600)
+        if content_type is None:
+            content_type = _get_content_type(upload_file)
+
+        @retry(
+            retry=retry_if_exception(_is_retryable_upload_error),
+            stop=stop_after_attempt(5),
+            wait=wait_random_exponential(multiplier=1, max=30),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )
+        def upload() -> None:
+            # 再試行時にもファイルを先頭から送信する。
+            with upload_file.open(mode="rb") as data:
+                response = requests.put(
+                    data_path.url,
+                    data=data,
+                    headers={"Content-Type": content_type},
+                    timeout=_UPLOAD_TIMEOUT,
+                )
+            response.raise_for_status()
+
+        upload()
 
         return data_path.path
 
