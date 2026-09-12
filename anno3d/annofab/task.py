@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import Collection, List, Optional
 
 from annofabapi import AnnofabApi
@@ -28,7 +29,7 @@ class TaskApi:
         client = self._client
         project_id = self._project_id
         result, response = client.get_task(project_id, task_id)
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             return None
 
         return self._decode_task(result)
