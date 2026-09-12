@@ -6,7 +6,6 @@ lint:
 	uv run ruff format --check anno3d tests
 	uv run ruff check anno3d tests
 	uv run mypy anno3d tests
-	uv run pylint --jobs=$(shell nproc) anno3d tests --rcfile .pylintrc
 
 format:
 	uv run ruff check anno3d tests --fix-only --exit-zero

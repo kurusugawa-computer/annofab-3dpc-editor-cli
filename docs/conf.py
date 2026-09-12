@@ -60,5 +60,8 @@ html_static_path = ["_static"]
 
 html_theme_options = {
     "github_url": "https://github.com/kurusugawa-computer/annofab-3dpc-editor-cli",
-    "footer_items": [],  # footerは重要な情報が表示されないので、footerを空にする
+    # footerは重要な情報が表示されないので、footerを空にする
+    "footer_start": [],
+    "footer_center": [],
+    "footer_end": [],
 }
