@@ -24,17 +24,18 @@ class KittiLabel:
 
     @classmethod
     def decode(cls, line: str) -> Optional["KittiLabel"]:
+        annotation_id_index = 16
         fields = [field.strip() for field in line.split(" ")]
-        label = KittiLabel(
-            fields[0],
-            float(fields[8]),
-            float(fields[9]),
-            float(fields[10]),
-            float(fields[11]),
-            float(fields[12]),
-            float(fields[13]),
-            float(fields[14]),
-            fields[16] if len(fields) > 16 else None,
+        label = cls(
+            type=fields[0],
+            height=float(fields[8]),
+            width=float(fields[9]),
+            depth=float(fields[10]),
+            x=float(fields[11]),
+            y=float(fields[12]),
+            z=float(fields[13]),
+            yaw=float(fields[14]),
+            annotation_id=(fields[annotation_id_index] if len(fields) > annotation_id_index else None),
         )
 
         return label if label.type not in cls.ignore_types else None
