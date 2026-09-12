@@ -18,11 +18,15 @@ ignore = [
     "RUF001", # 全角記号など`ambiguous unicode character`も使いたいため
     "RUF002",# 全角記号など`ambiguous unicode character`も使いたいため
     "RUF003",# 全角記号など`ambiguous unicode character`も使いたいため
-    "PLC2401", # Pylint: non-ascii-name。テスト関数名に日本語を利用するため
     "PLC1802", # Pylint: len-as-condition。len(SEQUENCE) による空判定を許容するため
     "PLR0913", # Pylint: too-many-arguments。コマンドに対応する関数では引数が多くなるため
     "PLR0917", # Pylint: too-many-positional-arguments。コマンドに対応する関数では位置引数が多くなるため
     "PLR0912", # Pylint: too-many-branches。分岐数が多い関数を許容するため
-    "PLR2004", # Pylint 拡張: magic-value-comparison。テストの期待値などのリテラル比較を許容するため
     "PLR5501", # Pylint: consider-using-elif。else 内の if を許容するため
+]
+
+[lint.per-file-ignores]
+"tests/**" = [
+    "PLC2401", # Pylint: non-ascii-name。テスト関数名に日本語を利用するため
+    "PLR2004", # Pylint 拡張: magic-value-comparison。テストの期待値などのリテラル比較を許容するため
 ]
