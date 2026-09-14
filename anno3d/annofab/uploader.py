@@ -37,7 +37,6 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
         {
             HTTPStatus.REQUEST_TIMEOUT,
             HTTPStatus.TOO_MANY_REQUESTS,
-            HTTPStatus.INTERNAL_SERVER_ERROR,
             HTTPStatus.BAD_GATEWAY,
             HTTPStatus.SERVICE_UNAVAILABLE,
             HTTPStatus.GATEWAY_TIMEOUT,
@@ -151,6 +150,8 @@ class AnnofabStorageUploader(Uploader):
         if content_type is None:
             content_type = _get_content_type(upload_file)
 
+        # 一時的な通信エラーでは最大5回、指数バックオフでアップロードを再試行する。
+        # すべて失敗した場合は最後の例外をそのまま送出する。
         @retry(
             retry=retry_if_exception(_is_retryable_upload_error),
             stop=stop_after_attempt(5),
