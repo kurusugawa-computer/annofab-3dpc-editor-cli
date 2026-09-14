@@ -2,7 +2,6 @@ import abc
 import logging
 import mimetypes
 from dataclasses import dataclass
-from logging import getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -21,7 +20,7 @@ class DataPath:
     path: str
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 _RETRYABLE_HTTP_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 _UPLOAD_TIMEOUT = 600
