@@ -31,18 +31,17 @@ anno3d = "anno3d.app:main"
 
 [dependency-groups]
 linter = [
-    "ruff>=0.8,<0.9",
-    "mypy>=1.11,<2",
-    "pylint>=3.2,<4",
+    "ruff>=0.16,<0.17",
+    "mypy>=2.3,<3",
 ]
 test = [
-    "pytest>=7.1.2,<8",
+    "pytest>=9,<10",
 ]
 documentation = [
-    "sphinx>=5.1.1,<6",
-    "pydata-sphinx-theme>=0.9.0,<0.10",
-    "types-requests>=2.25.0,<3",
-    "myst-parser>=0.18.1,<0.19",
+    "sphinx>=9.1,<10; python_version >= '3.12'",
+    "pydata-sphinx-theme>=0.21,<0.22",
+    "types-requests>=2.33,<3",
+    "myst-parser>=5.1,<6",
 ]
 dev-only = [
     # Python 3.13用のwheelを利用するため、開発時のみ下限を引き上げる。

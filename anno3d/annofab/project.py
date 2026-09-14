@@ -3,6 +3,7 @@ import logging
 import random
 import uuid
 from dataclasses import replace
+from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from annofabapi import AnnofabApi
@@ -309,7 +310,7 @@ class ProjectApi:
     def get_project(self, project_id) -> Optional[Project]:
         client = self._client
         result, response = client.get_project(project_id)
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             return None
 
         return self._decode_project(result)
@@ -359,7 +360,7 @@ class ProjectApi:
             project_id = str(uuid.uuid4())
 
         project, response = client.put_project(project_id, request_body=body)
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             raise RuntimeError(
                 f"Project新規作成時のhttp status codeは200ですが、{response.status_code}が返されました。"
             )

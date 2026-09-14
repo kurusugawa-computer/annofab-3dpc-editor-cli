@@ -22,7 +22,7 @@ class ProjectMetadata(DataClassJsonMixin):
     version: ProjectMetadataVersion = field(default_factory=ProjectMetadataVersion)
 
 
-def decode_project_meta_from_v0(data: Dict[str, str]) -> ProjectMetadata:  # pylint: disable=unused-argument
+def decode_project_meta_from_v0(data: Dict[str, str]) -> ProjectMetadata:
     return ProjectMetadata(annotation_area=WholeAnnotationArea(), preset_cuboid_sizes={})
 
 
