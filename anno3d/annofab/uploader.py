@@ -2,6 +2,7 @@ import abc
 import logging
 import mimetypes
 from dataclasses import dataclass
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -22,15 +23,30 @@ class DataPath:
 
 logger = logging.getLogger(__name__)
 
-_RETRYABLE_HTTP_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
-_UPLOAD_TIMEOUT = 600
-
 
 def _is_retryable_upload_error(error: BaseException) -> bool:
-    """一時的な通信エラー、または再試行可能なHTTPエラーかを返す。"""
+    """一時的な通信エラー、または再試行可能なHTTPエラーかを返す。
+
+    Args:
+        error: 判定対象の例外。
+
+    Returns:
+        再試行可能な場合はTrue。それ以外の場合はFalse。
+    """
+    retryable_http_status_codes = frozenset(
+        {
+            HTTPStatus.REQUEST_TIMEOUT,
+            HTTPStatus.TOO_MANY_REQUESTS,
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            HTTPStatus.BAD_GATEWAY,
+            HTTPStatus.SERVICE_UNAVAILABLE,
+            HTTPStatus.GATEWAY_TIMEOUT,
+        }
+    )
+
     if isinstance(error, requests.exceptions.HTTPError):
         response = error.response
-        return response is not None and response.status_code in _RETRYABLE_HTTP_STATUS_CODES
+        return response is not None and response.status_code in retryable_http_status_codes
 
     return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
 
@@ -149,7 +165,7 @@ class AnnofabStorageUploader(Uploader):
                     data_path.url,
                     data=data,
                     headers={"Content-Type": content_type},
-                    timeout=_UPLOAD_TIMEOUT,
+                    timeout=600,
                 )
             response.raise_for_status()
 
