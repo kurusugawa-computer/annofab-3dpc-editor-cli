@@ -37,6 +37,7 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
         {
             HTTPStatus.REQUEST_TIMEOUT,
             HTTPStatus.TOO_MANY_REQUESTS,
+            HTTPStatus.INTERNAL_SERVER_ERROR,
             HTTPStatus.BAD_GATEWAY,
             HTTPStatus.SERVICE_UNAVAILABLE,
             HTTPStatus.GATEWAY_TIMEOUT,
