@@ -17,7 +17,6 @@ from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
 from tenacity import (
     RetryCallState,
-    before_sleep_log,
     retry,
     retry_if_exception,
     stop_after_attempt,
@@ -34,6 +33,61 @@ class DataPath:
 logger = logging.getLogger(__name__)
 
 
+class UploadRequestError(Exception):
+    """署名付きURLを含まない、一時ストレージへのアップロード失敗を表す例外。
+
+    Args:
+        error_type: エラー種別。HTTPエラー、接続エラー、タイムアウト、または
+            S3のRequestTimeoutを識別する値。
+        status_code: HTTP応答のステータスコード。HTTP応答がない場合はNone。
+        retry_after: HTTP応答のRetry-Afterヘッダ値。ヘッダがない、またはHTTP応答が
+            ない場合はNone。
+
+    Attributes:
+        error_type: 再試行判定に使用するエラー種別。
+        status_code: 再試行判定に使用するHTTPステータスコード。
+        retry_after: 再試行の待機時間計算に使用するRetry-Afterヘッダ値。
+    """
+
+    def __init__(
+        self,
+        *,
+        error_type: str,
+        status_code: Optional[int] = None,
+        retry_after: Optional[str] = None,
+    ):
+        self.error_type = error_type
+        self.status_code = status_code
+        self.retry_after = retry_after
+
+        detail = f"status={status_code}, type={error_type}"
+        super().__init__(f"Temporary storage upload failed: {detail}")
+
+
+def _to_upload_request_error(error: requests.exceptions.RequestException) -> UploadRequestError:
+    """requests例外から、URLを保持しないアップロード例外を作成する。
+
+    Args:
+        error: 一時ストレージへのアップロードで発生したrequests例外。
+
+    Returns:
+        再試行判定に必要な情報だけを保持する例外。
+    """
+    if isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
+        response = error.response
+        return UploadRequestError(
+            error_type="s3_request_timeout" if _is_s3_request_timeout_response(response) else "http",
+            status_code=response.status_code,
+            retry_after=response.headers.get("Retry-After"),
+        )
+
+    if isinstance(error, requests.exceptions.ConnectionError):
+        return UploadRequestError(error_type="connection")
+    if isinstance(error, requests.exceptions.Timeout):
+        return UploadRequestError(error_type="timeout")
+    return UploadRequestError(error_type=type(error).__name__)
+
+
 def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
     """再試行可能な応答の Retry-After を秒数へ変換する。
 
@@ -43,11 +97,13 @@ def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
     Returns:
         有効な Retry-After の待機秒数。取得できない場合はNone。
     """
-    if not isinstance(error, requests.exceptions.HTTPError) or error.response is None:
+    if isinstance(error, UploadRequestError):
+        retry_after = error.retry_after
+    elif isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
+        retry_after = error.response.headers.get("Retry-After")
+    else:
         return None
 
-    response = error.response
-    retry_after = response.headers.get("Retry-After")
     if retry_after is None:
         return None
 
@@ -162,6 +218,13 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
         }
     )
 
+    if isinstance(error, UploadRequestError):
+        return (
+            error.status_code in retryable_http_status_codes
+            or error.error_type == "s3_request_timeout"
+            or error.error_type in {"connection", "timeout"}
+        )
+
     if isinstance(error, requests.exceptions.HTTPError):
         response = error.response
         return response is not None and (
@@ -169,6 +232,25 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
         )
 
     return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
+
+
+def _log_upload_retry(retry_state: RetryCallState, filename: str) -> None:
+    """署名付きURLを出力せずに、アップロードの再試行を記録する。
+
+    Args:
+        retry_state: Tenacityが再試行ごとに渡す状態。
+        filename: アップロード対象ファイルの名前。
+    """
+    error = retry_state.outcome.exception() if retry_state.outcome is not None else None
+    if not isinstance(error, UploadRequestError):
+        return
+
+    logger.warning(
+        "Retrying temporary storage upload: file=%s, status=%s, attempt=%d",
+        filename,
+        error.status_code,
+        retry_state.attempt_number,
+    )
 
 
 def _get_content_type(upload_file: Path) -> str:
@@ -272,24 +354,28 @@ class AnnofabStorageUploader(Uploader):
             content_type = _get_content_type(upload_file)
 
         # 一時的な通信エラーでは最大5回、指数バックオフでアップロードを再試行する。
-        # すべて失敗した場合は最後の例外をそのまま送出する。
+        # requests例外は署名付きURLを含まない例外へ変換してからTenacityへ渡す。
         @retry(
             retry=retry_if_exception(_is_retryable_upload_error),
             stop=stop_after_attempt(5),
             wait=_wait_upload_retry,
-            before_sleep=before_sleep_log(logger, logging.WARNING),
+            before_sleep=lambda retry_state: _log_upload_retry(retry_state, upload_file.name),
             reraise=True,
         )
         def upload() -> None:
-            # 再試行時にもファイルを先頭から送信する。
-            with upload_file.open(mode="rb") as data:
-                response = requests.put(
-                    data_path.url,
-                    data=data,
-                    headers={"Content-Type": content_type},
-                    timeout=600,
-                )
-            response.raise_for_status()
+            try:
+                # 再試行時にもファイルを先頭から送信する。
+                with upload_file.open(mode="rb") as data:
+                    response = requests.put(
+                        data_path.url,
+                        data=data,
+                        headers={"Content-Type": content_type},
+                        timeout=600,
+                    )
+                response.raise_for_status()
+            except requests.exceptions.RequestException as error:
+                # ``from None`` により、HTTPError（URLを含む）を例外チェーンへ残さない。
+                raise _to_upload_request_error(error) from None
 
         upload()
 

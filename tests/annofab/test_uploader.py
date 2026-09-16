@@ -1,3 +1,5 @@
+import logging
+import traceback
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from pathlib import Path
@@ -9,6 +11,7 @@ import requests
 from anno3d.annofab import uploader
 from anno3d.annofab.uploader import (
     AnnofabStorageUploader,
+    UploadRequestError,
     _get_retry_after_seconds,
     _is_retryable_upload_error,
     _parse_retry_after_seconds,
@@ -104,3 +107,34 @@ def test_upload_tempdata_一時的なput失敗後に先頭から再試行して�
     assert requests_put.call_count == 3
     assert sent_bodies == [b"upload data", b"upload data", b"upload data"]
     successful_response.raise_for_status.assert_called_once_with()
+
+
+def test_upload_tempdata_署名付きurlを再試行ログと最終例外へ出力しない(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    upload_file = tmp_path / "data.bin"
+    upload_file.write_bytes(b"upload data")
+    signed_url = "https://example.com/upload?X-Amz-Credential=credential&X-Amz-Signature=signature"
+    client = Mock()
+    client.create_temp_path.return_value = ({"url": signed_url, "path": "s3://temporary/data.bin"}, None)
+    response = requests.Response()
+    response.status_code = 503
+    response.url = signed_url
+
+    monkeypatch.setattr(uploader.requests, "put", Mock(return_value=response))
+    monkeypatch.setattr(uploader, "_wait_upload_retry", lambda _: 0)
+
+    with caplog.at_level(logging.WARNING, logger="anno3d.annofab.uploader"):
+        with pytest.raises(UploadRequestError) as exc_info:
+            AnnofabStorageUploader(client, project="project-id").upload_tempdata(upload_file)
+
+    rendered_traceback = "".join(traceback.format_exception(exc_info.type, exc_info.value, exc_info.tb))
+    assert "X-Amz-Credential" not in caplog.text
+    assert "X-Amz-Signature" not in caplog.text
+    assert "X-Amz-Credential" not in rendered_traceback
+    assert "X-Amz-Signature" not in rendered_traceback
+    assert len(caplog.records) == 4
+    assert all(
+        record.getMessage() == "Retrying temporary storage upload: file=data.bin, status=503, attempt=" + str(i)
+        for i, record in enumerate(caplog.records, start=1)
+    )
