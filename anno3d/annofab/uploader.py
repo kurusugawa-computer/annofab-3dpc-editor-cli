@@ -299,9 +299,10 @@ def _log_upload_retry(retry_state: RetryCallState, filename: str) -> None:
         return
 
     logger.warning(
-        "Retrying temporary storage upload: file=%s, status=%s, attempt=%d",
+        "Retrying temporary storage upload: file=%s, status=%s, type=%s, attempt=%d",
         filename,
         error.status_code,
+        error.error_type.value,
         retry_state.attempt_number,
     )
 

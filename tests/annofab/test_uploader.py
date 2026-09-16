@@ -2,6 +2,7 @@ import logging
 import traceback
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
+from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -81,8 +82,10 @@ def test_is_retryable_upload_error_s3_request_timeoutは再試行する():
 
 
 def test_s3_request_timeoutのステータスコードは400に固定される():
-    with pytest.raises(TypeError):
-        S3RequestTimeoutUploadRequestError(503, None)  # type: ignore[call-arg]
+    error = S3RequestTimeoutUploadRequestError(None)
+
+    assert error.status_code == HTTPStatus.BAD_REQUEST
+    assert error.retryable is True
 
 
 def test_httpエラーの再試行可否はステータスコードから導出される():
@@ -152,7 +155,8 @@ def test_upload_tempdata_署名付きurlを再試行ログと最終例外へ出�
     assert "X-Amz-Signature" not in rendered_traceback
     assert len(caplog.records) == 4
     assert all(
-        record.getMessage() == "Retrying temporary storage upload: file=data.bin, status=503, attempt=" + str(i)
+        record.getMessage()
+        == "Retrying temporary storage upload: file=data.bin, status=503, type=http, attempt=" + str(i)
         for i, record in enumerate(caplog.records, start=1)
     )
 
