@@ -54,6 +54,11 @@ def test_get_retry_after_seconds_上限値は有効():
     assert _parse_retry_after_seconds("60") == 60.0
 
 
+@pytest.mark.parametrize("retry_after", [float("inf"), -1.0, 61.0])
+def test_http_upload_request_errorの範囲外_retry_afterは_noneになる(retry_after: float):
+    assert HttpUploadRequestError(429, retry_after).retry_after_seconds is None
+
+
 @pytest.mark.parametrize("retry_after", ["61", "9" * 400])
 def test_get_retry_after_seconds_秒数形式の上限超過は_noneを返す(retry_after: str):
     assert _parse_retry_after_seconds(retry_after) is None
@@ -237,5 +242,30 @@ def test_upload_tempdata_不正な_retry_afterでも署名付きurlを最終例�
     rendered_traceback = "".join(traceback.format_exception(exc_info.type, exc_info.value, exc_info.tb))
     assert "X-Amz-Credential" not in caplog.text
     assert "X-Amz-Signature" not in caplog.text
+    assert "X-Amz-Credential" not in rendered_traceback
+    assert "X-Amz-Signature" not in rendered_traceback
+
+
+def test_upload_tempdata_不正なs3_xmlでも署名付きurlを例外チェーンへ出力しない(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    upload_file = tmp_path / "data.bin"
+    upload_file.write_bytes(b"upload data")
+    signed_url = "https://example.com/upload?X-Amz-Credential=credential&X-Amz-Signature=signature"
+    client = Mock()
+    client.create_temp_path.return_value = ({"url": signed_url, "path": "s3://temporary/data.bin"}, None)
+    response = requests.Response()
+    response.status_code = HTTPStatus.BAD_REQUEST
+    response.url = signed_url
+    response._content = b'<?xml version="1.0" encoding="UTF-32"?><Error><Code>RequestTimeout</Code></Error>'
+
+    monkeypatch.setattr(uploader.requests, "put", Mock(return_value=response))
+
+    with pytest.raises(UploadRequestError) as exc_info:
+        AnnofabStorageUploader(client, project="project-id").upload_tempdata(upload_file)
+
+    rendered_traceback = "".join(traceback.format_exception(exc_info.type, exc_info.value, exc_info.tb))
+    assert exc_info.value.__context__ is None
+    assert exc_info.value.__cause__ is None
     assert "X-Amz-Credential" not in rendered_traceback
     assert "X-Amz-Signature" not in rendered_traceback

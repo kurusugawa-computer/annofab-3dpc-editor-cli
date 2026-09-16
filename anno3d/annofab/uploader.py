@@ -99,10 +99,10 @@ class HttpUploadRequestError(UploadRequestError):
     def __init__(
         self, status_code: int, retry_after_seconds: Optional[float], diagnostic_details: tuple[str, ...] = ()
     ) -> None:
-        if retry_after_seconds is not None and retry_after_seconds < 0:
-            raise ValueError("Retry-After must not be negative")
         self._status_code = status_code
-        self._retry_after_seconds = retry_after_seconds
+        self._retry_after_seconds = (
+            _validate_retry_after_seconds(retry_after_seconds) if retry_after_seconds is not None else None
+        )
         super().__init__(diagnostic_details)
 
     @property
@@ -283,7 +283,11 @@ def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None)
 
 def _validate_retry_after_seconds(retry_after_seconds: float) -> Optional[float]:
     """アプリケーションで扱える範囲のRetry-After秒数だけを返す。"""
-    if not math.isfinite(retry_after_seconds) or retry_after_seconds > MAX_RETRY_AFTER_SECONDS:
+    if (
+        not math.isfinite(retry_after_seconds)
+        or retry_after_seconds < 0
+        or retry_after_seconds > MAX_RETRY_AFTER_SECONDS
+    ):
         return None
     return retry_after_seconds
 
@@ -341,7 +345,9 @@ def _get_s3_error_code(response: requests.Response) -> Optional[str]:
     """S3エラー応答から、URLを含まないエラーコードを取得する。"""
     try:
         root = ET.fromstring(response.content)
-    except (ET.ParseError, TypeError):
+    # XML宣言の不正な文字エンコーディング等は、ParseError以外の例外にもなる。
+    # エラー本文は信頼せず、解析に失敗した場合は常にエラーコードなしとして扱う。
+    except (ET.ParseError, LookupError, TypeError, ValueError):
         return None
 
     if root.tag != "Error":
@@ -487,7 +493,7 @@ class AnnofabStorageUploader(Uploader):
         if content_type is None:
             content_type = _get_content_type(upload_file)
 
-        # 一時的な通信エラーでは最大5回、指数バックオフでアップロードを再試行する。
+        # 一時的な通信エラーでは初回を含めて最大5回、指数バックオフでアップロードを試行する。
         # requests例外は署名付きURLを含まない例外へ変換してからTenacityへ渡す。
         @retry(
             retry=retry_if_exception(_is_retryable_upload_error),
@@ -497,6 +503,7 @@ class AnnofabStorageUploader(Uploader):
             reraise=True,
         )
         def upload() -> None:
+            upload_error: Optional[UploadRequestError] = None
             try:
                 # 再試行時にもファイルを先頭から送信する。
                 with upload_file.open(mode="rb") as data:
@@ -508,8 +515,10 @@ class AnnofabStorageUploader(Uploader):
                     )
                 response.raise_for_status()
             except requests.exceptions.RequestException as error:
-                # ``from None`` により、HTTPError（URLを含む）を例外チェーンへ残さない。
-                raise _to_upload_request_error(error) from None
+                # except節を抜けてから送出し、HTTPError（URLを含む）を例外チェーンへ残さない。
+                upload_error = _to_upload_request_error(error)
+            if upload_error is not None:
+                raise upload_error
 
         upload()
 
