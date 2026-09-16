@@ -2,6 +2,8 @@ import abc
 import logging
 import mimetypes
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -12,7 +14,14 @@ import requests
 from annofabapi import AnnofabApi
 from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
-from tenacity import before_sleep_log, retry, retry_if_exception, stop_after_attempt, wait_random_exponential
+from tenacity import (
+    RetryCallState,
+    before_sleep_log,
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 
 @dataclass(frozen=True)
@@ -22,6 +31,79 @@ class DataPath:
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
+    """再試行可能な応答の Retry-After を秒数へ変換する。
+
+    Args:
+        error: リトライ対象となった例外。
+
+    Returns:
+        有効な Retry-After の待機秒数。取得できない場合はNone。
+    """
+    if not isinstance(error, requests.exceptions.HTTPError) or error.response is None:
+        return None
+
+    response = error.response
+    if response.status_code not in {HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE}:
+        return None
+
+    retry_after = response.headers.get("Retry-After")
+    if retry_after is None:
+        return None
+
+    return _parse_retry_after_seconds(retry_after)
+
+
+def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None) -> Optional[float]:
+    """Retry-After ヘッダ値を秒数へ変換する。
+
+    Args:
+        retry_after: Retry-After ヘッダの値。
+        now: HTTP-date 形式を秒数に変換する際の基準時刻。None の場合は現在時刻を使用する。
+
+    Returns:
+        有効な Retry-After の待機秒数。値が不正な場合はNone。
+    """
+    retry_after = retry_after.strip()
+    if retry_after.isascii() and retry_after.isdigit():
+        return float(retry_after)
+
+    try:
+        retry_at = parsedate_to_datetime(retry_after)
+    except (IndexError, TypeError, ValueError):
+        return None
+
+    if retry_at.tzinfo is None:
+        return None
+
+    if now is None:
+        now = datetime.now(timezone.utc)
+    return max(0.0, (retry_at - now).total_seconds())
+
+
+def _wait_upload_retry(retry_state: RetryCallState) -> float:
+    """Retry-After と指数バックオフのうち長い方を待機時間として返す。
+
+    Args:
+        retry_state: Tenacity が再試行ごとに渡す状態。
+
+    Returns:
+        次回の再試行までの待機秒数。
+    """
+    exponential_wait = wait_random_exponential(multiplier=1, max=30)(retry_state)
+    if retry_state.outcome is None:
+        return exponential_wait
+
+    error = retry_state.outcome.exception()
+    if error is None:
+        return exponential_wait
+
+    retry_after = _get_retry_after_seconds(error)
+    if retry_after is None:
+        return exponential_wait
+    return max(exponential_wait, retry_after)
 
 
 def _is_retryable_upload_error(error: BaseException) -> bool:
@@ -156,7 +238,7 @@ class AnnofabStorageUploader(Uploader):
         @retry(
             retry=retry_if_exception(_is_retryable_upload_error),
             stop=stop_after_attempt(5),
-            wait=wait_random_exponential(multiplier=1, max=30),
+            wait=_wait_upload_retry,
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )
