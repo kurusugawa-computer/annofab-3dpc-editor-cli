@@ -7,10 +7,9 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from enum import Enum
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, ClassVar, Literal, Optional
+from typing import Any, Literal, Optional
 
 import boto3
 import more_itertools
@@ -20,6 +19,7 @@ from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
 from tenacity import (
     RetryCallState,
+    before_sleep_log,
     retry,
     retry_if_exception,
     stop_after_attempt,
@@ -35,19 +35,7 @@ class DataPath:
 
 logger = logging.getLogger(__name__)
 
-MAX_DIAGNOSTIC_EXCEPTION_CLASSES = 4
-MAX_HTTP_REASON_LENGTH = 128
 MAX_RETRY_AFTER_SECONDS = 60.0
-
-
-class UploadErrorType(Enum):
-    """一時ストレージのアップロード失敗の、正規化済みの種別。"""
-
-    HTTP = "http"
-    S3_REQUEST_TIMEOUT = "s3_request_timeout"
-    CONNECTION = "connection"
-    TIMEOUT = "timeout"
-    OTHER = "other"
 
 
 def _is_retryable_http_status_code(status_code: int) -> bool:
@@ -65,180 +53,7 @@ def _is_retryable_http_status_code(status_code: int) -> bool:
     return status_code in retryable_status_codes
 
 
-class UploadRequestError(Exception):
-    """署名付きURLを含まない、一時ストレージへのアップロード失敗を表す基底例外。"""
-
-    error_type: ClassVar[UploadErrorType]
-
-    def __init__(self, diagnostic_details: tuple[str, ...] = ()) -> None:
-        self.diagnostic_details = diagnostic_details
-        details = ", ".join((f"status={self.status_code}", f"type={self.error_type.value}", *self.diagnostic_details))
-        super().__init__(f"Temporary storage upload failed: {details}")
-
-    @property
-    def status_code(self) -> Optional[int]:
-        """HTTP応答のステータスコード。HTTP応答がない場合はNone。"""
-        return None
-
-    @property
-    def retry_after_seconds(self) -> Optional[float]:
-        """Retry-Afterヘッダから解析済みの待機秒数。HTTP応答以外ではNone。"""
-        return None
-
-    @property
-    def retryable(self) -> bool:
-        """この失敗を再試行するか。"""
-        return False
-
-
-class HttpUploadRequestError(UploadRequestError):
-    """HTTP応答を受けた一時ストレージへのアップロード失敗。"""
-
-    error_type = UploadErrorType.HTTP
-
-    def __init__(
-        self, status_code: int, retry_after_seconds: Optional[float], diagnostic_details: tuple[str, ...] = ()
-    ) -> None:
-        self._status_code = status_code
-        self._retry_after_seconds = (
-            _validate_retry_after_seconds(retry_after_seconds) if retry_after_seconds is not None else None
-        )
-        super().__init__(diagnostic_details)
-
-    @property
-    def status_code(self) -> int:
-        return self._status_code
-
-    @property
-    def retry_after_seconds(self) -> Optional[float]:
-        return self._retry_after_seconds
-
-    @property
-    def retryable(self) -> bool:
-        return _is_retryable_http_status_code(self.status_code)
-
-
-class S3RequestTimeoutUploadRequestError(HttpUploadRequestError):
-    """S3のHTTP 400 / RequestTimeout 応答によるアップロード失敗。"""
-
-    error_type = UploadErrorType.S3_REQUEST_TIMEOUT
-
-    def __init__(self, retry_after_seconds: Optional[float], diagnostic_details: tuple[str, ...] = ()) -> None:
-        super().__init__(HTTPStatus.BAD_REQUEST, retry_after_seconds, diagnostic_details)
-
-    @property
-    def retryable(self) -> bool:
-        return True
-
-
-class ConnectionUploadRequestError(UploadRequestError):
-    """接続エラーによるアップロード失敗。"""
-
-    error_type = UploadErrorType.CONNECTION
-
-    @property
-    def retryable(self) -> bool:
-        return True
-
-
-class TimeoutUploadRequestError(UploadRequestError):
-    """タイムアウトによるアップロード失敗。"""
-
-    error_type = UploadErrorType.TIMEOUT
-
-    @property
-    def retryable(self) -> bool:
-        return True
-
-
-class OtherUploadRequestError(UploadRequestError):
-    """再試行しないその他のアップロード失敗。"""
-
-    error_type = UploadErrorType.OTHER
-
-
-def _to_upload_request_error(error: requests.exceptions.RequestException) -> UploadRequestError:
-    """requests例外から、URLを保持しないアップロード例外を作成する。
-
-    Args:
-        error: 一時ストレージへのアップロードで発生したrequests例外。
-
-    Returns:
-        再試行判定に必要な情報だけを保持する例外。
-    """
-    if isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
-        response = error.response
-        retry_after_seconds = (
-            _parse_retry_after_seconds(response.headers["Retry-After"]) if "Retry-After" in response.headers else None
-        )
-        s3_error_code = _get_s3_error_code(response)
-        diagnostic_details = _get_http_diagnostic_details(error, response, s3_error_code)
-        if response.status_code == HTTPStatus.BAD_REQUEST and s3_error_code == "RequestTimeout":
-            return S3RequestTimeoutUploadRequestError(retry_after_seconds, diagnostic_details)
-        return HttpUploadRequestError(response.status_code, retry_after_seconds, diagnostic_details)
-
-    if isinstance(error, requests.exceptions.ConnectionError):
-        return ConnectionUploadRequestError(_get_exception_diagnostic_details(error))
-    if isinstance(error, requests.exceptions.Timeout):
-        return TimeoutUploadRequestError(_get_exception_diagnostic_details(error))
-    return OtherUploadRequestError(_get_exception_diagnostic_details(error))
-
-
-def _get_http_diagnostic_details(
-    error: requests.exceptions.HTTPError, response: requests.Response, s3_error_code: Optional[str]
-) -> tuple[str, ...]:
-    """URLを含めずにHTTP失敗を診断するための情報を返す。"""
-    details = [f"error={type(error).__name__}"]
-    reason = _get_safe_http_reason(response.reason)
-    if reason is not None:
-        details.append(f"reason={reason}")
-    if s3_error_code is not None:
-        details.append(f"s3_error_code={s3_error_code}")
-    return tuple(details)
-
-
-def _get_exception_diagnostic_details(error: BaseException) -> tuple[str, ...]:
-    """例外チェーンから、URLを含まない例外クラス名だけを取り出す。"""
-    class_names: list[str] = []
-    visited: set[int] = set()
-
-    def visit(exception: BaseException) -> None:
-        if id(exception) in visited or len(class_names) >= MAX_DIAGNOSTIC_EXCEPTION_CLASSES:
-            return
-        visited.add(id(exception))
-        class_names.append(type(exception).__name__)
-        for related in (
-            *exception.args,
-            exception.__cause__,
-            exception.__context__,
-            getattr(exception, "reason", None),
-        ):
-            if isinstance(related, BaseException):
-                visit(related)
-
-    visit(error)
-    return tuple(f"error={class_name}" for class_name in class_names)
-
-
-def _get_safe_http_reason(reason: object) -> Optional[str]:
-    """URLやクエリ文字列を含まないHTTP reasonだけを返す。"""
-    if isinstance(reason, bytes):
-        reason = reason.decode("ascii", errors="ignore")
-    if not isinstance(reason, str):
-        return None
-    reason = reason.strip()
-    if (
-        not reason
-        or len(reason) > MAX_HTTP_REASON_LENGTH
-        or any(character in reason for character in ("://", "?", "&", "="))
-    ):
-        return None
-    if not re.fullmatch(r"[A-Za-z0-9 .,:;()/_-]+", reason):
-        return None
-    return reason
-
-
-def _get_retry_after_seconds(error: UploadRequestError) -> Optional[float]:
+def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
     """再試行可能な応答の Retry-After を秒数へ変換する。
 
     Args:
@@ -247,7 +62,13 @@ def _get_retry_after_seconds(error: UploadRequestError) -> Optional[float]:
     Returns:
         有効な Retry-After の待機秒数。取得できない場合はNone。
     """
-    return error.retry_after_seconds
+    if not isinstance(error, requests.exceptions.HTTPError) or error.response is None:
+        return None
+
+    retry_after = error.response.headers.get("Retry-After")
+    if retry_after is None:
+        return None
+    return _parse_retry_after_seconds(retry_after)
 
 
 def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None) -> Optional[float]:
@@ -309,9 +130,6 @@ def _wait_upload_retry(retry_state: RetryCallState) -> float:
     if error is None:
         return exponential_wait
 
-    if not isinstance(error, UploadRequestError):
-        return exponential_wait
-
     retry_after = _get_retry_after_seconds(error)
     if retry_after is None:
         return exponential_wait
@@ -370,27 +188,13 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
     Returns:
         再試行可能な場合はTrue。それ以外の場合はFalse。
     """
-    return isinstance(error, UploadRequestError) and error.retryable
+    if isinstance(error, requests.exceptions.HTTPError):
+        response = error.response
+        return response is not None and (
+            _is_retryable_http_status_code(response.status_code) or _is_s3_request_timeout_response(response)
+        )
 
-
-def _log_upload_retry(retry_state: RetryCallState, filename: str) -> None:
-    """署名付きURLを出力せずに、アップロードの再試行を記録する。
-
-    Args:
-        retry_state: Tenacityが再試行ごとに渡す状態。
-        filename: アップロード対象ファイルの名前。
-    """
-    error = retry_state.outcome.exception() if retry_state.outcome is not None else None
-    if not isinstance(error, UploadRequestError):
-        return
-
-    logger.warning(
-        "Retrying temporary storage upload: file=%s, status=%s, type=%s, attempt=%d",
-        filename,
-        error.status_code,
-        error.error_type.value,
-        retry_state.attempt_number,
-    )
+    return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
 
 
 def _get_content_type(upload_file: Path) -> str:
@@ -494,31 +298,23 @@ class AnnofabStorageUploader(Uploader):
             content_type = _get_content_type(upload_file)
 
         # 一時的な通信エラーでは初回を含めて最大5回、指数バックオフでアップロードを試行する。
-        # requests例外は署名付きURLを含まない例外へ変換してからTenacityへ渡す。
         @retry(
             retry=retry_if_exception(_is_retryable_upload_error),
             stop=stop_after_attempt(5),
             wait=_wait_upload_retry,
-            before_sleep=lambda retry_state: _log_upload_retry(retry_state, upload_file.name),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )
         def upload() -> None:
-            upload_error: Optional[UploadRequestError] = None
-            try:
-                # 再試行時にもファイルを先頭から送信する。
-                with upload_file.open(mode="rb") as data:
-                    response = requests.put(
-                        data_path.url,
-                        data=data,
-                        headers={"Content-Type": content_type},
-                        timeout=600,
-                    )
-                response.raise_for_status()
-            except requests.exceptions.RequestException as error:
-                # except節を抜けてから送出し、HTTPError（URLを含む）を例外チェーンへ残さない。
-                upload_error = _to_upload_request_error(error)
-            if upload_error is not None:
-                raise upload_error
+            # 再試行時にもファイルを先頭から送信する。
+            with upload_file.open(mode="rb") as data:
+                response = requests.put(
+                    data_path.url,
+                    data=data,
+                    headers={"Content-Type": content_type},
+                    timeout=600,
+                )
+            response.raise_for_status()
 
         upload()
 
