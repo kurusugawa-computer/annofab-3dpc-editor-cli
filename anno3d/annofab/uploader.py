@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from enum import Enum
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -33,35 +34,77 @@ class DataPath:
 logger = logging.getLogger(__name__)
 
 
+class UploadErrorType(Enum):
+    """一時ストレージのアップロード失敗の、正規化済みの種別。"""
+
+    HTTP = "http"
+    S3_REQUEST_TIMEOUT = "s3_request_timeout"
+    CONNECTION = "connection"
+    TIMEOUT = "timeout"
+    OTHER = "other"
+
+
+_RETRYABLE_HTTP_STATUS_CODES = frozenset(
+    {
+        HTTPStatus.REQUEST_TIMEOUT,
+        HTTPStatus.TOO_MANY_REQUESTS,
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+        HTTPStatus.BAD_GATEWAY,
+        HTTPStatus.SERVICE_UNAVAILABLE,
+        HTTPStatus.GATEWAY_TIMEOUT,
+    }
+)
+
+
+@dataclass(frozen=True)
 class UploadRequestError(Exception):
     """署名付きURLを含まない、一時ストレージへのアップロード失敗を表す例外。
 
     Args:
-        error_type: エラー種別。HTTPエラー、接続エラー、タイムアウト、または
-            S3のRequestTimeoutを識別する値。
+        error_type: 正規化済みのエラー種別。
         status_code: HTTP応答のステータスコード。HTTP応答がない場合はNone。
-        retry_after: HTTP応答のRetry-Afterヘッダ値。ヘッダがない、またはHTTP応答が
-            ない場合はNone。
+        retryable: この失敗を再試行するか。変換時に確定する。
+        retry_after_seconds: Retry-Afterヘッダから解析済みの待機秒数。
 
     Attributes:
-        error_type: 再試行判定に使用するエラー種別。
-        status_code: 再試行判定に使用するHTTPステータスコード。
-        retry_after: 再試行の待機時間計算に使用するRetry-Afterヘッダ値。
+        retryable: Tenacity の再試行判定に使用する安全な値。
+        retry_after_seconds: 待機時間計算に使用する安全な値。
     """
 
-    def __init__(
-        self,
-        *,
-        error_type: str,
-        status_code: Optional[int] = None,
-        retry_after: Optional[str] = None,
-    ):
-        self.error_type = error_type
-        self.status_code = status_code
-        self.retry_after = retry_after
+    error_type: UploadErrorType
+    status_code: Optional[int]
+    retryable: bool
+    retry_after_seconds: Optional[float]
 
-        detail = f"status={status_code}, type={error_type}"
-        super().__init__(f"Temporary storage upload failed: {detail}")
+    def __post_init__(self) -> None:
+        if self.error_type in {UploadErrorType.HTTP, UploadErrorType.S3_REQUEST_TIMEOUT}:
+            if self.status_code is None:
+                raise ValueError("HTTP upload errors require a status code")
+        elif self.status_code is not None:
+            raise ValueError("non-HTTP upload errors cannot have a status code")
+
+        expected_retryable = (
+            self.error_type
+            in {
+                UploadErrorType.CONNECTION,
+                UploadErrorType.TIMEOUT,
+                UploadErrorType.S3_REQUEST_TIMEOUT,
+            }
+            or (self.error_type is UploadErrorType.HTTP and self.status_code in _RETRYABLE_HTTP_STATUS_CODES)
+        )
+        if self.retryable != expected_retryable:
+            raise ValueError("retryable must agree with the normalized upload error")
+
+        if self.retry_after_seconds is not None and (
+            self.error_type not in {UploadErrorType.HTTP, UploadErrorType.S3_REQUEST_TIMEOUT}
+            or self.retry_after_seconds < 0
+        ):
+            raise ValueError("Retry-After is only valid for HTTP upload errors")
+
+        Exception.__init__(
+            self,
+            f"Temporary storage upload failed: status={self.status_code}, type={self.error_type.value}",
+        )
 
 
 def _to_upload_request_error(error: requests.exceptions.RequestException) -> UploadRequestError:
@@ -75,20 +118,27 @@ def _to_upload_request_error(error: requests.exceptions.RequestException) -> Upl
     """
     if isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
         response = error.response
+        error_type = (
+            UploadErrorType.S3_REQUEST_TIMEOUT if _is_s3_request_timeout_response(response) else UploadErrorType.HTTP
+        )
         return UploadRequestError(
-            error_type="s3_request_timeout" if _is_s3_request_timeout_response(response) else "http",
+            error_type=error_type,
             status_code=response.status_code,
-            retry_after=response.headers.get("Retry-After"),
+            retryable=error_type is UploadErrorType.S3_REQUEST_TIMEOUT
+            or response.status_code in _RETRYABLE_HTTP_STATUS_CODES,
+            retry_after_seconds=_parse_retry_after_seconds(response.headers["Retry-After"])
+            if "Retry-After" in response.headers
+            else None,
         )
 
     if isinstance(error, requests.exceptions.ConnectionError):
-        return UploadRequestError(error_type="connection")
+        return UploadRequestError(UploadErrorType.CONNECTION, None, True, None)
     if isinstance(error, requests.exceptions.Timeout):
-        return UploadRequestError(error_type="timeout")
-    return UploadRequestError(error_type=type(error).__name__)
+        return UploadRequestError(UploadErrorType.TIMEOUT, None, True, None)
+    return UploadRequestError(UploadErrorType.OTHER, None, False, None)
 
 
-def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
+def _get_retry_after_seconds(error: UploadRequestError) -> Optional[float]:
     """再試行可能な応答の Retry-After を秒数へ変換する。
 
     Args:
@@ -97,17 +147,7 @@ def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
     Returns:
         有効な Retry-After の待機秒数。取得できない場合はNone。
     """
-    if isinstance(error, UploadRequestError):
-        retry_after = error.retry_after
-    elif isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
-        retry_after = error.response.headers.get("Retry-After")
-    else:
-        return None
-
-    if retry_after is None:
-        return None
-
-    return _parse_retry_after_seconds(retry_after)
+    return error.retry_after_seconds
 
 
 def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None) -> Optional[float]:
@@ -152,6 +192,9 @@ def _wait_upload_retry(retry_state: RetryCallState) -> float:
 
     error = retry_state.outcome.exception()
     if error is None:
+        return exponential_wait
+
+    if not isinstance(error, UploadRequestError):
         return exponential_wait
 
     retry_after = _get_retry_after_seconds(error)
@@ -207,31 +250,7 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
     Returns:
         再試行可能な場合はTrue。それ以外の場合はFalse。
     """
-    retryable_http_status_codes = frozenset(
-        {
-            HTTPStatus.REQUEST_TIMEOUT,
-            HTTPStatus.TOO_MANY_REQUESTS,
-            HTTPStatus.INTERNAL_SERVER_ERROR,
-            HTTPStatus.BAD_GATEWAY,
-            HTTPStatus.SERVICE_UNAVAILABLE,
-            HTTPStatus.GATEWAY_TIMEOUT,
-        }
-    )
-
-    if isinstance(error, UploadRequestError):
-        return (
-            error.status_code in retryable_http_status_codes
-            or error.error_type == "s3_request_timeout"
-            or error.error_type in {"connection", "timeout"}
-        )
-
-    if isinstance(error, requests.exceptions.HTTPError):
-        response = error.response
-        return response is not None and (
-            response.status_code in retryable_http_status_codes or _is_s3_request_timeout_response(response)
-        )
-
-    return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
+    return isinstance(error, UploadRequestError) and error.retryable
 
 
 def _log_upload_retry(retry_state: RetryCallState, filename: str) -> None:

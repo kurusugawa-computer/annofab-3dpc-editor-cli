@@ -15,6 +15,7 @@ from anno3d.annofab.uploader import (
     _get_retry_after_seconds,
     _is_retryable_upload_error,
     _parse_retry_after_seconds,
+    _to_upload_request_error,
     _wait_upload_retry,
 )
 
@@ -34,7 +35,7 @@ def _http_error_with_body(status_code: int, body: bytes) -> requests.exceptions.
 
 
 def test_get_retry_after_seconds_秒数形式():
-    error = _http_error(429, "120")
+    error = _to_upload_request_error(_http_error(429, "120"))
 
     assert _get_retry_after_seconds(error) == 120.0
 
@@ -48,7 +49,7 @@ def test_get_retry_after_seconds_http_date形式():
 
 @pytest.mark.parametrize("retry_after", ["-1", "120.5", "invalid date"])
 def test_get_retry_after_seconds_不正値は_noneを返す(retry_after: str):
-    error = _http_error(429, retry_after)
+    error = _to_upload_request_error(_http_error(429, retry_after))
 
     assert _get_retry_after_seconds(error) is None
 
@@ -56,7 +57,7 @@ def test_get_retry_after_seconds_不正値は_noneを返す(retry_after: str):
 def test_wait_upload_retry_retry_afterを指数バックオフの下限にする():
     retry_state = Mock()
     retry_state.attempt_number = 1
-    retry_state.outcome.exception.return_value = _http_error(429, "120")
+    retry_state.outcome.exception.return_value = _to_upload_request_error(_http_error(429, "120"))
 
     assert _wait_upload_retry(retry_state) == 120.0
 
@@ -70,13 +71,13 @@ def test_is_retryable_upload_error_s3_request_timeoutは再試行する():
         </Error>""",
     )
 
-    assert _is_retryable_upload_error(error) is True
+    assert _is_retryable_upload_error(_to_upload_request_error(error)) is True
 
 
 def test_is_retryable_upload_error_s3の他の400は再試行しない():
     error = _http_error_with_body(400, b"<Error><Code>AccessDenied</Code></Error>")
 
-    assert _is_retryable_upload_error(error) is False
+    assert _is_retryable_upload_error(_to_upload_request_error(error)) is False
 
 
 def test_upload_tempdata_一時的なput失敗後に先頭から再試行して成功する(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
