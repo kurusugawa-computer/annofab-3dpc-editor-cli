@@ -1,7 +1,12 @@
 import abc
+import logging
+import math
 import mimetypes
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from logging import getLogger
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -11,6 +16,16 @@ import requests
 from annofabapi import AnnofabApi
 from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
+from tenacity import (
+    RetryCallState,
+    before_sleep_log,
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -19,7 +34,142 @@ class DataPath:
     path: str
 
 
-logger = getLogger(__name__)
+def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
+    """再試行可能な応答の Retry-After を秒数へ変換する。
+
+    Args:
+        error: リトライ対象となった例外。
+
+    Returns:
+        有効な Retry-After の待機秒数。取得できない場合はNone。
+    """
+    if not isinstance(error, requests.exceptions.HTTPError) or error.response is None:
+        return None
+
+    retry_after = error.response.headers.get("Retry-After")
+    if retry_after is None:
+        return None
+    return _parse_retry_after_seconds(retry_after)
+
+
+def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None) -> Optional[float]:
+    """Retry-After ヘッダ値を秒数へ変換する。
+
+    Args:
+        retry_after: Retry-After ヘッダの値。
+        now: HTTP-date 形式を秒数に変換する際の基準時刻。None の場合は現在時刻を使用する。
+
+    Returns:
+        有効な Retry-After の待機秒数。値が不正な場合はNone。
+    """
+    retry_after = retry_after.strip()
+    if retry_after.isascii() and retry_after.isdigit():
+        try:
+            retry_after_seconds = float(retry_after)
+        except OverflowError:
+            return None
+        return retry_after_seconds if math.isfinite(retry_after_seconds) else None
+
+    try:
+        retry_at = parsedate_to_datetime(retry_after)
+    except (IndexError, OverflowError, TypeError, ValueError):
+        return None
+
+    if retry_at.tzinfo is None:
+        return None
+
+    if now is None:
+        now = datetime.now(timezone.utc)
+    return max(0.0, (retry_at - now).total_seconds())
+
+
+def _wait_upload_retry(retry_state: RetryCallState) -> float:
+    """Retry-After と指数バックオフのうち長い方を待機時間として返す。
+
+    Args:
+        retry_state: Tenacity が再試行ごとに渡す状態。
+
+    Returns:
+        次回の再試行までの待機秒数。
+    """
+    exponential_wait = wait_random_exponential(multiplier=1, max=30)(retry_state)
+    if retry_state.outcome is None:
+        return exponential_wait
+
+    error = retry_state.outcome.exception()
+    if error is None:
+        return exponential_wait
+
+    retry_after = _get_retry_after_seconds(error)
+    if retry_after is None:
+        return exponential_wait
+    return max(exponential_wait, retry_after)
+
+
+def _is_s3_request_timeout_response(response: requests.Response) -> bool:
+    """S3のHTTP 400 / RequestTimeout応答かを返す。
+
+    Args:
+        response: 判定対象のHTTPレスポンス。
+
+    Returns:
+        HTTPステータスが400で、レスポンスXMLのエラーコードが
+        ``RequestTimeout`` の場合はTrue。それ以外の場合はFalse。
+
+    Examples:
+        以下のようなS3エラー応答を判定する。
+
+        .. code-block:: xml
+
+            <Error>
+                <Code>RequestTimeout</Code>
+                <Message>Your socket connection timed out.</Message>
+            </Error>
+    """
+    if response.status_code != HTTPStatus.BAD_REQUEST:
+        return False
+
+    try:
+        root = ET.fromstring(response.content)
+    # XML宣言の不正な文字エンコーディング等は、ParseError以外の例外にもなる。
+    # エラー本文は信頼せず、解析に失敗した場合は常にエラーコードなしとして扱う。
+    except (ET.ParseError, LookupError, TypeError, ValueError):
+        return False
+
+    if root.tag != "Error":
+        return False
+
+    for child in root:
+        if child.tag == "Code" and child.text is not None:
+            return child.text.strip() == "RequestTimeout"
+    return False
+
+
+def _is_retryable_upload_error(error: BaseException) -> bool:
+    """一時的な通信エラー、または再試行可能なHTTPエラーかを返す。
+
+    Args:
+        error: 判定対象の例外。
+
+    Returns:
+        再試行可能な場合はTrue。それ以外の場合はFalse。
+    """
+    if isinstance(error, requests.exceptions.HTTPError):
+        response = error.response
+        return response is not None and (
+            response.status_code
+            in {
+                HTTPStatus.REQUEST_TIMEOUT,
+                HTTPStatus.TOO_MANY_REQUESTS,
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            }
+            or _is_s3_request_timeout_response(response)
+        )
+
+    return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
 
 
 def _get_content_type(upload_file: Path) -> str:
@@ -119,11 +269,29 @@ class AnnofabStorageUploader(Uploader):
         data_path_dict, _ = client.create_temp_path(self._project)
 
         data_path = DataPath(data_path_dict["url"], data_path_dict["path"])
-        # XXX エラー処理とか例外処理とか何もないので注意
-        with upload_file.open(mode="rb") as data:
-            if content_type is None:
-                content_type = _get_content_type(upload_file)
-            requests.put(data_path.url, data, headers={"Content-Type": content_type}, timeout=600)
+        if content_type is None:
+            content_type = _get_content_type(upload_file)
+
+        # 一時的な通信エラーでは初回を含めて最大5回、指数バックオフでアップロードを試行する。
+        @retry(
+            retry=retry_if_exception(_is_retryable_upload_error),
+            stop=stop_after_attempt(5),
+            wait=_wait_upload_retry,
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )
+        def upload() -> None:
+            # 再試行時にもファイルを先頭から送信する。
+            with upload_file.open(mode="rb") as data:
+                response = requests.put(
+                    data_path.url,
+                    data=data,
+                    headers={"Content-Type": content_type},
+                    timeout=600,
+                )
+            response.raise_for_status()
+
+        upload()
 
         return data_path.path
 
