@@ -2,7 +2,6 @@ import abc
 import logging
 import math
 import mimetypes
-import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -33,21 +32,6 @@ logger = logging.getLogger(__name__)
 class DataPath:
     url: str
     path: str
-
-
-def _is_retryable_http_status_code(status_code: int) -> bool:
-    """再試行可能なHTTPステータスコードかを返す。"""
-    retryable_status_codes = frozenset(
-        {
-            HTTPStatus.REQUEST_TIMEOUT,
-            HTTPStatus.TOO_MANY_REQUESTS,
-            HTTPStatus.INTERNAL_SERVER_ERROR,
-            HTTPStatus.BAD_GATEWAY,
-            HTTPStatus.SERVICE_UNAVAILABLE,
-            HTTPStatus.GATEWAY_TIMEOUT,
-        }
-    )
-    return status_code in retryable_status_codes
 
 
 def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
@@ -142,27 +126,23 @@ def _is_s3_request_timeout_response(response: requests.Response) -> bool:
                 <Message>Your socket connection timed out.</Message>
             </Error>
     """
-    return response.status_code == HTTPStatus.BAD_REQUEST and _get_s3_error_code(response) == "RequestTimeout"
+    if response.status_code != HTTPStatus.BAD_REQUEST:
+        return False
 
-
-def _get_s3_error_code(response: requests.Response) -> Optional[str]:
-    """S3エラー応答から、URLを含まないエラーコードを取得する。"""
     try:
         root = ET.fromstring(response.content)
     # XML宣言の不正な文字エンコーディング等は、ParseError以外の例外にもなる。
     # エラー本文は信頼せず、解析に失敗した場合は常にエラーコードなしとして扱う。
     except (ET.ParseError, LookupError, TypeError, ValueError):
-        return None
+        return False
 
     if root.tag != "Error":
-        return None
+        return False
 
     for child in root:
         if child.tag == "Code" and child.text is not None:
-            error_code = child.text.strip()
-            if re.fullmatch(r"[A-Za-z][A-Za-z0-9._-]{0,127}", error_code):
-                return error_code
-    return None
+            return child.text.strip() == "RequestTimeout"
+    return False
 
 
 def _is_retryable_upload_error(error: BaseException) -> bool:
@@ -177,7 +157,16 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
     if isinstance(error, requests.exceptions.HTTPError):
         response = error.response
         return response is not None and (
-            _is_retryable_http_status_code(response.status_code) or _is_s3_request_timeout_response(response)
+            response.status_code
+            in {
+                HTTPStatus.REQUEST_TIMEOUT,
+                HTTPStatus.TOO_MANY_REQUESTS,
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            }
+            or _is_s3_request_timeout_response(response)
         )
 
     return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
