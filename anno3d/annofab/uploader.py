@@ -44,16 +44,19 @@ class UploadErrorType(Enum):
     OTHER = "other"
 
 
-_RETRYABLE_HTTP_STATUS_CODES = frozenset(
-    {
-        HTTPStatus.REQUEST_TIMEOUT,
-        HTTPStatus.TOO_MANY_REQUESTS,
-        HTTPStatus.INTERNAL_SERVER_ERROR,
-        HTTPStatus.BAD_GATEWAY,
-        HTTPStatus.SERVICE_UNAVAILABLE,
-        HTTPStatus.GATEWAY_TIMEOUT,
-    }
-)
+def _is_retryable_http_status_code(status_code: int) -> bool:
+    """再試行可能なHTTPステータスコードかを返す。"""
+    retryable_status_codes = frozenset(
+        {
+            HTTPStatus.REQUEST_TIMEOUT,
+            HTTPStatus.TOO_MANY_REQUESTS,
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            HTTPStatus.BAD_GATEWAY,
+            HTTPStatus.SERVICE_UNAVAILABLE,
+            HTTPStatus.GATEWAY_TIMEOUT,
+        }
+    )
+    return status_code in retryable_status_codes
 
 
 class UploadRequestError(Exception):
@@ -102,7 +105,7 @@ class HttpUploadRequestError(UploadRequestError):
 
     @property
     def retryable(self) -> bool:
-        return self.status_code in _RETRYABLE_HTTP_STATUS_CODES
+        return _is_retryable_http_status_code(self.status_code)
 
 
 class S3RequestTimeoutUploadRequestError(HttpUploadRequestError):
