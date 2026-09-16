@@ -83,15 +83,11 @@ class UploadRequestError(Exception):
         elif self.status_code is not None:
             raise ValueError("non-HTTP upload errors cannot have a status code")
 
-        expected_retryable = (
-            self.error_type
-            in {
-                UploadErrorType.CONNECTION,
-                UploadErrorType.TIMEOUT,
-                UploadErrorType.S3_REQUEST_TIMEOUT,
-            }
-            or (self.error_type is UploadErrorType.HTTP and self.status_code in _RETRYABLE_HTTP_STATUS_CODES)
-        )
+        expected_retryable = self.error_type in {
+            UploadErrorType.CONNECTION,
+            UploadErrorType.TIMEOUT,
+            UploadErrorType.S3_REQUEST_TIMEOUT,
+        } or (self.error_type is UploadErrorType.HTTP and self.status_code in _RETRYABLE_HTTP_STATUS_CODES)
         if self.retryable != expected_retryable:
             raise ValueError("retryable must agree with the normalized upload error")
 
