@@ -11,6 +11,8 @@ import requests
 from anno3d.annofab import uploader
 from anno3d.annofab.uploader import (
     AnnofabStorageUploader,
+    HttpUploadRequestError,
+    S3RequestTimeoutUploadRequestError,
     UploadRequestError,
     _get_retry_after_seconds,
     _is_retryable_upload_error,
@@ -71,7 +73,21 @@ def test_is_retryable_upload_error_s3_request_timeoutは再試行する():
         </Error>""",
     )
 
-    assert _is_retryable_upload_error(_to_upload_request_error(error)) is True
+    upload_error = _to_upload_request_error(error)
+
+    assert isinstance(upload_error, S3RequestTimeoutUploadRequestError)
+    assert upload_error.status_code == 400
+    assert _is_retryable_upload_error(upload_error) is True
+
+
+def test_s3_request_timeoutのステータスコードは400に固定される():
+    with pytest.raises(TypeError):
+        S3RequestTimeoutUploadRequestError(503, None)
+
+
+def test_httpエラーの再試行可否はステータスコードから導出される():
+    assert HttpUploadRequestError(503, None).retryable is True
+    assert HttpUploadRequestError(400, None).retryable is False
 
 
 def test_is_retryable_upload_error_s3の他の400は再試行しない():
