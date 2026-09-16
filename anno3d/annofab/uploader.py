@@ -1,6 +1,7 @@
 import abc
 import logging
 import mimetypes
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -106,6 +107,44 @@ def _wait_upload_retry(retry_state: RetryCallState) -> float:
     return max(exponential_wait, retry_after)
 
 
+def _is_s3_request_timeout_response(response: requests.Response) -> bool:
+    """S3のHTTP 400 / RequestTimeout応答かを返す。
+
+    Args:
+        response: 判定対象のHTTPレスポンス。
+
+    Returns:
+        HTTPステータスが400で、レスポンスXMLのエラーコードが
+        ``RequestTimeout`` の場合はTrue。それ以外の場合はFalse。
+
+    Examples:
+        以下のようなS3エラー応答を判定する。
+
+        .. code-block:: xml
+
+            <Error>
+                <Code>RequestTimeout</Code>
+                <Message>Your socket connection timed out.</Message>
+            </Error>
+    """
+    if response.status_code != HTTPStatus.BAD_REQUEST:
+        return False
+
+    try:
+        root = ET.fromstring(response.content)
+    except ET.ParseError:
+        return False
+
+    if root.tag != "Error":
+        return False
+
+    for child in root:
+        if child.tag == "Code":
+            return child.text == "RequestTimeout"
+
+    return False
+
+
 def _is_retryable_upload_error(error: BaseException) -> bool:
     """一時的な通信エラー、または再試行可能なHTTPエラーかを返す。
 
@@ -128,7 +167,9 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
 
     if isinstance(error, requests.exceptions.HTTPError):
         response = error.response
-        return response is not None and response.status_code in retryable_http_status_codes
+        return response is not None and (
+            response.status_code in retryable_http_status_codes or _is_s3_request_timeout_response(response)
+        )
 
     return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
 
