@@ -26,16 +26,13 @@ from tenacity import (
     wait_random_exponential,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class DataPath:
     url: str
     path: str
-
-
-logger = logging.getLogger(__name__)
-
-MAX_RETRY_AFTER_SECONDS = 60.0
 
 
 def _is_retryable_http_status_code(status_code: int) -> bool:
@@ -87,7 +84,7 @@ def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None)
             retry_after_seconds = float(retry_after)
         except OverflowError:
             return None
-        return _validate_retry_after_seconds(retry_after_seconds)
+        return retry_after_seconds if math.isfinite(retry_after_seconds) else None
 
     try:
         retry_at = parsedate_to_datetime(retry_after)
@@ -99,18 +96,7 @@ def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None)
 
     if now is None:
         now = datetime.now(timezone.utc)
-    return _validate_retry_after_seconds(max(0.0, (retry_at - now).total_seconds()))
-
-
-def _validate_retry_after_seconds(retry_after_seconds: float) -> Optional[float]:
-    """アプリケーションで扱える範囲のRetry-After秒数だけを返す。"""
-    if (
-        not math.isfinite(retry_after_seconds)
-        or retry_after_seconds < 0
-        or retry_after_seconds > MAX_RETRY_AFTER_SECONDS
-    ):
-        return None
-    return retry_after_seconds
+    return max(0.0, (retry_at - now).total_seconds())
 
 
 def _wait_upload_retry(retry_state: RetryCallState) -> float:

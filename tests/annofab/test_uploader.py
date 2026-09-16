@@ -43,27 +43,28 @@ def test_get_retry_after_seconds_http_date形式():
     assert _parse_retry_after_seconds(format_datetime(retry_at, usegmt=True), now=now) == 60.0
 
 
-def test_get_retry_after_seconds_上限値は有効():
-    assert _parse_retry_after_seconds("60") == 60.0
+def test_get_retry_after_seconds_大きい秒数形式もそのまま返す():
+    assert _parse_retry_after_seconds("61") == 61.0
 
 
-@pytest.mark.parametrize("retry_after", ["61", "9" * 400])
-def test_get_retry_after_seconds_秒数形式の上限超過は_noneを返す(retry_after: str):
+def test_get_retry_after_seconds_数値に変換できない大きさは_noneを返す():
+    retry_after = "9" * 400
+
     assert _parse_retry_after_seconds(retry_after) is None
 
 
-def test_get_retry_after_seconds_http_date形式の上限超過は_noneを返す():
+def test_get_retry_after_seconds_http_date形式の大きい値もそのまま返す():
     now = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
     retry_at = now + timedelta(seconds=61)
 
-    assert _parse_retry_after_seconds(format_datetime(retry_at, usegmt=True), now=now) is None
+    assert _parse_retry_after_seconds(format_datetime(retry_at, usegmt=True), now=now) == 61.0
 
 
-def test_get_retry_after_seconds_遠い将来のhttp_date形式は_noneを返す():
+def test_get_retry_after_seconds_遠い将来のhttp_date形式も返す():
     now = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
     retry_at = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
 
-    assert _parse_retry_after_seconds(format_datetime(retry_at, usegmt=True), now=now) is None
+    assert _parse_retry_after_seconds(format_datetime(retry_at, usegmt=True), now=now) > 60.0
 
 
 @pytest.mark.parametrize("retry_after", ["-1", "120.5", "invalid date", "Sun, 32 Jan 9999999999 00:00:00 GMT"])
