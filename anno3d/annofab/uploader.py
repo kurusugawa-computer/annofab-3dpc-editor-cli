@@ -17,6 +17,7 @@ from annofabapi import Wrapper as AnnofabApiWrapper
 from botocore.errorfactory import ClientError
 from tenacity import (
     RetryCallState,
+    before_sleep_log,
     retry,
     retry_if_exception,
     stop_after_attempt,
@@ -31,28 +32,6 @@ class DataPath:
 
 
 logger = logging.getLogger(__name__)
-
-
-class TempDataUploadError(RuntimeError):
-    """署名付きURLを含まない一時データアップロードの失敗を表す例外。"""
-
-    def __init__(
-        self,
-        *,
-        file_name: str,
-        reason: str,
-        status_code: Optional[int],
-        retryable: bool,
-        retry_after_seconds: Optional[float],
-    ) -> None:
-        self.file_name = file_name
-        self.reason = reason
-        self.status_code = status_code
-        self.retryable = retryable
-        self.retry_after_seconds = retry_after_seconds
-
-        status = str(status_code) if status_code is not None else "network"
-        super().__init__(f"temporary-data upload failed: file={file_name}, reason={reason}, status={status}")
 
 
 def _get_retry_after_seconds(error: BaseException) -> Optional[float]:
@@ -119,10 +98,7 @@ def _wait_upload_retry(retry_state: RetryCallState) -> float:
     if error is None:
         return exponential_wait
 
-    if isinstance(error, TempDataUploadError):
-        retry_after = error.retry_after_seconds
-    else:
-        retry_after = _get_retry_after_seconds(error)
+    retry_after = _get_retry_after_seconds(error)
     if retry_after is None:
         return exponential_wait
     return max(exponential_wait, retry_after)
@@ -193,48 +169,6 @@ def _is_retryable_upload_error(error: BaseException) -> bool:
         )
 
     return isinstance(error, (requests.exceptions.ConnectionError, requests.exceptions.Timeout))
-
-
-def _to_safe_upload_error(error: requests.exceptions.RequestException, file_name: str) -> TempDataUploadError:
-    """requests例外を、URLなどの認可情報を持たない例外へ変換する。"""
-    response = error.response
-    status_code = response.status_code if response is not None else None
-
-    if isinstance(error, requests.exceptions.HTTPError):
-        reason = "http_error"
-    elif isinstance(error, requests.exceptions.Timeout):
-        reason = "timeout"
-    elif isinstance(error, requests.exceptions.ConnectionError):
-        reason = "connection_error"
-    else:
-        reason = "request_error"
-
-    return TempDataUploadError(
-        file_name=file_name,
-        reason=reason,
-        status_code=status_code,
-        retryable=_is_retryable_upload_error(error),
-        retry_after_seconds=_get_retry_after_seconds(error),
-    )
-
-
-def _before_sleep_upload_retry(retry_state: RetryCallState) -> None:
-    """安全なアップロード失敗情報だけをリトライログへ記録する。"""
-    if retry_state.outcome is None:
-        return
-
-    error = retry_state.outcome.exception()
-    if not isinstance(error, TempDataUploadError):
-        return
-
-    status = str(error.status_code) if error.status_code is not None else "network"
-    logger.warning(
-        "temporary-data upload failed (file=%s, reason=%s, status=%s, attempt=%d/5); retrying",
-        error.file_name,
-        error.reason,
-        status,
-        retry_state.attempt_number,
-    )
 
 
 def _get_content_type(upload_file: Path) -> str:
@@ -338,32 +272,24 @@ class AnnofabStorageUploader(Uploader):
             content_type = _get_content_type(upload_file)
 
         # 一時的な通信エラーでは最大5回、指数バックオフでアップロードを再試行する。
-        # すべて失敗した場合は、署名付きURLを含まない例外を送出する。
+        # すべて失敗した場合は最後の例外をそのまま送出する。
         @retry(
-            retry=retry_if_exception(lambda error: isinstance(error, TempDataUploadError) and error.retryable),
+            retry=retry_if_exception(_is_retryable_upload_error),
             stop=stop_after_attempt(5),
             wait=_wait_upload_retry,
-            before_sleep=_before_sleep_upload_retry,
+            before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )
         def upload() -> None:
             # 再試行時にもファイルを先頭から送信する。
-            safe_error: Optional[TempDataUploadError] = None
             with upload_file.open(mode="rb") as data:
-                try:
-                    response = requests.put(
-                        data_path.url,
-                        data=data,
-                        headers={"Content-Type": content_type},
-                        timeout=600,
-                    )
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as error:
-                    safe_error = _to_safe_upload_error(error, upload_file.name)
-
-            # except節の外で送出することで、元のrequests例外を例外チェーンに残さない。
-            if safe_error is not None:
-                raise safe_error
+                response = requests.put(
+                    data_path.url,
+                    data=data,
+                    headers={"Content-Type": content_type},
+                    timeout=600,
+                )
+            response.raise_for_status()
 
         upload()
 
