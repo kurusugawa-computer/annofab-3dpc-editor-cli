@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 import requests
 
+from anno3d.annofab import uploader
 from anno3d.annofab.uploader import (
+    AnnofabStorageUploader,
     _get_retry_after_seconds,
     _is_retryable_upload_error,
     _parse_retry_after_seconds,
@@ -71,3 +74,33 @@ def test_is_retryable_upload_error_s3の他の400は再試行しない():
     error = _http_error_with_body(400, b"<Error><Code>AccessDenied</Code></Error>")
 
     assert _is_retryable_upload_error(error) is False
+
+
+def test_upload_tempdata_一時的なput失敗後に先頭から再試行して成功する(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    upload_file = tmp_path / "data.bin"
+    upload_file.write_bytes(b"upload data")
+    client = Mock()
+    client.create_temp_path.return_value = (
+        {"url": "https://example.com/upload", "path": "s3://temporary/data.bin"},
+        None,
+    )
+    sent_bodies: list[bytes] = []
+    successful_response = Mock()
+
+    def put(*args, **kwargs):
+        sent_bodies.append(kwargs["data"].read())
+        if len(sent_bodies) < 3:
+            raise requests.exceptions.ConnectionError()
+        return successful_response
+
+    requests_put = Mock(side_effect=put)
+    monkeypatch.setattr(uploader.requests, "put", requests_put)
+    monkeypatch.setattr(uploader, "_wait_upload_retry", lambda _: 0)
+
+    result = AnnofabStorageUploader(client, project="project-id").upload_tempdata(upload_file)
+
+    assert result == "s3://temporary/data.bin"
+    client.create_temp_path.assert_called_once_with("project-id")
+    assert requests_put.call_count == 3
+    assert sent_bodies == [b"upload data", b"upload data", b"upload data"]
+    successful_response.raise_for_status.assert_called_once_with()
