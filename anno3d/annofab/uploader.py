@@ -1,6 +1,8 @@
 import abc
 import logging
+import math
 import mimetypes
+import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -33,6 +35,10 @@ class DataPath:
 
 logger = logging.getLogger(__name__)
 
+MAX_DIAGNOSTIC_EXCEPTION_CLASSES = 4
+MAX_HTTP_REASON_LENGTH = 128
+MAX_RETRY_AFTER_SECONDS = 60.0
+
 
 class UploadErrorType(Enum):
     """一時ストレージのアップロード失敗の、正規化済みの種別。"""
@@ -64,8 +70,10 @@ class UploadRequestError(Exception):
 
     error_type: ClassVar[UploadErrorType]
 
-    def __init__(self) -> None:
-        super().__init__(f"Temporary storage upload failed: status={self.status_code}, type={self.error_type.value}")
+    def __init__(self, diagnostic_details: tuple[str, ...] = ()) -> None:
+        self.diagnostic_details = diagnostic_details
+        details = ", ".join((f"status={self.status_code}", f"type={self.error_type.value}", *self.diagnostic_details))
+        super().__init__(f"Temporary storage upload failed: {details}")
 
     @property
     def status_code(self) -> Optional[int]:
@@ -88,12 +96,14 @@ class HttpUploadRequestError(UploadRequestError):
 
     error_type = UploadErrorType.HTTP
 
-    def __init__(self, status_code: int, retry_after_seconds: Optional[float]) -> None:
+    def __init__(
+        self, status_code: int, retry_after_seconds: Optional[float], diagnostic_details: tuple[str, ...] = ()
+    ) -> None:
         if retry_after_seconds is not None and retry_after_seconds < 0:
             raise ValueError("Retry-After must not be negative")
         self._status_code = status_code
         self._retry_after_seconds = retry_after_seconds
-        super().__init__()
+        super().__init__(diagnostic_details)
 
     @property
     def status_code(self) -> int:
@@ -113,8 +123,8 @@ class S3RequestTimeoutUploadRequestError(HttpUploadRequestError):
 
     error_type = UploadErrorType.S3_REQUEST_TIMEOUT
 
-    def __init__(self, retry_after_seconds: Optional[float]) -> None:
-        super().__init__(HTTPStatus.BAD_REQUEST, retry_after_seconds)
+    def __init__(self, retry_after_seconds: Optional[float], diagnostic_details: tuple[str, ...] = ()) -> None:
+        super().__init__(HTTPStatus.BAD_REQUEST, retry_after_seconds, diagnostic_details)
 
     @property
     def retryable(self) -> bool:
@@ -161,15 +171,71 @@ def _to_upload_request_error(error: requests.exceptions.RequestException) -> Upl
         retry_after_seconds = (
             _parse_retry_after_seconds(response.headers["Retry-After"]) if "Retry-After" in response.headers else None
         )
-        if _is_s3_request_timeout_response(response):
-            return S3RequestTimeoutUploadRequestError(retry_after_seconds)
-        return HttpUploadRequestError(response.status_code, retry_after_seconds)
+        s3_error_code = _get_s3_error_code(response)
+        diagnostic_details = _get_http_diagnostic_details(error, response, s3_error_code)
+        if response.status_code == HTTPStatus.BAD_REQUEST and s3_error_code == "RequestTimeout":
+            return S3RequestTimeoutUploadRequestError(retry_after_seconds, diagnostic_details)
+        return HttpUploadRequestError(response.status_code, retry_after_seconds, diagnostic_details)
 
     if isinstance(error, requests.exceptions.ConnectionError):
-        return ConnectionUploadRequestError()
+        return ConnectionUploadRequestError(_get_exception_diagnostic_details(error))
     if isinstance(error, requests.exceptions.Timeout):
-        return TimeoutUploadRequestError()
-    return OtherUploadRequestError()
+        return TimeoutUploadRequestError(_get_exception_diagnostic_details(error))
+    return OtherUploadRequestError(_get_exception_diagnostic_details(error))
+
+
+def _get_http_diagnostic_details(
+    error: requests.exceptions.HTTPError, response: requests.Response, s3_error_code: Optional[str]
+) -> tuple[str, ...]:
+    """URLを含めずにHTTP失敗を診断するための情報を返す。"""
+    details = [f"error={type(error).__name__}"]
+    reason = _get_safe_http_reason(response.reason)
+    if reason is not None:
+        details.append(f"reason={reason}")
+    if s3_error_code is not None:
+        details.append(f"s3_error_code={s3_error_code}")
+    return tuple(details)
+
+
+def _get_exception_diagnostic_details(error: BaseException) -> tuple[str, ...]:
+    """例外チェーンから、URLを含まない例外クラス名だけを取り出す。"""
+    class_names: list[str] = []
+    visited: set[int] = set()
+
+    def visit(exception: BaseException) -> None:
+        if id(exception) in visited or len(class_names) >= MAX_DIAGNOSTIC_EXCEPTION_CLASSES:
+            return
+        visited.add(id(exception))
+        class_names.append(type(exception).__name__)
+        for related in (
+            *exception.args,
+            exception.__cause__,
+            exception.__context__,
+            getattr(exception, "reason", None),
+        ):
+            if isinstance(related, BaseException):
+                visit(related)
+
+    visit(error)
+    return tuple(f"error={class_name}" for class_name in class_names)
+
+
+def _get_safe_http_reason(reason: object) -> Optional[str]:
+    """URLやクエリ文字列を含まないHTTP reasonだけを返す。"""
+    if isinstance(reason, bytes):
+        reason = reason.decode("ascii", errors="ignore")
+    if not isinstance(reason, str):
+        return None
+    reason = reason.strip()
+    if (
+        not reason
+        or len(reason) > MAX_HTTP_REASON_LENGTH
+        or any(character in reason for character in ("://", "?", "&", "="))
+    ):
+        return None
+    if not re.fullmatch(r"[A-Za-z0-9 .,:;()/_-]+", reason):
+        return None
+    return reason
 
 
 def _get_retry_after_seconds(error: UploadRequestError) -> Optional[float]:
@@ -196,7 +262,11 @@ def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None)
     """
     retry_after = retry_after.strip()
     if retry_after.isascii() and retry_after.isdigit():
-        return float(retry_after)
+        try:
+            retry_after_seconds = float(retry_after)
+        except OverflowError:
+            return None
+        return _validate_retry_after_seconds(retry_after_seconds)
 
     try:
         retry_at = parsedate_to_datetime(retry_after)
@@ -208,7 +278,14 @@ def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None)
 
     if now is None:
         now = datetime.now(timezone.utc)
-    return max(0.0, (retry_at - now).total_seconds())
+    return _validate_retry_after_seconds(max(0.0, (retry_at - now).total_seconds()))
+
+
+def _validate_retry_after_seconds(retry_after_seconds: float) -> Optional[float]:
+    """アプリケーションで扱える範囲のRetry-After秒数だけを返す。"""
+    if not math.isfinite(retry_after_seconds) or retry_after_seconds > MAX_RETRY_AFTER_SECONDS:
+        return None
+    return retry_after_seconds
 
 
 def _wait_upload_retry(retry_state: RetryCallState) -> float:
@@ -257,22 +334,25 @@ def _is_s3_request_timeout_response(response: requests.Response) -> bool:
                 <Message>Your socket connection timed out.</Message>
             </Error>
     """
-    if response.status_code != HTTPStatus.BAD_REQUEST:
-        return False
+    return response.status_code == HTTPStatus.BAD_REQUEST and _get_s3_error_code(response) == "RequestTimeout"
 
+
+def _get_s3_error_code(response: requests.Response) -> Optional[str]:
+    """S3エラー応答から、URLを含まないエラーコードを取得する。"""
     try:
         root = ET.fromstring(response.content)
-    except ET.ParseError:
-        return False
+    except (ET.ParseError, TypeError):
+        return None
 
     if root.tag != "Error":
-        return False
+        return None
 
     for child in root:
-        if child.tag == "Code":
-            return child.text == "RequestTimeout"
-
-    return False
+        if child.tag == "Code" and child.text is not None:
+            error_code = child.text.strip()
+            if re.fullmatch(r"[A-Za-z][A-Za-z0-9._-]{0,127}", error_code):
+                return error_code
+    return None
 
 
 def _is_retryable_upload_error(error: BaseException) -> bool:
