@@ -200,7 +200,7 @@ def _parse_retry_after_seconds(retry_after: str, now: Optional[datetime] = None)
 
     try:
         retry_at = parsedate_to_datetime(retry_after)
-    except (IndexError, TypeError, ValueError):
+    except (IndexError, OverflowError, TypeError, ValueError):
         return None
 
     if retry_at.tzinfo is None:
