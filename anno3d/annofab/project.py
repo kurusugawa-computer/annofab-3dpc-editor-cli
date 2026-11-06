@@ -378,7 +378,9 @@ class ProjectApi:
         new_specs = replace(mod_func(specs), annotation_type_version=annotation_type_version)
         request = AnnotationSpecsRequestV3.from_specs(new_specs)
 
-        created_specs, _ = client.put_annotation_specs(project_id, {"v": "3"}, request.to_dict(encode_json=True))
+        created_specs, _ = client.put_annotation_specs(
+            project_id, query_params={"v": "3"}, request_body=request.to_dict(encode_json=True)
+        )
         return AnnotationSpecsV3.from_dict(created_specs)
 
     def put_cuboid_label(
@@ -444,7 +446,7 @@ class ProjectApi:
 
     def get_annotation_specs(self, project_id: str) -> AnnotationSpecsV3:
         client = self._client
-        specs, _ = client.get_annotation_specs(project_id, {"v": "3"})
+        specs, _ = client.get_annotation_specs(project_id, query_params={"v": "3"})
 
         return AnnotationSpecsV3.from_dict(specs)
 

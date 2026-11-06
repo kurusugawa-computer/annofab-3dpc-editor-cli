@@ -50,7 +50,7 @@ class TaskApi:
         )
 
         body = annotations.to_json(ensure_ascii=False)
-        client.put_annotation(project_id, task_id, input_data_id, {"v": "2"}, body)
+        client.put_annotation(project_id, task_id, input_data_id, query_params={"v": "2"}, request_body=body)
 
     def start_annotate(self, task_id: str) -> Optional[Task]:
         """対象タスクの担当者を自分自身ににして、 annotate状態にする"""
@@ -66,7 +66,7 @@ class TaskApi:
             "last_updated_datetime": task.updated_datetime,
             "account_id": client.account_id,
         }
-        result, _ = client.operate_task(project_id, task_id, params)
+        result, _ = client.operate_task(project_id, task_id, request_body=params)
         return self._decode_task(result)
 
     def finish_annotate(self, task_id: str):
@@ -79,5 +79,5 @@ class TaskApi:
             return None
 
         params = {"status": TaskStatus.NOT_STARTED, "last_updated_datetime": task.updated_datetime}
-        result, _ = client.operate_task(project_id, task_id, params)
+        result, _ = client.operate_task(project_id, task_id, request_body=params)
         return self._decode_task(result)

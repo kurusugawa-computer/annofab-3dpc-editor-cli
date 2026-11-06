@@ -97,7 +97,9 @@ class Uploader(abc.ABC):
             if old_supplementary is not None:
                 body["last_updated_datetime"] = old_supplementary["updated_datetime"]
 
-        supplementary, _ = self._client.put_supplementary_data(self._project, input_data_id, supplementary_id, body)
+        supplementary, _ = self._client.put_supplementary_data(
+            self._project, input_data_id, supplementary_id, request_body=body
+        )
         logger.debug("uploaded supplementary data: %s", supplementary)
         return supplementary_id
 
